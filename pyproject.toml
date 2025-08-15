@@ -36,12 +36,12 @@ authors = [
     { name = "Alexander Soare", email = "alexander.soare159@gmail.com" },
     { name = "Quentin Gallouédec", email = "quentin.gallouedec@ec-lyon.fr" },
     { name = "Steven Palma", email = "imstevenpmwork@ieee.org" },
-    { name = "Pepijn Kooijmans", email = "pepijnkooijmans@outlook.com"},
-    { name = "Michel Aractingi", email = "michel.aractingi@gmail.com"},
+    { name = "Pepijn Kooijmans", email = "pepijnkooijmans@outlook.com" },
+    { name = "Michel Aractingi", email = "michel.aractingi@gmail.com" },
     { name = "Adil Zouitine", email = "adilzouitinegm@gmail.com" },
-    { name = "Dana Aubakirova", email = "danaaubakirova17@gmail.com"},
-    { name = "Caroline Pascal", email = "caroline8.pascal@gmail.com"},
-    { name = "Martino Russi", email = "nopyeps@gmail.com"},
+    { name = "Dana Aubakirova", email = "danaaubakirova17@gmail.com" },
+    { name = "Caroline Pascal", email = "caroline8.pascal@gmail.com" },
+    { name = "Martino Russi", email = "nopyeps@gmail.com" },
     { name = "Thomas Wolf", email = "thomaswolfcontact@gmail.com" },
 ]
 classifiers = [
@@ -54,12 +54,18 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-keywords = ["lerobot", "huggingface", "robotics",  "machine learning", "artificial intelligence"]
+keywords = [
+    "lerobot",
+    "huggingface",
+    "robotics",
+    "machine learning",
+    "artificial intelligence",
+]
 
 dependencies = [
 
     # Hugging Face dependencies
-    "datasets>=2.19.0,<=3.6.0", # TODO: Bumb dependency
+    "datasets>=2.19.0,<=3.6.0",                 # TODO: Bumb dependency
     "diffusers>=0.27.2",
     "huggingface-hub[hf-transfer,cli]>=0.34.2",
 
@@ -74,12 +80,12 @@ dependencies = [
     "pyserial>=3.5",
     "wandb>=0.20.0",
 
-    "torch>=2.2.1,<2.8.0", # TODO: Bumb dependency
+    "torch>=2.2.1,<2.8.0",                                                                                                                                                                                                                                # TODO: Bumb dependency
     "torchcodec>=0.2.1,<0.6.0; sys_platform != 'win32' and (sys_platform != 'linux' or (platform_machine != 'aarch64' and platform_machine != 'arm64' and platform_machine != 'armv7l')) and (sys_platform != 'darwin' or platform_machine != 'x86_64')", # TODO: Bumb dependency
-    "torchvision>=0.21.0,<0.23.0", # TODO: Bumb dependency
+    "torchvision>=0.21.0,<0.23.0",                                                                                                                                                                                                                        # TODO: Bumb dependency
 
-    "draccus==0.10.0", # TODO: Remove ==
-    "gymnasium>=0.29.1,<1.0.0", # TODO: Bumb dependency
+    "draccus==0.10.0",           # TODO: Remove ==
+    "gymnasium>=0.29.1,<1.0.0",  # TODO: Bumb dependency
     "rerun-sdk>=0.21.0,<0.23.0", # TODO: Bumb dependency
 
     # Support dependencies
@@ -87,6 +93,9 @@ dependencies = [
     "flask>=3.0.3,<4.0.0",
     "imageio[ffmpeg]>=2.34.0,<3.0.0",
     "termcolor>=2.4.0,<4.0.0",
+
+    "tqdm",
+    "modelscope",
 ]
 
 # Optional dependencies
@@ -119,20 +128,43 @@ intelrealsense = [
 
 # Policies
 pi0 = ["lerobot[transformers-dep]"]
-smolvla = ["lerobot[transformers-dep]", "num2words>=0.5.14", "accelerate>=1.7.0", "safetensors>=0.4.3"]
-hilserl = ["lerobot[transformers-dep]", "gym-hil>=0.1.9", "lerobot[grpcio-dep]", "lerobot[placo-dep]"]
+smolvla = [
+    "lerobot[transformers-dep]",
+    "num2words>=0.5.14",
+    "accelerate>=1.7.0",
+    "safetensors>=0.4.3",
+]
+hilserl = [
+    "lerobot[transformers-dep]",
+    "gym-hil>=0.1.9",
+    "lerobot[grpcio-dep]",
+    "lerobot[placo-dep]",
+]
 
 # Features
 async = ["lerobot[grpcio-dep]", "matplotlib>=3.10.3"]
 
 # Development
-dev = ["pre-commit>=3.7.0", "debugpy>=1.8.1", "lerobot[grpcio-dep]", "grpcio-tools==1.73.1"]
-test = ["pytest>=8.1.0", "pytest-timeout>=2.4.0", "pytest-cov>=5.0.0", "mock-serial>=0.0.1 ; sys_platform != 'win32'"]
+dev = [
+    "pre-commit>=3.7.0",
+    "debugpy>=1.8.1",
+    "lerobot[grpcio-dep]",
+    "grpcio-tools==1.73.1",
+]
+test = [
+    "pytest>=8.1.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-cov>=5.0.0",
+    "mock-serial>=0.0.1 ; sys_platform != 'win32'",
+]
 video_benchmark = ["scikit-image>=0.23.2", "pandas>=2.2.2"]
 
 # Simulation
 aloha = ["gym-aloha>=0.1.1"]
-pusht = ["gym-pusht>=0.1.5", "pymunk>=6.6.0,<7.0.0"] # TODO: Fix pymunk version in gym-pusht instead
+pusht = [
+    "gym-pusht>=0.1.5",
+    "pymunk>=6.6.0,<7.0.0",
+] # TODO: Fix pymunk version in gym-pusht instead
 xarm = ["gym-xarm>=0.1.1"]
 
 # All
@@ -152,19 +184,19 @@ all = [
     "lerobot[video_benchmark]",
     "lerobot[aloha]",
     "lerobot[pusht]",
-    "lerobot[xarm]"
+    "lerobot[xarm]",
 ]
 
 [project.scripts]
-lerobot-calibrate="lerobot.calibrate:main"
-lerobot-find-cameras="lerobot.find_cameras:main"
-lerobot-find-port="lerobot.find_port:main"
-lerobot-record="lerobot.record:main"
-lerobot-replay="lerobot.replay:main"
-lerobot-setup-motors="lerobot.setup_motors:main"
-lerobot-teleoperate="lerobot.teleoperate:main"
-lerobot-eval="lerobot.scripts.eval:main"
-lerobot-train="lerobot.scripts.train:main"
+lerobot-calibrate = "lerobot.calibrate:main"
+lerobot-find-cameras = "lerobot.find_cameras:main"
+lerobot-find-port = "lerobot.find_port:main"
+lerobot-record = "lerobot.record:main"
+lerobot-replay = "lerobot.replay:main"
+lerobot-setup-motors = "lerobot.setup_motors:main"
+lerobot-teleoperate = "lerobot.teleoperate:main"
+lerobot-eval = "lerobot.scripts.eval:main"
+lerobot-train = "lerobot.scripts.train:main"
 
 # ---------------- Tool Configurations ----------------
 [tool.setuptools.packages.find]
@@ -172,6 +204,8 @@ where = ["src"]
 
 [tool.ruff]
 target-version = "py310"
+indent-width = 4
+
 line-length = 110
 exclude = ["tests/artifacts/**/*.safetensors", "*_pb2.py", "*_pb2_grpc.py"]
 
@@ -191,7 +225,14 @@ exclude = ["tests/artifacts/**/*.safetensors", "*_pb2.py", "*_pb2_grpc.py"]
 # N: pep8-naming
 # TODO: Uncomment rules when ready to use
 select = [
-    "E", "W", "F", "I", "B", "C4", "T20", "N" # "SIM", "A", "S", "D", "RUF", "UP"
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "T20",
+    "N",   # "SIM", "A", "S", "D", "RUF", "UP"
 ]
 ignore = [
     "E501", # Line too long
@@ -199,6 +240,23 @@ ignore = [
     "T203", # Pprint statement found
     "B008", # Perform function call in argument defaults
 ]
+
+fixable = ["ALL"] # 所有规则都可自动修复
+unfixable = []
+extend-select = [
+    "UP",   # Ruff's UP rule
+    "PERF", # Ruff's PERF rule
+    "RET",  # Ruff's RET rule
+    "RSE",  # Ruff's RSE rule
+    "NPY",  # Ruff's NPY rule
+    "N",    # Ruff's N rule
+    "I",    # isort (import sorting)
+    "ANN",
+]
+
+# 允许下划线前缀的未使用变量
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]

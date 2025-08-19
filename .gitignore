@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+third_party/*
+!third_party/install.sh
+
+
 ### Environments & Dependencies ###
 .env
 .venv
@@ -26,7 +30,7 @@ node_modules/
 # Lock files
 poetry.lock
 uv.lock
-Pipfile.lock
+Pipfile.lock*
 
 ### Build & Distribution ###
 build/

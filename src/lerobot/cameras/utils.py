@@ -37,6 +37,13 @@ def make_cameras_from_configs(camera_configs: dict[str, CameraConfig]) -> dict[s
             from .realsense.camera_realsense import RealSenseCamera
 
             cameras[key] = RealSenseCamera(cfg)
+        
+        # extension cameras
+        elif cfg.type == "dummy":
+            from .dummy.camera_dummy import DummyCamera
+
+            cameras[key] = DummyCamera(cfg)
+        
         else:
             raise ValueError(f"The motor type '{cfg.type}' is not valid.")
 

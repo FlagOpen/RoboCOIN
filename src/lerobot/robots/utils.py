@@ -65,6 +65,36 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from tests.mocks.mock_robot import MockRobot
 
         return MockRobot(config)
+
+    # extension robots
+    elif config.type == "dummy":
+        from .dummy.dummy import DummyRobot
+
+        return DummyRobot(config)
+    elif config.type == "piper":
+        from .piper.piper import Piper
+
+        return Piper(config)
+    elif config.type == "piper_end_effector":
+        from .piper.piper_end_effector import PiperEndEffector
+
+        return PiperEndEffector(config)
+    elif config.type == "bi_piper":
+        from .bi_piper.bi_piper import BiPiper
+
+        return BiPiper(config)
+    elif config.type == "bi_piper_end_effector":
+        from .bi_piper.bi_piper_end_effector import BiPiperEndEffector
+
+        return BiPiperEndEffector(config)
+    elif config.type == "realman":
+        from .realman.realman import Realman
+
+        return Realman(config)
+    elif config.type == "realman_end_effector":
+        from .realman.realman_end_effector import RealmanEndEffector
+
+        return RealmanEndEffector(config)
     else:
         raise ValueError(config.type)
 

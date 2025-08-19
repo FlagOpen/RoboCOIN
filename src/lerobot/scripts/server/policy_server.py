@@ -255,11 +255,14 @@ class PolicyServer(services_pb2_grpc.AsyncInferenceServicer):
             self.logger.debug(f"Skipping observation #{obs.get_timestep()} - Timestep predicted already!")
             return False
 
-        elif observations_similar(obs, previous_obs, lerobot_features=self.lerobot_features):
-            self.logger.debug(
-                f"Skipping observation #{obs.get_timestep()} - Observation too similar to last obs predicted!"
-            )
-            return False
+        # comment here to disable skipping similar observations
+        # because we add end effector delta control and it can lead to similar observations
+        # TODO: support checking delta control
+        # elif observations_similar(obs, previous_obs, lerobot_features=self.lerobot_features):
+        #     self.logger.debug(
+        #         f"Skipping observation #{obs.get_timestep()} - Observation too similar to last obs predicted!"
+        #     )
+        #     return False
 
         else:
             return True

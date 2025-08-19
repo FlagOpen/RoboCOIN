@@ -14,22 +14,160 @@
 
 """
 Example command:
-```shell
+
+1. Dummy robot & dummy policy:
+
+```python
 python src/lerobot/scripts/server/robot_client.py \
-    --robot.type=so100_follower \
-    --robot.port=/dev/tty.usbmodem58760431541 \
-    --robot.cameras="{ front: {type: opencv, index_or_path: 0, width: 1920, height: 1080, fps: 30}}" \
+    --robot.type=dummy \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 5} }" \
+    --robot.init_ee_state="[0, 0, 0, 0, 1.57, 0, 0]" \
+    --robot.base_euler="[0, 1.57, 0]" \
     --robot.id=black \
-    --task="dummy" \
-    --server_address=127.0.0.1:8080 \
-    --policy_type=act \
-    --pretrained_name_or_path=user/model \
-    --policy_device=mps \
-    --actions_per_chunk=50 \
-    --chunk_size_threshold=0.5 \
-    --aggregate_fn_name=weighted_average \
-    --debug_visualize_queue_size=True
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[0.01, 0, 0, 0, 0.1, 0, 0]" \
+    --actions_per_chunk=4 \
+    --verify_robot_cameras=False
 ```
+
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=dummy \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 5} }" \
+    --robot.init_ee_state="[0, 0, 0, 0, 0.83, -0.28, 0]" \
+    --robot.base_euler="[0, 0, 0]" \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path=examples/traj_ep0.npy \
+    --actions_per_chunk=4 \
+    --verify_robot_cameras=False
+```
+
+----------------------------------------------------------------------------------
+
+2. Dummy robot & ACT policy:
+
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=dummy \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.cameras="{ left_wrist_fisheye: {type: dummy, width: 640, height: 480, fps: 5}, right_wrist_fisheye: {type: dummy, width: 640, height: 480, fps: 5} }" \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=act \
+    --pretrained_name_or_path=outputs/train/2025-08-07/17-15-07_act/checkpoints/last/pretrained_model \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
+----------------------------------------------------------------------------------------------------------------
+
+3. Piper end effector robot & dummy Policy
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=piper_end_effector \
+    --robot.port=can_left \
+    --robot.cameras="{ left_wrist_fisheye: {type: opencv, index_or_path: /dev/video6, width: 640, height: 480, fps: 5}, right_wrist_fisheye: {type: opencv, index_or_path: /dev/video8, width: 640, height: 480, fps: 5} }" \
+    --robot.init_ee_state="[100000, 0, 300000, 0, 90000, 0, 60000]" \
+    --robot.base_euler="[0.0, 1.57, 0.0]" \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[0.01, 0, 0, 0, 0.1, 0, 0]" \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=piper_end_effector \
+    --robot.port=can_left \
+    --robot.cameras="{ left_wrist_fisheye: {type: opencv, index_or_path: /dev/video6, width: 640, height: 480, fps: 5}, right_wrist_fisheye: {type: opencv, index_or_path: /dev/video8, width: 640, height: 480, fps: 5} }" \
+    --robot.init_ee_state="[100000, 0, 300000, 0, 100000, 0, 60000]" \
+    --robot.base_euler="[0.0, 1.57, 0.0]" \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path=examples/traj_ep0.npy \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
+----------------------------------------------------------------------------------------------------------------
+
+3. Multi-arm Piper end effector robot & dummy policy:
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=bi_piper_end_effector \
+    --robot.port_left=can_left \
+    --robot.port_right=can_right \
+    --robot.cameras="{ left_wrist_fisheye: {type: opencv, index_or_path: /dev/video6, width: 640, height: 480, fps: 5}, right_wrist_fisheye: {type: opencv, index_or_path: /dev/video8, width: 640, height: 480, fps: 5} }" \
+    --robot.init_ee_state="[100000, 0, 300000, 0, 120000, 0, 60000]" \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[0.01, 0, 0, 0, 0, 0, 0, 0.01, 0, 0, 0, 0, 0, 0]" \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=bi_piper_end_effector \
+    --robot.port_left=can_left \
+    --robot.port_right=can_right \
+    --robot.cameras="{ left_wrist_fisheye: {type: opencv, index_or_path: /dev/video6, width: 640, height: 480, fps: 5}, right_wrist_fisheye: {type: opencv, index_or_path: /dev/video8, width: 640, height: 480, fps: 5} }" \
+    --robot.init_ee_state="[300000, 0, 300000, 0, 120000, 0, 60000]" \
+    --robot.base_euler="[0.0, 1.57, 0.0]" \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path=examples/traj_ep0.npy \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
+------------------------------------------------------------------------------------------------------------------
+
+3. Multi-arm Piper end effector robot & ACT policy:
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=bi_piper_end_effector \
+    --robot.port_left=can_left \
+    --robot.port_right=can_right \
+    --robot.cameras="{ left_wrist_fisheye: {type: opencv, index_or_path: /dev/video6, width: 640, height: 480, fps: 5}, right_wrist_fisheye: {type: opencv, index_or_path: /dev/video8, width: 640, height: 480, fps: 5} }" \
+    --robot.init_ee_state="[200000, 0, 200000, 0, 135000, 0, 60000]" \
+    --robot.control_mode=ee_delta_gripper \
+    --robot.id=black \
+    --fps=30 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=act \
+    --pretrained_name_or_path=outputs/train/2025-08-07/17-15-07_act/checkpoints/last/pretrained_model \
+    --actions_per_chunk=64 \
+    --verify_robot_cameras=False
 """
 
 import logging
@@ -48,6 +186,8 @@ import torch
 
 from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
 from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
+# extension cameras
+from lerobot.cameras.dummy.configuration_dummy import DummyCameraConfig  # noqa: F401
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.robots import (  # noqa: F401
     Robot,
@@ -56,6 +196,10 @@ from lerobot.robots import (  # noqa: F401
     make_robot_from_config,
     so100_follower,
     so101_follower,
+    # extension robots
+    dummy,
+    piper,
+    bi_piper,
 )
 from lerobot.scripts.server.configs import RobotClientConfig
 from lerobot.scripts.server.constants import SUPPORTED_ROBOTS

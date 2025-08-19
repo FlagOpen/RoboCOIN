@@ -1,4 +1,3 @@
-import time
 from functools import cached_property
 from typing import Any
 
@@ -6,6 +5,8 @@ from lerobot.cameras import make_cameras_from_configs
 from lerobot.errors import DeviceNotConnectedError
 from lerobot.robots.robot import Robot
 
+import sys
+sys.path.append(".")
 from third_party.rm_api.robotic_arm import Arm
 
 from .configuration_realman import RealmanConfig
@@ -19,7 +20,7 @@ class Realman(Robot):
     Example:
         ```python
         config = RealmanConfig(
-            dev_mode=0, ip="192.168.1.18", 
+            dev_mode=65, ip="192.168.1.18", 
             cameras={"front": {"type": "dummy_camera", "height": 480, "width": 640, "fps": 30}}
         )
         robot = Realman(config)
@@ -78,11 +79,11 @@ class Realman(Robot):
         return self.arm.Arm_Socket_State() == 0 and all(self.camera.is_connected for self.camera in self.cameras.values())
     
     def connect(self):
+        for cam in self.cameras.values():
+            cam.connect()
         # realman robot connect while init
         print('Realman robot connected.')
         self._set_ee_state(self.init_state)
-        for cam in self.cameras.values():
-            cam.connect()
     
     def is_calibrated(self) -> bool:
         return True

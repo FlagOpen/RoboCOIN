@@ -33,5 +33,7 @@ SUPPORTED_POLICIES = [
 SUPPORTED_ROBOTS = [
     "so100_follower", "so101_follower", 
     # extension robots
-    "dummy", "piper", "bi_piper", "piper_end_effector", "bi_piper_end_effector",
+    "dummy", 
+    "piper", "bi_piper", "piper_end_effector", "bi_piper_end_effector",
+    "realman", "realman_end_effector",
 ]

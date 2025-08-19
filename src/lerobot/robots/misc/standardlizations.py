@@ -139,6 +139,12 @@ def get_standardization(standardization_type: str) -> BaseStandardization:
         standardization = PiperJointStandardization()
     elif standardization_type == "piper_end_effector":
         standardization = PiperEndEffectorStandardization()
+    elif standardization_type == "realman":
+        # TODO
+        standardization = DummyStandardization()
+    elif standardization_type == "realman_end_effector":
+        # TODO
+        standardization = DummyStandardization()
     else:
         raise ValueError(f"Unknown standardization type: {standardization_type}")
 

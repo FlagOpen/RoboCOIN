@@ -18,6 +18,7 @@ class RealmanConfig(RobotConfig):
     """
     dev_mode: int
     ip: str
+    port: int
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
     init_ee_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
     block: bool = True

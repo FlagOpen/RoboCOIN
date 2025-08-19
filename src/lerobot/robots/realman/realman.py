@@ -5,9 +5,10 @@ from lerobot.cameras import make_cameras_from_configs
 from lerobot.errors import DeviceNotConnectedError
 from lerobot.robots.robot import Robot
 
-import sys
-sys.path.append(".")
-from third_party.rm_api.robotic_arm import Arm
+# import sys
+# sys.path.append(".")
+# from third_party.rm_api.robotic_arm import Arm
+from Robotic_Arm.rm_robot_interface import RoboticArm, rm_thread_mode_e
 
 from .configuration_realman import RealmanConfig
 
@@ -46,7 +47,8 @@ class Realman(Robot):
         super().__init__(config)
 
         self.config = config
-        self.arm = Arm(config.dev_mode, config.ip)
+        # self.arm = Arm(config.dev_mode, config.ip)
+        self.arm = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
 
         self.config = config
         self.init_state = config.init_ee_state
@@ -76,14 +78,19 @@ class Realman(Robot):
 
     @property
     def is_connected(self) -> bool:
-        return self.arm.Arm_Socket_State() == 0 and all(self.camera.is_connected for self.camera in self.cameras.values())
+        return (
+            all(self.camera.is_connected for self.camera in self.cameras.values())
+        )
     
     def connect(self):
+        ret_code = self.arm.rm_create_robot_arm(self.config.ip, self.config.port)
+        if ret_code == 0:
+            print('Realman robot connected.')
+        else:
+            raise RuntimeError('Failed to connect realman robot')
+        self._set_ee_state(self.init_state)
         for cam in self.cameras.values():
             cam.connect()
-        # realman robot connect while init
-        print('Realman robot connected.')
-        self._set_ee_state(self.init_state)
     
     def is_calibrated(self) -> bool:
         return True
@@ -95,11 +102,14 @@ class Realman(Robot):
         print("Realman robot does not require configuration.")
     
     def _set_joint_state(self, state: list[int]):
-        self.arm.Movej_Cmd(state[:-1], v=30, r=0, block=self.config.block)
-        self.arm.Set_Gripper_Position(int(state[-1]), block=self.config.block)
+        # self.arm.Movej_Cmd(state[:-1], v=30, r=0, block=self.config.block)
+        # self.arm.Set_Gripper_Position(int(state[-1]), block=self.config.block)
+        self.arm.rm_movej(state[:-1], v=30, r=0, connect=0, block=self.config.block)
     
     def _get_joint_state(self) -> list[int]:
-        error_code, joint, _, _ = self.arm.Get_Current_Arm_State()
+        # error_code, joint, _, _ = self.arm.Get_Current_Arm_State()
+        error_code, state = self.arm.rm_get_current_arm_state()
+        joint = state['joint']
         if error_code != 0:
             raise RuntimeError(f"Failed to get joint state: {error_code}")
         error_code, grip = self.arm.Get_Gripper_State()
@@ -108,11 +118,15 @@ class Realman(Robot):
         return joint + [grip]
     
     def _set_ee_state(self, state: list[int]):
-        self.arm.Movel_Cmd(state[:6], v=30, r=0, block=self.config.block)
-        self.arm.Set_Gripper_Position(int(state[6]), block=self.config.block)
+        # self.arm.Movel_Cmd(state[:6], v=30, r=0, block=self.config.block)
+        # self.arm.Set_Gripper_Position(int(state[6]), block=self.config.block)
+        self.arm.rm_movel(state[:6], v=30, r=0, connect=0, block=self.config.block)
+        self.arm.rm_set_gripper_position(int(state[6]), block=self.config.block)
 
     def _get_ee_state(self) -> list[int]:
-        error_code, _, pose, _ = self.arm.Get_Current_Arm_State()
+        # error_code, _, pose, _ = self.arm.Get_Current_Arm_State()
+        error_code, state = self.arm.rm_get_current_arm_state()
+        pose = state['pose']
         if error_code != 0:
             raise RuntimeError(f"Failed to get end-effector state: {error_code}")
         error_code, grip = self.arm.Get_Gripper_State()
@@ -142,5 +156,8 @@ class Realman(Robot):
         return obs_dict
     
     def disconnect(self):
-        self.arm.Arm_Socket_Close()
-        print("Realman robot disconnected.")
+        ret_code = self.arm.rm_delete_robot_arm()
+        if ret_code == 0:
+            print("Realman robot disconnected.")
+        else:
+            raise RuntimeError("Failed to disconnect realman robot.")

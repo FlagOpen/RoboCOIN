@@ -1,10 +1,9 @@
 pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu126
 
+pip install -e .
+
 mkdir third_party
 cd third_party
-
-git clone https://github.com/huggingface/lerobot.git
-pip install -e lerobot
 
 git clone https://github.com/agilexrobotics/piper_sdk.git
 pip install -e piper_sdk

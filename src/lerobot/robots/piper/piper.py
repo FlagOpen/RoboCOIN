@@ -6,8 +6,6 @@ from lerobot.cameras import make_cameras_from_configs
 from lerobot.errors import DeviceNotConnectedError
 from lerobot.robots.robot import Robot
 
-from piper_sdk import C_PiperInterface_V2
-
 from .configuration_piper import PiperConfig
 
 
@@ -39,6 +37,8 @@ class Piper(Robot):
 
     def __init__(self, config: PiperConfig):
         super().__init__(config)
+        
+        from piper_sdk import C_PiperInterface_V2
 
         self.config = config
         self.arm = C_PiperInterface_V2(config.port)
@@ -132,7 +132,7 @@ class Piper(Robot):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
         
-        state = self._get_ee_state()
+        state = self._get_joint_state()
         obs_dict = {k: v for k, v in zip(self._motors_ft.keys(), state)}
 
         for cam_key, cam in self.cameras.items():

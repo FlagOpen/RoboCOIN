@@ -112,18 +112,19 @@ python src/lerobot/scripts/server/robot_client.py \
 ```python
 python src/lerobot/scripts/server/robot_client.py \
     --robot.type=realman_end_effector \
-    --robot.dev_mode=65 \
-    --robot.ip="192.168.1.18" \
-    --robot.cameras="{ left_wrist_fisheye: {type: opencv, index_or_path: /dev/video6, width: 640, height: 480, fps: 5}, right_wrist_fisheye: {type: opencv, index_or_path: /dev/video8, width: 640, height: 480, fps: 5} }" \
-    --robot.init_ee_state="[100000, 0, 300000, 0, 90000, 0, 60000]" \
-    --robot.base_euler="[0.0, 1.57, 0.0]" \
-    --robot.control_mode=ee_delta_gripper \
+    --robot.ip="169.254.128.18" \
+    --robot.port=8080 \
+    --robot.cameras="{ front: {type: opencv, index_or_path: /dev/video0, width: 640, height: 480, fps: 30} }" \
+    --robot.init_ee_state="[-0.20, 0.37, 0.08, 1.57, 0.70, 3.14, 1000]" \
+    --robot.base_euler="[0.0, 0.0, 1.57]" \
+    --robot.control_mode=ee_delta_base \
+    --robot.block=False \
     --robot.id=black \
     --fps=5 \
     --task="do something" \
     --server_address=127.0.0.1:18080 \
     --policy_type=dummy \
-    --pretrained_name_or_path="[0.01, 0, 0, 0, 0.1, 0, 0]" \
+    --pretrained_name_or_path="[0.01, 0, 0, 0, 0, 0, 0]" \
     --actions_per_chunk=100 \
     --verify_robot_cameras=False
 ```

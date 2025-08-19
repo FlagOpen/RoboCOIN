@@ -48,7 +48,7 @@ class DeltaBaseToAbsoluteTransform(BaseTransform):
     def __call__(self, end_effector_state, end_effector_action):
         current_pos, current_euler = end_effector_state[:3], end_effector_state[3:6]
         delta_pos, delta_euler, gripper = end_effector_action[:3], end_effector_action[3:6], end_effector_action[6]
-        absolute_pos = current_pos + delta_pos
+        absolute_pos = np.array(current_pos) + np.array(delta_pos)
 
         current_rot_matrix = euler_to_rotation_matrix(*current_euler)
         delta_rot_matrix = euler_to_rotation_matrix(*delta_euler)

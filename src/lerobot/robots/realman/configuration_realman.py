@@ -16,11 +16,10 @@ class RealmanConfig(RobotConfig):
         cameras: Dictionary of camera configurations.
         init_ee_state: Initial end-effector state.
     """
-    dev_mode: int
     ip: str
     port: int
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
-    init_ee_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
+    init_ee_state: list[float] = field(default_factory=lambda: [-0.20, 0.37, 0.08, 1.57, 0.70, 3.14, 1000])
     block: bool = True
 
 

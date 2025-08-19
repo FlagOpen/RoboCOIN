@@ -5,10 +5,11 @@ from lerobot.cameras import make_cameras_from_configs
 from lerobot.errors import DeviceNotConnectedError
 from lerobot.robots.robot import Robot
 
-# import sys
-# sys.path.append(".")
-# from third_party.rm_api.robotic_arm import Arm
-from Robotic_Arm.rm_robot_interface import RoboticArm, rm_thread_mode_e
+from Robotic_Arm.rm_robot_interface import (
+    RoboticArm, 
+    rm_inverse_kinematics_params_t, 
+    rm_thread_mode_e
+)
 
 from .configuration_realman import RealmanConfig
 
@@ -47,7 +48,6 @@ class Realman(Robot):
         super().__init__(config)
 
         self.config = config
-        # self.arm = Arm(config.dev_mode, config.ip)
         self.arm = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
 
         self.config = config
@@ -83,11 +83,8 @@ class Realman(Robot):
         )
     
     def connect(self):
-        ret_code = self.arm.rm_create_robot_arm(self.config.ip, self.config.port)
-        if ret_code == 0:
-            print('Realman robot connected.')
-        else:
-            raise RuntimeError('Failed to connect realman robot')
+        self.handle = self.arm.rm_create_robot_arm(self.config.ip, self.config.port)
+        self.arm.rm_set_arm_run_mode(1)
         self._set_ee_state(self.init_state)
         for cam in self.cameras.values():
             cam.connect()
@@ -102,39 +99,59 @@ class Realman(Robot):
         print("Realman robot does not require configuration.")
     
     def _set_joint_state(self, state: list[int]):
-        # self.arm.Movej_Cmd(state[:-1], v=30, r=0, block=self.config.block)
-        # self.arm.Set_Gripper_Position(int(state[-1]), block=self.config.block)
         self.arm.rm_movej(state[:-1], v=30, r=0, connect=0, block=self.config.block)
     
     def _get_joint_state(self) -> list[int]:
-        # error_code, joint, _, _ = self.arm.Get_Current_Arm_State()
-        error_code, state = self.arm.rm_get_current_arm_state()
-        joint = state['joint']
-        if error_code != 0:
-            raise RuntimeError(f"Failed to get joint state: {error_code}")
-        error_code, grip = self.arm.Get_Gripper_State()
-        if error_code != 0:
-            raise RuntimeError(f"Failed to get gripper state: {error_code}")
+        # error_code, state = self.arm.rm_get_current_arm_state()
+        # joint = state['joint']
+        # if error_code != 0:
+        #     raise RuntimeError(f"Failed to get joint state: {error_code}")
+        # error_code, grip = self.arm.Get_Gripper_State()
+        # if error_code != 0:
+        #     raise RuntimeError(f"Failed to get gripper state: {error_code}")
+        # return joint + [grip]
+        res = self.arm.rm_get_arm_current_trajectory()
+        if res['return_code'] != 0:
+            ret_code = res['return_code']
+            raise RuntimeError(f'Failed to get joint state: {ret_code}')
+        joint = res['data']
+        ret_code, grip = self.arm.rm_get_gripper_state()
+        grip = grip['actpos']
+        if ret_code != 0:
+            raise RuntimeError(f'Failed to get gripper state: {ret_code}')
         return joint + [grip]
     
     def _set_ee_state(self, state: list[int]):
         # self.arm.Movel_Cmd(state[:6], v=30, r=0, block=self.config.block)
         # self.arm.Set_Gripper_Position(int(state[6]), block=self.config.block)
-        self.arm.rm_movel(state[:6], v=30, r=0, connect=0, block=self.config.block)
-        self.arm.rm_set_gripper_position(int(state[6]), block=self.config.block)
+        # self.arm.rm_movel(state[:6], v=30, r=0, connect=0, block=self.config.block)
+        # self.arm.rm_set_gripper_position(int(state[6]), block=self.config.block)
+        print(state)
+        ret_code, joint = self.arm.rm_algo_inverse_kinematics(rm_inverse_kinematics_params_t(
+            q_in=self._get_joint_state()[:-1],
+            q_pose=state[:-1],
+            flag=1
+        ))
+        if ret_code != 0:
+            print('IK error:', ret_code)
+        self._set_joint_state(joint + [state[-1]])
 
     def _get_ee_state(self) -> list[int]:
         # error_code, _, pose, _ = self.arm.Get_Current_Arm_State()
-        error_code, state = self.arm.rm_get_current_arm_state()
-        pose = state['pose']
-        if error_code != 0:
-            raise RuntimeError(f"Failed to get end-effector state: {error_code}")
-        error_code, grip = self.arm.Get_Gripper_State()
-        if error_code != 0:
-            raise RuntimeError(f"Failed to get gripper state: {error_code}")
-        return pose + [grip]
+        # error_code, state = self.arm.rm_get_current_arm_state()
+        # pose = state['pose']
+        # if error_code != 0:
+        #     raise RuntimeError(f"Failed to get end-effector state: {error_code}")
+        # error_code, grip = self.arm.Get_Gripper_State()
+        # if error_code != 0:
+        #     raise RuntimeError(f"Failed to get gripper state: {error_code}")
+        # return pose + [grip]
+        joint = self._get_joint_state()
+        pose = self.arm.rm_algo_forward_kinematics(joint[:-1], flag=1)
+        return pose + [joint[-1]]
     
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
+        print(action)
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
         
@@ -146,13 +163,14 @@ class Realman(Robot):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
         
-        state = self._get_ee_state()
+        state = self._get_joint_state()
         obs_dict = {k: v for k, v in zip(self._motors_ft.keys(), state)}
 
         for cam_key, cam in self.cameras.items():
             outputs = cam.async_read()
             obs_dict[cam_key] = outputs
 
+        print(obs_dict)
         return obs_dict
     
     def disconnect(self):

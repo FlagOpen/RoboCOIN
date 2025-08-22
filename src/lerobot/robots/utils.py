@@ -95,6 +95,10 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from .realman.realman_end_effector import RealmanEndEffector
 
         return RealmanEndEffector(config)
+    elif config.type == "ros_robot":
+        from .ros_robot import ROSRobot
+
+        return ROSRobot(config)
     else:
         raise ValueError(config.type)
 

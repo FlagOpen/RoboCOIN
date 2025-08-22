@@ -1,25 +1,50 @@
-from Robotic_Arm.rm_robot_interface import RoboticArm, rm_thread_mode_e, rm_inverse_kinematics_params_t
+#!/usr/bin/env python3
 
-arm = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
-print('create arm')
+import rospy
+import moveit_commander
+from sensor_msgs.msg import JointState
 
-ret = arm.rm_create_robot_arm("169.254.128.18", 8080, level=1)
 
-software_info = arm.rm_get_arm_software_info()
-if software_info[0] == 0:
-    print("\n================== Arm Software Information ==================")
-    print("Arm Model: ", software_info[1]['product_version'])
-    print("Algorithm Library Version: ", software_info[1]['algorithm_info']['version'])
-    print("Control Layer Software Version: ", software_info[1]['ctrl_info']['version'])
-    print("Dynamics Version: ", software_info[1]['dynamic_info']['model_version'])
-    print("Planning Layer Software Version: ", software_info[1]['plan_info']['version'])
-    print("==============================================================\n")
+def callback(data):
+    rospy.loginfo("Received joint states: %s", data.position)
 
-print(arm.rm_movej([0, -130, 90, 0, 0, 0, 0], v=30, r=0, connect=0, block=1))
-arm.rm_set_gripper_position(1, True, 3)
-joint = arm.rm_get_arm_current_trajectory()['data']
-print('joint:', joint)
-pose = [-0.1965884119272232, 0.37119612097740173, 0.0755152478814125, 1.5720537900924683, 0.698494017124176, 3.1435928344726562]
-_, joint = arm.rm_algo_inverse_kinematics(rm_inverse_kinematics_params_t(q_in=joint, q_pose=pose, flag=1))
-print(joint)
-print(arm.rm_movej(joint, v=30, r=0, connect=0, block=1))
+
+def test_rospy():
+    rospy.init_node('test_node', anonymous=True)
+    rospy.loginfo("ROS node initialized successfully.")
+
+    # get joint states
+    # sub = rospy.Subscriber('/joint_states', JointState, callback)
+    # rospy.sleep(1)  # wait for messages to be received
+    pub = rospy.Publisher('/joint_states', JointState, queue_size=10)
+    rospy.sleep(1)  # wait for the publisher to be set up
+    msg = JointState()
+    msg.name = [f'joint{i + 1}' for i in range(7)]
+    msg.position = [1.0, 0.4, -0.6, 0.0, 0.9, 0.0, 0.0]
+    msg.header.stamp = rospy.Time.now()
+    rospy.loginfo("Publishing joint states: %s", msg.position)
+    pub.publish(msg)
+    rospy.sleep(1)  # wait for the message to be sent
+
+def test_moveit():
+    # 初始化 MoveIt! 相关组件
+    moveit_commander.roscpp_initialize([])
+    move_group = moveit_commander.MoveGroupCommander("arm")  # 可以根据需要修改为 "arm"、"gripper"或"piper"
+
+    # 获取当前关节值
+    joint_goal = move_group.get_current_joint_values()
+    joint_goal[0] = 0.0  # arm使用joint_goal长度为6,gripper使用joint_goal长度为1,piper使用joint_goal长度为7
+    # joint_goal[1] = 0.0
+    # joint_goal[2] = 0.0
+    # joint_goal[3] = 0.0
+    # joint_goal[4] = 0.0
+    # joint_goal[5] = 0.0
+    # joint_goal[6] = 0.0 # 使用piper规划组是，这一位是夹爪控制
+
+    # 设置并执行目标
+    move_group.set_joint_value_target(joint_goal)
+    success = move_group.go()
+    moveit_commander.roscpp_shutdown()
+
+if __name__ == "__main__":
+    test_rospy()

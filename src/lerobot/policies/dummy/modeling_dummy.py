@@ -41,8 +41,6 @@ class DummyPolicy(PreTrainedPolicy):
         self.config = config
         self.num_action_steps = config.num_action_steps
         if isinstance(config.action, str):
-            print(config.action)
-            # config.action = [float(x) for x in config.action.split(',')]
             actions = np.load(config.action, allow_pickle=True)
             self.actions = torch.from_numpy(actions)
         else:

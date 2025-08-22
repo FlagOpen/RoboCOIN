@@ -1,5 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
+from typing import Literal
 
 from lerobot.cameras import CameraConfig
 from lerobot.robots import RobotConfig
@@ -18,7 +19,9 @@ class PiperConfig(RobotConfig):
     """
     port: str
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
-    init_ee_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
+    # choice: joint, end_effector
+    init_state_type: Literal['joint', 'end_effector'] = 'end_effector'
+    init_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
 
 
 @RobotConfig.register_subclass("piper_end_effector")

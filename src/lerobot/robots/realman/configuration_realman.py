@@ -1,5 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
+from typing import Literal
 
 from lerobot.cameras import CameraConfig
 from lerobot.robots import RobotConfig
@@ -19,7 +20,9 @@ class RealmanConfig(RobotConfig):
     ip: str
     port: int
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
-    init_ee_state: list[float] = field(default_factory=lambda: [-0.20, 0.37, 0.08, 1.57, 0.70, 3.14, 1000])
+    # choice: joint, end_effector
+    init_type: Literal['joint', 'end_effector'] = 'end_effector'
+    init_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
     block: bool = True
 
 

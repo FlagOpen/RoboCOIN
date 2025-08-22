@@ -70,6 +70,26 @@ python src/lerobot/scripts/server/robot_client.py \
     --verify_robot_cameras=False
 ```
 
+------------------------------------------------------------------------------------
+
+ROS robot & dummy policy:
+
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=ros_robot \
+    --robot.subscribers="{ joint: {name: /gazebo/joint_states, data_class: JointState, queue_size: 10} }" \
+    --robot.publishers="{ joint: {name: /joint_states, data_class: JointState, queue_size: 10} }" \
+    --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 30} }" \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[1.0, 0.4, -0.6, 0.0, 0.9, 0.0, 0.0]" \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
 ----------------------------------------------------------------------------------------------------------------
 
 3. Piper end effector robot & dummy Policy
@@ -221,6 +241,7 @@ from lerobot.robots import (  # noqa: F401
     piper,
     bi_piper,
     realman,
+    ros_robot,
 )
 from lerobot.scripts.server.configs import RobotClientConfig
 from lerobot.scripts.server.constants import SUPPORTED_ROBOTS

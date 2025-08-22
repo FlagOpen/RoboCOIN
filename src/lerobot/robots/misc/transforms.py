@@ -18,6 +18,18 @@ def rotation_matrix_to_euler(matrix):
     return Rotation.from_matrix(matrix).as_euler('xyz')
 
 
+def quaternion_to_rotation_matrix(x, y, z, w):
+    # scalar-first order: (w, x, y, z)
+    # scalar-last order: (x, y, z, w)
+    return Rotation.from_quat([x, y, z, w], scalar_first=False).as_matrix()
+
+
+def rotation_matrix_to_quaternion(matrix):
+    # scalar-first order: (w, x, y, z)
+    # scalar-last order: (x, y, z, w)
+    return Rotation.from_matrix(matrix).as_quat(scalar_first=False)
+
+
 class BaseTransform(ABC):
     """
     Base class for end effector transforms.

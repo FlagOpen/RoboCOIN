@@ -36,15 +36,16 @@ class Piper(Robot):
     name = "piper"
 
     def __init__(self, config: PiperConfig):
+        try:
+            from piper_sdk import C_PiperInterface_V2
+        except ImportError:
+            raise ImportError("Piper robot requires the piper_sdk package. "
+                              "Please install it using 'pip install piper_sdk'.")
+
         super().__init__(config)
-        
-        from piper_sdk import C_PiperInterface_V2
 
         self.config = config
         self.arm = C_PiperInterface_V2(config.port)
-
-        self.config = config
-        self.init_state = config.init_ee_state
         self.cameras = make_cameras_from_configs(config.cameras)
     
     @property
@@ -77,7 +78,13 @@ class Piper(Robot):
             print("Waiting for Piper to enable...")
             time.sleep(0.1)
         
-        self._set_ee_state(self.init_state)
+        if self.config.init_state_type == 'joint':
+            self._set_joint_state(self.config.init_state)
+        elif self.config.init_state_type == 'end_effector':
+            self._set_ee_state(self.config.init_state)
+        else:
+            raise ValueError(f"Unknown init_state_type: {self.config.init_state_type}")
+
         print("Piper robot connected.")
         
         for cam in self.cameras.values():

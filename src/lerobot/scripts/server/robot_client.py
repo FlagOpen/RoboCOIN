@@ -90,6 +90,52 @@ python src/lerobot/scripts/server/robot_client.py \
     --verify_robot_cameras=False
 ```
 
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=moveit_robot \
+    --robot.move_group=piper \
+    --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 30} }" \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]" \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=moveit_robot_end_effector \
+    --robot.move_group=piper \
+    --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 30} }" \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[0.5, 0.0, 0.3, 1.57, 1.57, 0.0, 0.1]" \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=moveit_robot_end_effector \
+    --robot.move_group=arm \
+    --robot.has_gripper=False \
+    --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 30} }" \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[0.0, 0.0, 0.6, 0.0, 0.0, 0.0]" \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
 ----------------------------------------------------------------------------------------------------------------
 
 3. Piper end effector robot & dummy Policy
@@ -237,9 +283,10 @@ from lerobot.robots import (  # noqa: F401
     so100_follower,
     so101_follower,
     # extension robots
-    dummy,
-    piper,
     bi_piper,
+    dummy,
+    moveit_robot,
+    piper,
     realman,
     ros_robot,
 )
@@ -647,7 +694,9 @@ class RobotClient:
         _performed_action = None
         _captured_observation = None
 
-        while self.running:
+        import rospy
+
+        while self.running and not rospy.is_shutdown():
             control_loop_start = time.perf_counter()
             """Control loop: (1) Performing actions, when available"""
             if self.actions_available():

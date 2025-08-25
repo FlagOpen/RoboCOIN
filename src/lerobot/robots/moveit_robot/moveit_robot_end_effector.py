@@ -3,12 +3,12 @@ from typing import Any
 
 from lerobot.errors import DeviceNotConnectedError
 
-from .ros_robot import ROSRobot
-from .configuration_ros_robot import ROSRobotEndEffectorConfig
+from .moveit_robot import MoveitRobot
+from .configuration_moveit_robot import MoveitRobotEndEffectorConfig
 from ..misc import get_standardization, get_transform, get_visualizer
 
 
-class ROSRobotEndEffector(ROSRobot):
+class MoveitRobotEndEffector(MoveitRobot):
     """
     Example:
         ```python
@@ -27,10 +27,10 @@ class ROSRobotEndEffector(ROSRobot):
         ```
     """
 
-    config_class = ROSRobotEndEffectorConfig
-    name = "ros_robot_end_effector"
+    config_class = MoveitRobotEndEffectorConfig
+    name = "moveit_robot_end_effector"
 
-    def __init__(self, config: ROSRobotEndEffectorConfig):
+    def __init__(self, config: MoveitRobotEndEffectorConfig):
         super().__init__(config)
 
         self._base_state = None
@@ -40,14 +40,17 @@ class ROSRobotEndEffector(ROSRobot):
                                if hasattr(config, 'standardization_fn') else get_standardization('dummy')
         self.transform = get_transform(config.control_mode, config.base_euler)
         self.visualizer = get_visualizer(list(self._cameras_ft.keys()), ['arm'], 
-                                         [self.standardization.input_transform(config.init_ee_state)], 
+                                         [self.standardization.input_transform(config.init_state)], 
                                          'ee_absolute') \
                           if config.visualize else None
     
     @property
     def action_features(self) -> dict[str, Any]:
+        actions = ['x', 'y', 'z', 'roll', 'pitch', 'yaw']
+        if self.config.has_gripper:
+            actions.append('gripper')
         return {
-            each: float for each in ['x', 'y', 'z', 'roll', 'pitch', 'yaw', 'gripper']
+            each: float for each in actions
         }
     
     def connect(self):

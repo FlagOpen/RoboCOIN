@@ -5,8 +5,6 @@ from typing import Any, Literal
 from lerobot.cameras import CameraConfig
 from lerobot.robots import RobotConfig
 
-from sensor_msgs.msg import JointState
-
 
 @RobotConfig.register_subclass("moveit_robot")
 @dataclass
@@ -24,15 +22,9 @@ class MoveitRobotConfig(RobotConfig):
     # choice: joint, end_effector
     init_state_type: Literal['joint', 'end_effector'] = 'joint'
     init_state: list[int] = field(default_factory=lambda: [
-        0.0, 0.4, -0.6, 0.0, 0.9, 0.0, 0.0
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     ])
-
-    def __post_init__(self):
-        for each in list(self.subscribers.values()) + list(self.publishers.values()):
-            if each['data_class'] == 'JointState':
-                each['data_class'] = JointState
-            else:
-                raise ValueError(f"Unsupported data_class: {each['data_class']}")
+    has_gripper: bool = True
 
 
 @RobotConfig.register_subclass("moveit_robot_end_effector")

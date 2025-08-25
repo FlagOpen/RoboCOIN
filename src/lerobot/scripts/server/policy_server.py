@@ -18,9 +18,7 @@ Example:
 python src/lerobot/scripts/server/policy_server.py \
      --host=127.0.0.1 \
      --port=18080 \
-     --fps=30 \
-     --inference_latency=0.033 \
-     --obs_queue_timeout=1
+     --fps=10 
 ```
 """
 

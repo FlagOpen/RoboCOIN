@@ -1,3 +1,4 @@
+import time
 from functools import cached_property
 from typing import Any
 
@@ -6,12 +7,7 @@ from lerobot.errors import DeviceNotConnectedError
 from lerobot.robots.robot import Robot
 
 from .configuration_moveit_robot import MoveitRobotConfig
-from ..misc.transforms import (
-    euler_to_rotation_matrix,
-    quaternion_to_rotation_matrix,
-    rotation_matrix_to_euler,
-    rotation_matrix_to_quaternion,
-)
+
 
 class MoveitRobot(Robot):
     """
@@ -72,13 +68,14 @@ class MoveitRobot(Robot):
         super().__init__(config)
 
         self.move_group: MoveGroupCommander = None
+        self.joint_names: list[str] = None
 
         self.config = config
         self.cameras = make_cameras_from_configs(config.cameras)
-        self.messages = {}
     
     @property
     def _motors_ft(self) -> dict[str, type]:
+        assert self.joint_names is not None, "Joint names are not set. Ensure the robot is connected."
         return {
             f'{each}_pos': float for each in self.joint_names
         }
@@ -104,9 +101,14 @@ class MoveitRobot(Robot):
         )
     
     def connect(self):
+        import rospy
+        rospy.init_node('moveit_robot_node', anonymous=True)
+
         import moveit_commander
         moveit_commander.roscpp_initialize([])
         self.move_group = moveit_commander.MoveGroupCommander(self.config.move_group)
+
+        self.joint_names = self.move_group.get_active_joints()
 
         if self.config.init_state_type == 'joint':
             self._set_joint_state(self.config.init_state)
@@ -114,6 +116,7 @@ class MoveitRobot(Robot):
             self._set_ee_state(self.config.init_state)
         else:
             raise ValueError(f"Unknown init_state_type: {self.config.init_state_type}")
+        time.sleep(1)
         
         for cam in self.cameras.values():
             cam.connect()
@@ -129,7 +132,7 @@ class MoveitRobot(Robot):
     
     def _set_joint_state(self, state: list[int]):
         self.move_group.set_joint_value_target(state)
-        success = self.move_group.go(wait=True)
+        success = self.move_group.go()
         if not success:
             print("Failed to set joint state")
 
@@ -137,28 +140,31 @@ class MoveitRobot(Robot):
         return self.move_group.get_current_joint_values()
     
     def _set_ee_state(self, state: list[int]):
-        from moveit_commander import Pose
-        pose = Pose()
-        pose.position.x = state[0]
-        pose.position.y = state[1]
-        pose.position.z = state[2]
-        quaternion = rotation_matrix_to_quaternion(
-            euler_to_rotation_matrix(state[3:])
-        )
-        pose.orientation.x = quaternion[0]
-        pose.orientation.y = quaternion[1]
-        pose.orientation.z = quaternion[2]
-        pose.orientation.w = quaternion[3]
-        self.move_group.set_pose_target(pose)
+        self.move_group.set_pose_target(state[:6])
+        success, traj, _, _ = self.move_group.plan()
+        if not success:
+            print("Failed to plan end effector state")
+            return
+        joint = list(traj.joint_trajectory.points[-1].positions)
+        if self.config.has_gripper and len(state) > 6:
+            joint[-1] = state[-1]
+            self.move_group.set_joint_value_target(joint)
+        success = self.move_group.go()
+        if not success:
+            print("Failed to set end effector state")
+            return
 
     def _get_ee_state(self) -> list[int]:
-        pose = self.move_group.get_current_pose().pose
-        return [
-            pose.position.x, pose.position.y, pose.position.z,
-            *rotation_matrix_to_euler(
-                quaternion_to_rotation_matrix([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
-            )
-        ]
+        xyz = self.move_group.get_current_pose().pose.position
+        xyz = [xyz.x, xyz.y, xyz.z]
+        rpy = self.move_group.get_current_rpy()
+        state = xyz + rpy
+        if self.config.has_gripper:
+            gripper = self.move_group.get_current_joint_values()[-1]
+            state += [gripper]
+        else:
+            state += [0.0]
+        return state
     
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
         if not self.is_connected:
@@ -182,5 +188,10 @@ class MoveitRobot(Robot):
         return obs_dict
     
     def disconnect(self):
+        import moveit_commander
+        moveit_commander.roscpp_shutdown()
+        import rospy
+        rospy.signal_shutdown('moveit_robot_node shutdown')
+        print("Shutting down ROS node...")
         for cam in self.cameras.values():
             cam.disconnect()

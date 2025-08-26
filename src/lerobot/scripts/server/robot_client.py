@@ -195,6 +195,28 @@ python src/lerobot/scripts/server/robot_client.py \
     --verify_robot_cameras=False
 ```
 
+```python
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=bi_realman \
+    --robot.ip_left="169.254.128.18" \
+    --robot.port_left=8080 \
+    --robot.ip_right="169.254.128.19" \
+    --robot.port_right=8080 \
+    --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 30} }" \
+    --robot.init_ee_state="[0, -129, 90, 90, 77, 0, -78, 1000, 0, 129, -90, -90, -77, 0, 78, 1000]" \
+    --robot.base_euler="[0.0, 0.0, 1.57]" \
+    --robot.control_mode=ee_delta_base \
+    --robot.block=False \
+    --robot.id=black \
+    --fps=5 \
+    --task="do something" \
+    --server_address=127.0.0.1:18080 \
+    --policy_type=dummy \
+    --pretrained_name_or_path="[0, -129, 90, 90, 77, 0, -78, 1000, 0, 129, -90, -90, -77, 0, 78, 1000]" \
+    --actions_per_chunk=100 \
+    --verify_robot_cameras=False
+```
+
 ----------------------------------------------------------------------------------------------------------------
 
 3. Multi-arm Piper end effector robot & dummy policy:
@@ -284,6 +306,7 @@ from lerobot.robots import (  # noqa: F401
     so101_follower,
     # extension robots
     bi_piper,
+    bi_realman,
     dummy,
     moveit_robot,
     piper,

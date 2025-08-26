@@ -35,7 +35,7 @@ SUPPORTED_ROBOTS = [
     # extension robots
     "dummy", 
     "piper", "bi_piper", "piper_end_effector", "bi_piper_end_effector",
-    "realman", "realman_end_effector",
+    "realman", "bi_realman", "realman_end_effector", "bi_realman_end_effector",
     "ros_robot", "ros_robot_end_effector",
     "moveit_robot", "moveit_robot_end_effector",
 ]

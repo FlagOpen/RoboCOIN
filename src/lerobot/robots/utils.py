@@ -95,6 +95,14 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from .realman.realman_end_effector import RealmanEndEffector
 
         return RealmanEndEffector(config)
+    elif config.type == "bi_realman":
+        from .bi_realman.bi_realman import BiRealman
+
+        return BiRealman(config)
+    elif config.type == "bi_realman_end_effector":
+        from .bi_realman.bi_realman_end_effector import BiRealmanEndEffector
+
+        return BiRealmanEndEffector(config)
     elif config.type == "ros_robot":
         from .ros_robot.ros_robot import ROSRobot
 

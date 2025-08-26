@@ -52,7 +52,6 @@ class Realman(Robot):
         self.arm = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
 
         self.config = config
-        self.init_state = config.init_ee_state
         self.cameras = make_cameras_from_configs(config.cameras)
     
     @property
@@ -108,6 +107,7 @@ class Realman(Robot):
     
     def _set_joint_state(self, state: list[int]):
         self.arm.rm_movej(state[:-1], v=30, r=0, connect=0, block=self.config.block)
+        self.arm.rm_set_gripper_position(int(state[-1]), block=self.config.block, timeout=3)
     
     def _get_joint_state(self) -> list[int]:
         # WARN: rm_get_current_arm_state not working in Realman API
@@ -115,11 +115,9 @@ class Realman(Robot):
         # joint = state['joint']
         # if error_code != 0:
         #     raise RuntimeError(f"Failed to get joint state: {error_code}")
-        res = self.arm.rm_get_arm_current_trajectory()
-        if res['return_code'] != 0:
-            ret_code = res['return_code']
+        ret_code, joint = self.arm.rm_get_joint_degree()
+        if ret_code != 0:
             raise RuntimeError(f'Failed to get joint state: {ret_code}')
-        joint = res['data']
         ret_code, grip = self.arm.rm_get_gripper_state()
         grip = grip['actpos']
         if ret_code != 0:

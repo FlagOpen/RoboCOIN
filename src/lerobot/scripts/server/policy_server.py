@@ -35,6 +35,9 @@ import draccus
 import grpc
 import torch
 
+import sys
+sys.path.append('src/')
+
 from lerobot.policies.factory import get_policy_class
 from lerobot.scripts.server.configs import PolicyServerConfig
 from lerobot.scripts.server.constants import SUPPORTED_POLICIES
@@ -246,6 +249,7 @@ class PolicyServer(services_pb2_grpc.AsyncInferenceServicer):
 
     def _obs_sanity_checks(self, obs: TimedObservation, previous_obs: TimedObservation) -> bool:
         """Check if the observation is valid to be processed by the policy"""
+        return True
         with self._predicted_timesteps_lock:
             predicted_timesteps = self._predicted_timesteps
 

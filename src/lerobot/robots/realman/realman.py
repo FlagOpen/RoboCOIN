@@ -1,3 +1,4 @@
+import time
 from functools import cached_property
 from typing import Any
 
@@ -86,12 +87,13 @@ class Realman(Robot):
         self.handle = self.arm.rm_create_robot_arm(self.config.ip, self.config.port)
         self.arm.rm_set_arm_run_mode(1)
 
-        if self.config.init_state_type == 'joint':
+        if self.config.init_type == 'joint':
             self._set_joint_state(self.config.init_state)
-        elif self.config.init_state_type == 'end_effector':
+        elif self.config.init_type == 'end_effector':
             self._set_ee_state(self.config.init_state)
         else:
             raise ValueError(f"Unknown init_state_type: {self.config.init_state_type}")
+        time.sleep(1)
         
         for cam in self.cameras.values():
             cam.connect()
@@ -106,8 +108,13 @@ class Realman(Robot):
         print("Realman robot does not require configuration.")
     
     def _set_joint_state(self, state: list[int]):
-        self.arm.rm_movej(state[:-1], v=30, r=0, connect=0, block=self.config.block)
-        self.arm.rm_set_gripper_position(int(state[-1]), block=self.config.block, timeout=3)
+        print(state)
+        success = self.arm.rm_movej(state[:-1], v=100, r=0, connect=0, block=self.config.block)
+        if success != 0:
+            raise RuntimeError(f'Failed movej')
+        success = self.arm.rm_set_gripper_position(int(state[-1]), block=self.config.block, timeout=3)
+        if success != 0:
+            raise RuntimeError('Failed set gripper')
     
     def _get_joint_state(self) -> list[int]:
         # WARN: rm_get_current_arm_state not working in Realman API
@@ -172,7 +179,6 @@ class Realman(Robot):
             outputs = cam.async_read()
             obs_dict[cam_key] = outputs
 
-        print(obs_dict)
         return obs_dict
     
     def disconnect(self):

@@ -1,3 +1,3 @@
-from .configuration_bi_piper import BiPiperConfig, BiPiperEndEffectorConfig
-from .bi_piper import BiPiper
-from .bi_piper_end_effector import BiPiperEndEffector
+from .configuration_bi_realman import BiRealmanConfig, BiRealmanEndEffectorConfig
+from .bi_realman import BiRealman
+from .bi_realman_end_effector import BiRealmanEndEffector

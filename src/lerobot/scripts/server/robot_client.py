@@ -203,9 +203,7 @@ python src/lerobot/scripts/server/robot_client.py \
     --robot.ip_right="169.254.128.19" \
     --robot.port_right=8080 \
     --robot.cameras="{ front: {type: dummy, width: 640, height: 480, fps: 30} }" \
-    --robot.init_ee_state="[0, -129, 90, 90, 77, 0, -78, 1000, 0, 129, -90, -90, -77, 0, 78, 1000]" \
-    --robot.base_euler="[0.0, 0.0, 1.57]" \
-    --robot.control_mode=ee_delta_base \
+    --robot.init_state="[0, -129, 90, 90, 77, 0, -78, 1000, 0, 129, -90, -90, -77, 0, 78, 1000]" \
     --robot.block=False \
     --robot.id=black \
     --fps=5 \
@@ -291,6 +289,9 @@ from typing import Any
 import draccus
 import grpc
 import torch
+
+import sys
+sys.path.append('src/')
 
 from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
 from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
@@ -672,7 +673,8 @@ class RobotClient:
             observation = TimedObservation(
                 timestamp=time.time(),  # need time.time() to compare timestamps across client and server
                 observation=raw_observation,
-                timestep=max(latest_action, 0),
+                # timestep=max(latest_action, 0),
+                timestep=latest_action + 1,
             )
 
             obs_capture_time = time.perf_counter() - start_time
@@ -717,9 +719,10 @@ class RobotClient:
         _performed_action = None
         _captured_observation = None
 
-        import rospy
+        #import rospy
 
-        while self.running and not rospy.is_shutdown():
+        # while self.running and not rospy.is_shutdown():
+        while self.running:
             control_loop_start = time.perf_counter()
             """Control loop: (1) Performing actions, when available"""
             if self.actions_available():

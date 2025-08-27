@@ -13,7 +13,7 @@ class DummyConfig(PreTrainedConfig):
     Configuration for the DummyPolicy, which is a placeholder policy that always returns a fixed action.
     """
 
-    num_action_steps: int = 16
+    num_action_steps: int = 1
     action: List[int] | str = field(default_factory=lambda: [0.1, 0, 0, 0, 0, 0, 0])
 
     def get_optimizer_preset(self) -> AdamWConfig:

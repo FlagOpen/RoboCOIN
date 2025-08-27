@@ -145,12 +145,11 @@ class DummyPolicy(PreTrainedPolicy):
                 actions = self.actions[self.index].unsqueeze(0).unsqueeze(0).repeat(
                     1, self.num_action_steps, 1
                 )
-                self.index += 1
+                self.index += 10
             else:
                 actions = self.actions[-1].unsqueeze(0).unsqueeze(0).repeat(
                     1, self.num_action_steps, 1
                 )
-                actions = torch.zeros_like(actions)
         return actions
 
     def forward(self, batch):

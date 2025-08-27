@@ -19,11 +19,11 @@ class BiRealmanConfig(RobotConfig):
         init_ee_state: Initial end effector state for both arms.
     """
     ip_left: str
-    port_left: str
+    port_left: int
     ip_right: str
-    port_right: str
+    port_right: int
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
-    init_type: Literal['joint', 'end_effector'] = 'end_effector'
+    init_type: Literal['joint', 'end_effector'] = 'joint'
     init_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
     block: bool = True
 

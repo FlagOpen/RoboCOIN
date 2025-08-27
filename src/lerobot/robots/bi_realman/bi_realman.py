@@ -73,14 +73,14 @@ class BiRealman(Robot):
 
         self.left_arm = Realman(left_arm_config)
         self.right_arm = Realman(right_arm_config)
+        self.config = config
         self.cameras = make_cameras_from_configs(config.cameras)
     
     @property
     def _motors_ft(self) -> dict[str, type]:
-        return {
-            {f"left_{each}": float for each in self.left_arm._motors_ft.keys()} |
-            {f"right_{each}": float for each in self.right_arm._motors_ft.keys()}
-        }
+        left_ft = {f"left_{each}": float for each in self.left_arm._motors_ft.keys()}
+        right_ft = {f"right_{each}": float for each in self.right_arm._motors_ft.keys()}
+        return {**left_ft, **right_ft}
     
     @property
     def _cameras_ft(self) -> dict[str, tuple]:
@@ -124,7 +124,7 @@ class BiRealman(Robot):
         
         left_action = {k.removeprefix("left_"): v for k, v in action.items() if k.startswith("left_")}
         right_action = {k.removeprefix("right_"): v for k, v in action.items() if k.startswith("right_")}
-
+        
         send_action_left = self.left_arm.send_action(left_action)
         send_action_right = self.right_arm.send_action(right_action)
 

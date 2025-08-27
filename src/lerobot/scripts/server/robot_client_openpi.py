@@ -68,11 +68,13 @@ class OpenPIRobotClient:
         # signal.signal(signal.SIGTERM, quit)
 
         while True:
-            obs = self.robot.get_observation()
-            self.logger.info(f'Sent observation: {obs.keys()}')
-            actions = self.policy.infer(self._prepare_observation(obs))['actions']
+            obs = self._prepare_observation(self.robot.get_observation())
+            self.logger.info(f'Sent observation: {list(obs.keys())}')
+            actions = self.policy.infer(obs)['actions']
             for action in actions:
-                self.robot.send_action(self._prepare_action(action))
+                action = self._prepare_action(action)
+                self.logger.info(f'Received action: {action}')
+                self.robot.send_action(action)
             time.sleep(1 / self.config.frequency)
 
     def stop(self):

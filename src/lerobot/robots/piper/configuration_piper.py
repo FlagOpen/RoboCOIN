@@ -20,7 +20,7 @@ class PiperConfig(RobotConfig):
     port: str
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
     # choice: joint, end_effector
-    init_state_type: Literal['joint', 'end_effector'] = 'end_effector'
+    init_state_type: str = 'end_effector'
     init_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
 
 

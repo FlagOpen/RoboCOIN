@@ -110,10 +110,11 @@ class BiBaseRobot(Robot):
         return {**state_left, **state_right}
     
     def get_observation(self) -> dict[str, Any]:
-        state_left = self.left_robot.get_joint_state()
-        state_right = self.right_robot.get_joint_state()
-        state_left = {f"left_{k}": v for k, v in zip(self.left_robot._motors_ft.keys(), state_left)}
-        state_right = {f"right_{k}": v for k, v in zip(self.right_robot._motors_ft.keys(), state_right)}
+        state_left = self.left_robot.get_observation()
+        state_right = self.right_robot.get_observation()
+
+        state_left = {f"left_{k}": v for k, v in state_left.items()}
+        state_right = {f"right_{k}": v for k, v in state_right.items()}
         obs_dict = {**state_left, **state_right}
 
         for cam_key, cam in self.cameras.items():

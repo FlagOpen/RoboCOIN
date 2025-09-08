@@ -16,7 +16,7 @@ class RealmanConfig(BaseRobotConfig):
         'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
     ])
 
-    init_type: Literal['joint', 'end_effector', 'none'] = 'none'
+    init_type: str = 'none'
     init_state: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
@@ -31,7 +31,7 @@ class RealmanConfig(BaseRobotConfig):
         'mm', 'mm', 'mm', 'degree', 'degree', 'degree', 'mm',
     ])
     
-    delta_with: Literal['previous', 'initial', 'none'] = 'none'    
+    delta_with: str = 'none'    
     visualize: bool = True
 
 

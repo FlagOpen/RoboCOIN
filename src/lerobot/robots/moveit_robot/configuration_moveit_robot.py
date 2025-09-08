@@ -20,7 +20,7 @@ class MoveitRobotConfig(RobotConfig):
     move_group: str = 'arm'
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
     # choice: joint, end_effector
-    init_state_type: Literal['joint', 'end_effector'] = 'joint'
+    init_state_type: str = 'joint'
     init_state: list[int] = field(default_factory=lambda: [
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     ])

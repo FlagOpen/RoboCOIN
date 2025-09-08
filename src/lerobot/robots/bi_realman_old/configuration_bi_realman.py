@@ -23,7 +23,7 @@ class BiRealmanConfig(RobotConfig):
     ip_right: str
     port_right: int
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
-    init_type: Literal['joint', 'end_effector'] = 'joint'
+    init_type: str = 'joint'
     init_state: list[float] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
     block: bool = True
 

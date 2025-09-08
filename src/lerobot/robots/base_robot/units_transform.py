@@ -32,6 +32,7 @@ class AngleTransform:
         self.from_unit = from_unit
 
     def input_transform(self, value: float) -> float:
+        # convert to radian
         unit_map = {
             'degree': math.pi / 180.0,
             'radian': 1.0,
@@ -39,6 +40,7 @@ class AngleTransform:
         return value * unit_map[self.from_unit]
    
     def output_transform(self, value: float) -> float:
+        # convert from radian
         unit_map = {
             'degree': 180.0 / math.pi,
             'radian': 1.0,

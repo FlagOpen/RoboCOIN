@@ -106,7 +106,9 @@ def decode_video_frames_torchvision(
 
     # set a video stream reader
     # TODO(rcadene): also load audio stream at the same time
+    # video_path = "/home/lxc/.cache/huggingface/lerobot/robocoin/stir_coffee/videos/chunk-000/observation.images.cam_high_rgb/episode_000037.mp4"
     reader = torchvision.io.VideoReader(video_path, "video")
+    print(video_path)
 
     # set the first and last requested timestamps
     # Note: previous timestamps are usually loaded, since we need to access the previous key frame
@@ -314,14 +316,20 @@ def encode_video_frames(
         for input_data in input_list:
             input_image = Image.open(input_data).convert("RGB")
             input_frame = av.VideoFrame.from_image(input_image)
-            packet = output_stream.encode(input_frame)
-            if packet:
-                output.mux(packet)
+            for packet in output_stream.encode(input_frame):
+                if packet:
+                    if packet.pts is None:
+                        raise ValueError("Packet PTS is None, cannot mux.")
+                if packet and packet.pts is not None:
+                    output.mux(packet)
 
         # Flush the encoder
-        packet = output_stream.encode()
-        if packet:
-            output.mux(packet)
+        for packet in output_stream.encode():
+            if packet:
+                if packet.pts is None:
+                    raise ValueError("Packet PTS is None, cannot mux.")
+            if packet:
+                output.mux(packet)
 
     # Reset logging level
     if log_level is not None:
@@ -329,6 +337,118 @@ def encode_video_frames(
 
     if not video_path.exists():
         raise OSError(f"Video encoding did not work. File not found: {video_path}.")
+
+
+def encode_video_frames_gpu(
+    imgs_dir: Path | str,
+    video_path: Path | str,
+    fps: int,
+    # 改为支持 GPU 编码器
+    vcodec: str = "h264_nvenc",  # 可选: "hevc_nvenc", "h264_amf" (AMD), "h264_videotoolbox" (Mac)
+    pix_fmt: str = "yuv420p",
+    g: int | None = 2,  # 更合理的 GOP（GPU 编码不推荐 g=2）
+    cq: int | None = 1,  # NVENC 使用 cq（Constant Quality），类似 crf
+    preset: str = "p7",  # 高质量预设（p1~p7）
+    profile: str = "high",
+    log_level: int | None = av.logging.ERROR,
+    overwrite: bool = False,
+) -> None:
+    """
+    使用 GPU 编码图像序列为视频（基于 FFmpeg + PyAV + NVENC）
+    要求：NVIDIA 显卡 + 驱动 + FFmpeg 编译时启用 nvenc
+    """
+    # 支持的 GPU 编码器
+    supported_gpu_encoders = {
+        "h264_nvenc",
+        "hevc_nvenc",  # NVIDIA
+        "h264_amf",
+        "hevc_amf",  # AMD (Windows)
+        "h264_videotoolbox",
+        "hevc_videotoolbox",  # Apple VideoToolbox (Mac)
+    }
+
+    if vcodec not in supported_gpu_encoders:
+        raise ValueError(f"Unsupported GPU codec: {vcodec}. Supported: {supported_gpu_encoders}")
+
+    video_path = Path(video_path)
+    imgs_dir = Path(imgs_dir)
+
+    if video_path.exists():
+        if not overwrite:
+            raise FileExistsError(f"Video file exists: {video_path}")
+        video_path.unlink()
+
+    video_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Pixel format 兼容性检查
+    if vcodec.startswith("h264_") and pix_fmt not in ["yuv420p", "yuvj420p"]:
+        logging.warning(f"{vcodec} requires yuv420p, using yuv420p")
+        pix_fmt = "yuv420p"
+
+    # 匹配所有 frame_*.png 文件（更灵活）
+    png_files = sorted(
+        glob.glob(str(imgs_dir / "frame_*.png")),
+        key=lambda x: int("".join(filter(str.isdigit, Path(x).stem))),
+    )
+
+    if not png_files:
+        raise FileNotFoundError(f"No images found in {imgs_dir}")
+
+    # 检查图像尺寸一致性
+    first_img = Image.open(png_files[0])
+    width, height = first_img.size
+
+    for img_path in png_files:
+        w, h = Image.open(img_path).size
+        if w != width or h != height:
+            raise ValueError(f"Image {img_path} size ({w}x{h}) != expected ({width}x{height})")
+
+    # 设置编码参数（NVENC 特定）
+    video_options = {
+        "preset": preset,  # p7 = 最高质量，最慢
+        "cq": str(cq),  # 质量控制，0~51，越小越好（类似 CRF）
+        "profile": profile,  # high, main, baseline
+        "bf": "0",  # 使用 3 个 B 帧（提高压缩效率）
+        "strict_gop": "1",  # GOP 严格对齐
+    }
+
+    if g is not None:
+        video_options["g"] = str(g)  # GOP 大小
+
+    # 设置日志
+    if log_level is not None:
+        logging.getLogger("libav").setLevel(log_level)
+
+    # 打开输出容器
+    with av.open(str(video_path), "w", format=None) as container:
+        # 添加视频流（GPU 编码）
+        stream = container.add_stream(vcodec, rate=fps)
+        stream.pix_fmt = pix_fmt
+        stream.width = width
+        stream.height = height
+        stream.options = video_options
+
+        # 编码每一帧
+        for img_path in png_files:
+            img = Image.open(img_path).convert("RGB")
+            frame = av.VideoFrame.from_image(img)
+
+            # 必须将帧上传到 GPU（PyAV 会自动处理，前提是 FFmpeg 支持）
+            for packet in stream.encode(frame):
+                if packet and packet.pts is not None:
+                    container.mux(packet)
+
+        # Flush 编码器
+        for packet in stream.encode():
+            if packet and packet.pts is not None:
+                container.mux(packet)
+
+    # 恢复日志
+    if log_level is not None:
+        av.logging.restore_default_callback()
+
+    if not video_path.exists():
+        raise OSError(f"Failed to create video: {video_path}")
 
 
 @dataclass

@@ -19,6 +19,7 @@ import shutil
 from collections.abc import Callable
 from pathlib import Path
 
+import av
 import datasets
 import numpy as np
 import packaging.version
@@ -973,12 +974,33 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 episode_index=episode_index, image_key=key, frame_index=0
             ).parent
             encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
+
+            if not self._validate_video_pyav(video_path):
+                encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
+                if not self._validate_video_pyav(video_path):
+                    raise RuntimeError(f"Video {video_path} is invalid")
             shutil.rmtree(img_dir)
 
         # Update video info (only needed when first episode is encoded since it reads from episode 0)
         if len(self.meta.video_keys) > 0 and episode_index == 0:
             self.meta.update_video_info()
             write_info(self.meta.info, self.meta.root)  # ensure video info always written properly
+
+    def _validate_video_pyav(self, video_path: Path) -> bool:
+        try:
+            container = av.open(str(video_path))
+            stream = container.streams.video[0]
+            stream.thread_count = 1  # 单线程更稳定解码错误捕获
+
+            for frame in container.decode(video=0):
+                try:
+                    frame.to_rgb()  # 触发解码
+                except Exception:
+                    return False
+            container.close()
+        except Exception:
+            return False
+        return True
 
     def batch_encode_videos(self, start_episode: int = 0, end_episode: int | None = None) -> None:
         """

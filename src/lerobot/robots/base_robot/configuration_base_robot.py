@@ -30,7 +30,10 @@ class BaseRobotConfig(RobotConfig):
     ])
     
     delta_with: Literal['previous', 'initial', 'none'] = 'none'    
+
     visualize: bool = True
+    draw_2d: bool = True
+    draw_3d: bool = True
 
 
 @RobotConfig.register_subclass("base_robot_end_effector")

@@ -6,8 +6,8 @@ from lerobot.errors import DeviceNotConnectedError
 from lerobot.robots.robot import Robot
 
 from .configuration_bi_realman import BiRealmanConfig
-from ..realman.configuration_realman import RealmanConfig
-from ..realman.realman import Realman
+from ..realman_old.configuration_realman import RealmanConfig
+from ..realman_old.realman import Realman
 
 
 class BiRealman(Robot):

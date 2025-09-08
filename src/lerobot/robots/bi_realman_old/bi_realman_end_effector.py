@@ -6,7 +6,7 @@ from lerobot.errors import DeviceNotConnectedError
 from lerobot.robots.robot import Robot
 
 from .configuration_bi_realman import BiRealmanEndEffectorConfig
-from ..realman import RealmanEndEffector, RealmanEndEffectorConfig
+from ..realman_old import RealmanEndEffector, RealmanEndEffectorConfig
 from ..misc import get_visualizer
 
 

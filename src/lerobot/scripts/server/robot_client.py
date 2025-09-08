@@ -307,11 +307,11 @@ from lerobot.robots import (  # noqa: F401
     so101_follower,
     # extension robots
     bi_piper,
-    bi_realman,
+    bi_realman_old,
     dummy,
     moveit_robot,
     piper,
-    realman,
+    realman_old,
     ros_robot,
 )
 from lerobot.scripts.server.configs import RobotClientConfig

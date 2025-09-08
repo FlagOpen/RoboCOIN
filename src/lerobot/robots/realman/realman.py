@@ -97,6 +97,10 @@ class Realman(Robot):
         
         for cam in self.cameras.values():
             cam.connect()
+
+        for _ in range(10):
+            self._get_joint_state()
+            time.sleep(0.1)
     
     def is_calibrated(self) -> bool:
         return True
@@ -109,7 +113,7 @@ class Realman(Robot):
     
     def _set_joint_state(self, state: list[int]):
         print(state)
-        success = self.arm.rm_movej(state[:-1], v=100, r=0, connect=0, block=self.config.block)
+        success = self.arm.rm_movej(state[:-1], v=50, r=0, connect=0, block=self.config.block)
         if success != 0:
             raise RuntimeError(f'Failed movej')
         success = self.arm.rm_set_gripper_position(int(state[-1]), block=self.config.block, timeout=3)

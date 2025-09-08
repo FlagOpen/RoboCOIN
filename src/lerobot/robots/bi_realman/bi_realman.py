@@ -127,6 +127,8 @@ class BiRealman(Robot):
         
         send_action_left = self.left_arm.send_action(left_action)
         send_action_right = self.right_arm.send_action(right_action)
+        import time
+        time.sleep(0.1)
 
         send_action_left = {f"left_{k}": v for k, v in send_action_left.items()}
         send_action_right = {f"right_{k}": v for k, v in send_action_right.items()}

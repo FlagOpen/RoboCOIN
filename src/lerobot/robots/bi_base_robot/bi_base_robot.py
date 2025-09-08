@@ -19,13 +19,14 @@ class BiBaseRobot(Robot):
         super().__init__(config)
         self.config = config
         self.cameras = make_cameras_from_configs(config.cameras)
-        self.visualizer = get_visualizer(list(self._cameras_ft.keys()), ['arm_left', 'arm_right']) \
+        self.visualizer = get_visualizer(
+            list(self._cameras_ft.keys()), ['arm_left', 'arm_right'], config.draw_2d, config.draw_3d) \
             if config.visualize else None
 
         left_config, right_config = self._prepare_robot_configs()
         self._prepare_robots(left_config, right_config)
 
-    def _prepare_robot_configs(self):
+    def _prepare_robots(self):
         config = copy.deepcopy(self.config)
         config.cameras = {}
         config.visualize = False

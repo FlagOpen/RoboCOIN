@@ -14,12 +14,6 @@ class BiRealman(BiBaseRobot):
         self.config = config
     
     def _prepare_robot_configs(self):
-        # left_config, right_config = super()._prepare_robot_configs()
-        # left_config.ip = self.config.ip_left
-        # left_config.port = self.config.port_left
-        # right_config.ip = self.config.ip_right
-        # right_config.port = self.config.port_right
-        # return left_config, right_config
         left_config = RealmanConfig(
             ip=self.config.ip_left,
             port=self.config.port_left,

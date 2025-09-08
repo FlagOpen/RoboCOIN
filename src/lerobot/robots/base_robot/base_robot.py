@@ -23,8 +23,9 @@ class BaseRobot(Robot):
         self.config = config
         self.cameras = make_cameras_from_configs(config.cameras)
         self.arm = None
-        self.visualizer = get_visualizer(list(self._cameras_ft.keys()), ['arm']) \
-                          if config.visualize else None
+        self.visualizer = get_visualizer(
+            list(self._cameras_ft.keys()), ['arm'], config.draw_2d, config.draw_3d) \
+            if config.visualize else None
 
         self.model_transform = UnitsTransform(config.model_units)
         self.joint_transform = UnitsTransform(config.joint_units)

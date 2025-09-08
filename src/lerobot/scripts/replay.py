@@ -10,12 +10,11 @@ python src/lerobot/scripts/replay.py \
     --robot.port_left=8080     \
     --robot.ip_right="169.254.128.19"     \
     --robot.port_right=8080     \
-    --robot.block=False \
+    --robot.block=True \
     --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30}}"     \
     --robot.init_state="[-10.9, -123.7, 18.3, 37.8, 132.9, 101.4, -48.1, 718, 16.6, 116.3, -52.7,-21.2, -99.7, -84.2, 43.0, 956]"     \
-    --robot.base_euler="[0, 0, 0]" \
     --robot.id=black  \
-    --repo_id="realman/grasp_peach" \
+    --repo_id="realman/grasp_peach_new"
 ```
 """
 

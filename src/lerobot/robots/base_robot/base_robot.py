@@ -101,7 +101,7 @@ class BaseRobot(Robot):
         self._init_state = self.get_joint_state()
 
     def disconnect(self):
-        for cam in self.cameras.values:
+        for cam in self.cameras.values():
             cam.disconnect()
         self._disconnect_arm()
     

@@ -15,7 +15,7 @@ class BaseRobotConfig(RobotConfig):
     ])
 
     init_type: Literal['joint', 'end_effector', 'none'] = 'none'
-    init_state: list[int] = field(default_factory=lambda: [
+    init_state: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
 

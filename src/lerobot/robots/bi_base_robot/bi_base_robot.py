@@ -121,3 +121,10 @@ class BiBaseRobot(Robot):
             obs_dict[cam_key] = outputs
 
         return obs_dict
+    
+    def disconnect(self):
+        self.left_robot.disconnect()
+        self.right_robot.disconnect()
+        
+        for cam in self.cameras.values():
+            cam.disconnect()

@@ -9,15 +9,15 @@ from ..base_robot import BaseRobotConfig, BaseRobotEndEffectorConfig
 @RobotConfig.register_subclass("realman")
 @dataclass
 class RealmanConfig(BaseRobotConfig):
-    ip: str
-    port: int
+    ip: str = "169.254.128.18"
+    port: int = 8080
     block: bool = False
     joint_names: list[str] = field(default_factory=lambda: [
         'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
     ])
 
     init_type: Literal['joint', 'end_effector', 'none'] = 'none'
-    init_state: list[int] = field(default_factory=lambda: [
+    init_state: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
 

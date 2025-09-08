@@ -9,31 +9,32 @@ from ..bi_base_robot import BiBaseRobotConfig, BiBaseRobotEndEffectorConfig
 @RobotConfig.register_subclass("bi_realman")
 @dataclass
 class BiRealmanConfig(BiBaseRobotConfig):
-    ip_left: str
-    port_left: int
-    ip_right: str
-    port_right: int
-
+    ip_left: str = "169.254.128.18"
+    port_left: int = 8080
+    ip_right: str = "169.254.128.19"
+    port_right: int = 8080
+    block: bool = False
+    
     joint_names: list[str] = field(default_factory=lambda: [
         'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
     ])
 
     init_type: Literal['joint', 'end_effector', 'none'] = 'none'
-    init_state_left: list[int] = field(default_factory=lambda: [
+    init_state_left: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
-    init_state_right: list[int] = field(default_factory=lambda: [
+    init_state_right: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
 
     model_units: list[str] = field(default_factory=lambda: [
-        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'mm',
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'mm',
     ])
     joint_units: list[str] = field(default_factory=lambda: [
-        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'mm',
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'mm',
     ])
     pose_units: list[str] = field(default_factory=lambda: [
-        'mm', 'mm', 'mm', 'radian', 'radian', 'radian', 'mm',
+        'mm', 'mm', 'mm', 'degree', 'degree', 'degree', 'mm',
     ])
     
     delta_with: Literal['previous', 'initial', 'none'] = 'none'    
@@ -46,5 +47,5 @@ class BiRealmanEndEffectorConfig(BiRealmanConfig, BiBaseRobotEndEffectorConfig):
     base_euler: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
 
     model_units: list[str] = field(default_factory=lambda: [
-        'mm', 'mm', 'mm', 'radian', 'radian', 'radian', 'mm',
+        'mm', 'mm', 'mm', 'degree', 'degree', 'degree', 'mm',
     ])

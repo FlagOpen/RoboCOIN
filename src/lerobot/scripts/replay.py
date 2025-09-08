@@ -10,15 +10,16 @@ python src/lerobot/scripts/replay.py \
     --robot.port_left=8080     \
     --robot.ip_right="169.254.128.19"     \
     --robot.port_right=8080     \
-    --robot.block=True \
+    --robot.block=False \
     --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30}}"     \
-    --robot.init_state="[-10.9, -123.7, 18.3, 37.8, 132.9, 101.4, -48.1, 718, 16.6, 116.3, -52.7,-21.2, -99.7, -84.2, 43.0, 956]"     \
     --robot.id=black  \
-    --repo_id="realman/grasp_peach_new"
+    --robot.visualize=True \
+    --repo_id=realman/grasp_peach_new 
 ```
 """
 
 import draccus
+import numpy as np
 import traceback
 from dataclasses import dataclass
 from typing import Optional
@@ -67,7 +68,14 @@ class Replay:
     def stop(self):
         self.robot.disconnect()
     
-    def _prepare_action(self, action: dict) -> dict:
+    def _prepare_action(self, action) -> dict:
+        # left_joint = action[14:21]
+        # left_gripper = action[21:22]
+        # right_joint = action[0:7]
+        # right_gripper = action[7:8]
+        # left_joint = left_joint * 180 / np.pi
+        # right_joint = right_joint * 180 / np.pi
+        # action = np.concatenate([left_joint, left_gripper, right_joint, right_gripper])
         return {key: action[i].item() for i, key in enumerate(self.robot.action_features.keys())}
 
 

@@ -8,10 +8,10 @@ from ..base_robot import BaseRobotConfig, BaseRobotEndEffectorConfig
 @RobotConfig.register_subclass("bi_base_robot")
 @dataclass
 class BiBaseRobotConfig(BaseRobotConfig):
-    init_state_left: list[int] = field(default_factory=lambda: [
+    init_state_left: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
-    init_state_right: list[int] = field(default_factory=lambda: [
+    init_state_right: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
 

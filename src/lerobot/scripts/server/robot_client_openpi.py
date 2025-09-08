@@ -79,10 +79,10 @@ from lerobot.robots.config import RobotConfig
 from lerobot.robots.utils import make_robot_from_config
 from lerobot.robots import (
     bi_piper,
-    bi_realman_old,
+    bi_realman,
     dummy,
     piper,
-    realman_old,
+    realman,
 )
 from lerobot.scripts.server.helpers import get_logger
 

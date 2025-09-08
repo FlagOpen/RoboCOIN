@@ -23,13 +23,13 @@ class BaseRobot(Robot):
         self.config = config
         self.cameras = make_cameras_from_configs(config.cameras)
         self.arm = None
+        self.visualizer = get_visualizer(list(self._cameras_ft.keys()), ['arm']) \
+                          if config.visualize else None
 
         self.model_transform = UnitsTransform(config.model_units)
         self.joint_transform = UnitsTransform(config.joint_units)
         self.pose_transform = UnitsTransform(config.pose_units)
 
-        self.visualizer = get_visualizer(list(self._cameras_ft.keys()), ['arm']) \
-                          if config.visualize else None
 
         self._init_state = None
         self._current_state = None
@@ -156,7 +156,7 @@ class BaseRobot(Robot):
 
     @cached_property
     def action_features(self) -> dict:
-        return self._motors_ft()
+        return self._motors_ft
 
     @property
     def is_connected(self) -> bool:

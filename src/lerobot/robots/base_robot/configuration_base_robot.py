@@ -20,13 +20,13 @@ class BaseRobotConfig(RobotConfig):
     ])
 
     model_units: list[str] = field(default_factory=lambda: [
-        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'mm',
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'mm',
     ])
     joint_units: list[str] = field(default_factory=lambda: [
-        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'mm',
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'mm',
     ])
     pose_units: list[str] = field(default_factory=lambda: [
-        'mm', 'mm', 'mm', 'degree', 'degree', 'degree', 'mm',
+        'mm', 'mm', 'mm', 'radian', 'radian', 'radian', 'mm',
     ])
     
     delta_with: Literal['previous', 'initial', 'none'] = 'none'    
@@ -36,8 +36,8 @@ class BaseRobotConfig(RobotConfig):
 @RobotConfig.register_subclass("base_robot_end_effector")
 @dataclass
 class BaseRobotEndEffectorConfig(BaseRobotConfig):
-    base_euler: list[float] = field(default_factory=lambda: [0.0, 0.5 * np.pi, 0.0])
+    base_euler: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
 
     model_units: list[str] = field(default_factory=lambda: [
-        'mm', 'mm', 'mm', 'degree', 'degree', 'degree', 'mm',
+        'mm', 'mm', 'mm', 'radian', 'radian', 'radian', 'mm',
     ])

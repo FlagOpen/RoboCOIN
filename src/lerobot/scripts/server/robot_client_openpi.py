@@ -29,33 +29,19 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
 peach
 ```python
 python src/lerobot/scripts/server/robot_client_openpi.py \
---host="172.16.19.138"     \
---port=18000     \
---robot.type=bi_realman     \
---robot.ip_left="169.254.128.18"    \
---robot.port_left=8080     \
---robot.ip_right="169.254.128.19"     \
---robot.port_right=8080     \
---robot.block=False \
---robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30}}"     \
---robot.init_state="[-10.9, -123.7, 18.3, 37.8, 132.9, 101.4, -48.1, 718, 16.6, 116.3, -52.7,-21.2, -99.7, -84.2, 43.0, 956]"     \
---robot.id=black 
-```
-
-banana
-```python
-python src/lerobot/scripts/server/robot_client_openpi.py \
---host="172.16.19.138"     \
---port=18000     \
---robot.type=bi_realman     \
---robot.ip_left="169.254.128.18"    \
---robot.port_left=8080     \
---robot.ip_right="169.254.128.19"     \
---robot.port_right=8080     \
---robot.block=False \
---robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30}}"     \
---robot.init_state="[-14.8, -116.3, -79.6, -58.2, 55.7, -13.9, 97.2, 910, 14.3, 114.6, 79.0, 55.9, -55.6, 14.9, -97.5, 904]"    \
---robot.id=black 
+  --host="172.16.19.138"     \
+  --port=18000     \
+  --robot.type=bi_realman     \
+  --robot.ip_left="169.254.128.18"    \
+  --robot.port_left=8080     \
+  --robot.ip_right="169.254.128.19"     \
+  --robot.port_right=8080     \
+  --robot.block=False \
+  --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30}}"     \
+  --robot.init_type="joint"     \
+  --robot.init_state_left="[-0.77616538, -2.04976705,  1.6935104,   1.34390352, -0.24169319, -1.75644702,  0.86908667,  0.861     ]" \
+  --robot.init_state_right="[ 0.91439543,  1.89743463, -1.03691755, -0.70560173, -2.48657061, -1.54884003, 1.88523482,  0.853     ]" \
+  --robot.id=black 
 ```
 
 """
@@ -115,13 +101,13 @@ class OpenPIRobotClient:
         # signal.signal(signal.SIGINT, quit)                                
         # signal.signal(signal.SIGTERM, quit)
 
-        for _ in range(100):
-            obs = self._prepare_observation(self.robot.get_observation())
+        # for _ in range(100):
+        #     obs = self._prepare_observation(self.robot.get_observation())
 
         while True:
             obs = self._prepare_observation(self.robot.get_observation())
             self.logger.info(f'Sent observation: {list(obs.keys())}')
-            actions = self.policy.infer(obs)['action'] #[:16]
+            actions = self.policy.infer(obs)['action'][:32:4]
             # actions = actions[:32:1]
             # actions = [actions[31]]
             for action in actions:
@@ -143,31 +129,23 @@ class OpenPIRobotClient:
         
         state = np.array(state)
 
-        state[:7] *= math.pi / 180
-        state[8:-1] *= math.pi / 180
-
         observation['observation.state'] = state
-        from PIL import Image
-        Image.fromarray(observation['observation.images.cam_high']).save('test.jpg')
-        # exit()
         return observation
     
     def _prepare_action(self, action):
         assert len(action) == len(self.robot.action_features), \
             f"Action length {len(action)} does not match expected {len(self.robot.action_features)}: {self.robot.action_features.keys()}"
         action = np.array(action)
-        action[:7] *= 180 / math.pi
-        action[8:-1] *= 180 / math.pi
 
-    # 判断gripper值是否小于600，如果是则设为20
+        # 判断gripper值是否小于600，如果是则设为20
         if action[7] > 1000:
             action[7] = 1000
-        if action[7] < 600:
-           action[7] = 1
+        if action[7] < 300:
+           action[7] = 0
         if action[-1] > 1000:
             action[-1] = 1000
-        if action[-1] < 600:
-           action[-1] = 1
+        if action[-1] < 300:
+           action[-1] = 0
 
 
         return {key: action[i].item() for i, key in enumerate(self.robot.action_features.keys())}

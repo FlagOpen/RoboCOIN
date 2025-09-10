@@ -1,6 +1,6 @@
 from .realman import Realman
-from ..base_robot import BaseRobot
+from ..base_robot import BaseRobotEndEffector
 
 
-class RealmanEndEffector(Realman, BaseRobot):
+class RealmanEndEffector(Realman, BaseRobotEndEffector):
     pass

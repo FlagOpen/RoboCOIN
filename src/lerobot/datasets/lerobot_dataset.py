@@ -459,6 +459,9 @@ class LeRobotDataset(torch.utils.data.Dataset):
         self.batch_encoding_size = batch_encoding_size
         self.episodes_since_last_encoding = 0
 
+        # using a temp directory to cache images
+        self.image_cache_root = Path(f"./temp/{repo_id.replace('/', '_')}")
+
         # Unused attributes
         self.image_writer = None
         self.episode_buffer = None
@@ -759,6 +762,12 @@ class LeRobotDataset(torch.utils.data.Dataset):
         )
         return self.root / fpath
 
+    def _get_cached_image_file_path(self, episode_index: int, image_key: str, frame_index: int) -> Path:
+        fpath = DEFAULT_IMAGE_PATH.format(
+            image_key=image_key, episode_index=episode_index, frame_index=frame_index
+        )
+        return self.image_cache_root / fpath
+
     def _save_image(self, image: torch.Tensor | np.ndarray | PIL.Image.Image, fpath: Path) -> None:
         if self.image_writer is None:
             if isinstance(image, torch.Tensor):
@@ -799,9 +808,14 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 )
 
             if self.features[key]["dtype"] in ["image", "video"]:
-                img_path = self._get_image_file_path(
+                # img_path = self._get_image_file_path(
+                #     episode_index=self.episode_buffer["episode_index"], image_key=key, frame_index=frame_index
+                # )
+
+                img_path = self._get_cached_image_file_path(
                     episode_index=self.episode_buffer["episode_index"], image_key=key, frame_index=frame_index
                 )
+
                 if frame_index == 0:
                     img_path.parent.mkdir(parents=True, exist_ok=True)
                 self._save_image(frame[key], img_path)
@@ -917,9 +931,14 @@ class LeRobotDataset(torch.utils.data.Dataset):
         # Clean up image files for the current episode buffer
         if self.image_writer is not None:
             for cam_key in self.meta.camera_keys:
-                img_dir = self._get_image_file_path(
+                # img_dir = self._get_image_file_path(
+                #     episode_index=episode_index, image_key=cam_key, frame_index=0
+                # ).parent
+
+                img_dir = self._get_cached_image_file_path(
                     episode_index=episode_index, image_key=cam_key, frame_index=0
                 ).parent
+
                 if img_dir.is_dir():
                     shutil.rmtree(img_dir)
 
@@ -970,7 +989,11 @@ class LeRobotDataset(torch.utils.data.Dataset):
             if video_path.is_file():
                 # Skip if video is already encoded. Could be the case when resuming data recording.
                 continue
-            img_dir = self._get_image_file_path(
+            # img_dir = self._get_image_file_path(
+            #     episode_index=episode_index, image_key=key, frame_index=0
+            # ).parent
+
+            img_dir = self._get_cached_image_file_path(
                 episode_index=episode_index, image_key=key, frame_index=0
             ).parent
             encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
@@ -1068,6 +1091,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
         obj.delta_indices = None
         obj.episode_data_index = None
         obj.video_backend = video_backend if video_backend is not None else get_safe_default_codec()
+        obj.image_cache_root = Path(f"./temp/{repo_id.replace('/', '_')}")
         return obj
 
 

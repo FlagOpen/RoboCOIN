@@ -68,9 +68,21 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
 
     # extension robots
     elif config.type == "dummy":
-        from .dummy.dummy import DummyRobot
+        from .dummy.dummy_robot import DummyRobot
 
         return DummyRobot(config)
+    elif config.type == "dummy_end_effector":
+        from .dummy.dummy_robot_end_effector import DummyRobotEndEffector
+
+        return DummyRobotEndEffector(config)
+    elif config.type == "bi_dummy":
+        from .bi_dummy.bi_dummy_robot import BiDummyRobot
+
+        return BiDummyRobot(config)
+    elif config.type == "bi_dummy_end_effector":
+        from .bi_dummy.bi_dummy_robot_end_effector import BiDummyRobotEndEffector
+
+        return BiDummyRobotEndEffector(config)
     elif config.type == "piper":
         from .piper.piper import Piper
 

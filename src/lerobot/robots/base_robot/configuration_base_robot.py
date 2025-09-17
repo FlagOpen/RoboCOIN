@@ -1,6 +1,4 @@
-import numpy as np
 from dataclasses import dataclass, field
-from typing import Literal
 
 from lerobot.cameras import CameraConfig
 from lerobot.robots import RobotConfig
@@ -19,14 +17,14 @@ class BaseRobotConfig(RobotConfig):
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
 
-    model_units: list[str] = field(default_factory=lambda: [
-        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'mm',
-    ])
     joint_units: list[str] = field(default_factory=lambda: [
-        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'mm',
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
     ])
     pose_units: list[str] = field(default_factory=lambda: [
-        'mm', 'mm', 'mm', 'radian', 'radian', 'radian', 'mm',
+        'm', 'm', 'm', 'radian', 'radian', 'radian', 'm',
+    ])
+    model_joint_units: list[str] = field(default_factory=lambda: [
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
     ])
     
     delta_with: str = 'none'    
@@ -41,6 +39,6 @@ class BaseRobotConfig(RobotConfig):
 class BaseRobotEndEffectorConfig(BaseRobotConfig):
     base_euler: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
 
-    model_units: list[str] = field(default_factory=lambda: [
-        'mm', 'mm', 'mm', 'radian', 'radian', 'radian', 'mm',
+    model_pose_units: list[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'radian', 'radian', 'radian', 'm',
     ])

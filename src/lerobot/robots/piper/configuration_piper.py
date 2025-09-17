@@ -1,49 +1,34 @@
-import numpy as np
 from dataclasses import dataclass, field
-from typing import Literal
 
-from lerobot.cameras import CameraConfig
 from lerobot.robots import RobotConfig
+
+from ..base_robot import BaseRobotConfig, BaseRobotEndEffectorConfig
 
 
 @RobotConfig.register_subclass("piper")
 @dataclass
-class PiperConfig(RobotConfig):
-    """
-    Configuration for the Piper robot (for joint control).
+class PiperConfig(BaseRobotConfig):
+    can: str = "can0"
+    velocity: int = 30
 
-    Attributes:
-        port: Can port for the Piper robot.
-        cameras: Dictionary of camera configurations.
-        init_ee_state: Initial end-effector state.
-    """
-    port: str
-    cameras: dict[str, CameraConfig] = field(default_factory=dict)
-    # choice: joint, end_effector
-    init_state_type: str = 'end_effector'
-    init_state: list[int] = field(default_factory=lambda: [100000, 0, 300000, 0, 90000, 0, 60000])
+    joint_names: list[str] = field(default_factory=lambda: [
+        'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'gripper',
+    ])
+
+    init_type: str = "joint"
+    init_state: list[float] = field(default_factory=lambda: [
+        0, 0, 0, 0, 0, 0, 60000,
+    ])
+
+    joint_units: list[str] = field(default_factory=lambda: [
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm',
+    ])
+    pose_units: list[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'degree', 'degree', 'degree', 'm',
+    ])
 
 
 @RobotConfig.register_subclass("piper_end_effector")
 @dataclass
-class PiperEndEffectorConfig(PiperConfig):
-    """
-    Configuration for the Piper robot's end-effector (for end-effector control).
-
-    Attributes:
-        port: Can port for the Piper robot.
-        cameras: Dictionary of camera configurations.
-        init_ee_state: Initial end-effector state.
-        control_mode: Control mode for the robot, choices include 'ee_absolute', 'ee_delta_base', 'ee_delta_gripper',
-                      seeing `.misc.transforms` for detail.
-        delta_with_previous: Compute delta with previous state (True) or with initial state (False),
-                             (only used in 'ee_delta_base' or 'ee_delta_gripper' control mode).
-        base_euler: The base delta orientation from the world frame to the robot gripper frame 
-                    (only used in 'ee_delta_gripper' control mode).
-        visualize: Whether to visualize the robot's observations and actions.
-    """
-    
-    control_mode: str = 'ee_absolute'
-    delta_with_previous: bool = True
-    base_euler: list[float] = field(default_factory=lambda: [0.0, 0.5 * np.pi, 0.0])
-    visualize: bool = True
+class PiperEndEffectorConfig(PiperConfig, BaseRobotEndEffectorConfig):
+    base_euler: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])

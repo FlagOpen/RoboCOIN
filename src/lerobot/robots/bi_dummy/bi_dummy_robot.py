@@ -1,25 +1,20 @@
 from ..bi_base_robot import BiBaseRobot
-from .configuration_bi_realman import BiRealmanConfig
+from .configuration_bi_dummy import BiDummyRobotConfig
 
-from ..realman import Realman, RealmanConfig
+from ..dummy import DummyRobot, DummyRobotConfig
 
 
-class BiRealman(BiBaseRobot):
+class BiDummyRobot(BiBaseRobot):
+    
+    config_class = BiDummyRobotConfig
+    name = "bi_dummy"
 
-    config_class = BiRealmanConfig
-    name = "bi_realman"
-
-    def __init__(self, config: BiRealmanConfig):
+    def __init__(self, config: BiDummyRobotConfig):
         super().__init__(config)
         self.config = config
     
     def _prepare_robots(self):
-        left_config = RealmanConfig(
-            ip=self.config.ip_left,
-            port=self.config.port_left,
-            block=self.config.block,
-            wait_second=self.config.wait_second,
-            velocity=self.config.velocity,
+        left_config = DummyRobotConfig(
             joint_names=self.config.joint_names,
             init_type=self.config.init_type,
             init_state=self.config.init_state_left,
@@ -31,12 +26,7 @@ class BiRealman(BiBaseRobot):
             id=f"{self.config.id}_left" if self.config.id else None,
             cameras={},
         )
-        right_config = RealmanConfig(
-            ip=self.config.ip_right,
-            port=self.config.port_right,
-            block=self.config.block,
-            wait_second=self.config.wait_second,
-            velocity=self.config.velocity,
+        right_config = DummyRobotConfig(
             joint_names=self.config.joint_names,
             init_type=self.config.init_type,
             init_state=self.config.init_state_right,
@@ -48,5 +38,5 @@ class BiRealman(BiBaseRobot):
             id=f"{self.config.id}_right" if self.config.id else None,
             cameras={},
         )
-        self.left_robot = Realman(left_config)
-        self.right_robot = Realman(right_config)
+        self.left_robot = DummyRobot(left_config)
+        self.right_robot = DummyRobot(right_config)

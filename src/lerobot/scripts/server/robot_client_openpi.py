@@ -7,12 +7,14 @@ Example command:
 python src/lerobot/scripts/server/robot_client_openpi.py \
     --host="127.0.0.1" \
     --port=18000 \
-    --robot.type=dummy \
-    --robot.control_mode=ee_delta_gripper \
+    --robot.type=bi_dummy_end_effector \
     --robot.cameras="{ observation.images.cam_high: {type: dummy, width: 640, height: 480, fps: 5},observation.images.cam_left_wrist: {type: dummy, width: 640, height: 480, fps: 5},observation.images.cam_right_wrist: {type: dummy, width: 640, height: 480, fps: 5}}" \
-    --robot.init_ee_state="[0, 0, 0, 0, 0, 0, 0]" \
-    --robot.base_euler="[0, 0, 0]" \
-    --robot.id=black 
+    --robot.id=black \
+    --robot.delta_with="previous" \
+    --robot.pose_units="[m, m, m, radian, radian, radian, m]" \
+    --robot.model_pose_units="[m, m, m, radian, radian, radian, m]" \
+    --task="fold the towel" \
+    --fps 10
 ```
 
 ```python
@@ -47,11 +49,15 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
 """
 
 import draccus
-import math
+import imageio
 import numpy as np
+import os
 import time
+import threading
 import traceback
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
+from sshkeyboard import listen_keyboard, stop_listening
 
 from openpi_client.websocket_client_policy import WebsocketClientPolicy
 
@@ -64,6 +70,7 @@ from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
 from lerobot.robots.config import RobotConfig
 from lerobot.robots.utils import make_robot_from_config
 from lerobot.robots import (
+    bi_dummy,
     bi_piper,
     bi_realman,
     dummy,
@@ -76,10 +83,70 @@ from lerobot.scripts.server.helpers import get_logger
 @dataclass
 class OpenPIRobotClientConfig:
     robot: RobotConfig
+
     host: str = "127.0.0.1"
     port: int = 18000
     frequency: int = 10
-    prompt: str = "do something"
+    task: str = "do something"
+
+    result_dir: str = "results/"
+    camera_keys: List[str] = field(default_factory=lambda: [
+        'observation.images.cam_high', 'observation.images.cam_left_wrist', 'observation.images.cam_right_wrist'
+    ])
+    fps: int = 10
+
+
+class VideoRecorder:
+    def __init__(
+        self,
+        save_dir,
+        fps: int = 30,
+    ):
+        self.save_dir = save_dir
+        self.fps = fps
+        self._frames = []
+
+        os.makedirs(self.save_dir, exist_ok=True)
+
+    def add(self, frame):
+        if isinstance(frame, list):
+            # [(H, W, C), ...] -> (H, W * N, C)
+            frame = np.concatenate(frame, axis=1)
+        self._frames.append(frame)
+    
+    def save(self, task, success):
+        save_path = os.path.join(self.save_dir, f"{task.replace('.', '')}_{'success' if success else 'failed'}_{time.strftime('%Y%m%d_%H%M%S')}.mp4")
+        print(f'Saving video to {save_path}...')
+        imageio.mimwrite(save_path, self._frames, fps=self.fps)
+        self._frames = []
+
+
+class KeyboardListener:
+    def __init__(self):
+        self._listener = threading.Thread(target=listen_keyboard, args=(self._on_press,))
+        self._listener.daemon = True
+
+        self._quit = False
+        self._success = None
+    
+    def listen(self):
+        self._listener.start()
+    
+    def reset(self):
+        self._quit = False
+        self._success = None
+    
+    def _on_press(self, key):
+        if key == 'q':
+            self._quit = True
+        
+        elif key == 'y':
+            self._success = True
+            stop_listening()
+        
+        elif key == 'n':
+            self._success = False
+            stop_listening()
 
 
 class OpenPIRobotClient:
@@ -87,33 +154,33 @@ class OpenPIRobotClient:
         self.config = config
         self.logger = get_logger('openpi_robot_client')
 
+        self.video_recorder = VideoRecorder(config.result_dir, fps=config.fps)
+        self.keyboard_listener = KeyboardListener()
+
         self.policy = WebsocketClientPolicy(config.host, config.port)
         self.logger.info(f'Connected to OpenPI server at {config.host}:{config.port}')
 
         self.robot = make_robot_from_config(config.robot)
         self.logger.info(f'Initialized robot: {self.robot.name}')
+
+        self._is_finished = False
     
     def start(self):
+        self.keyboard_listener.listen()
         self.logger.info('Starting robot client...')
         self.robot.connect()
     
     def control_loop(self):
-        # signal.signal(signal.SIGINT, quit)                                
-        # signal.signal(signal.SIGTERM, quit)
-
-        # for _ in range(100):
-        #     obs = self._prepare_observation(self.robot.get_observation())
-
-        while True:
+        while not self._is_finished:
             obs = self._prepare_observation(self.robot.get_observation())
-            self.logger.info(f'Sent observation: {list(obs.keys())}')
-            actions = self.policy.infer(obs)['action'][:32:4]
-            # actions = actions[:32:1]
-            # actions = [actions[31]]
+            # self.logger.info(f'Sent observation: {list(obs.keys())}')
+            self.logger.info(f'Prompt: {obs["prompt"]}')
+            actions = self.policy.infer(obs)['action']
             for action in actions:
                 action = self._prepare_action(action)
                 self.logger.info(f'Received action: {action}')
                 self.robot.send_action(action)
+                self._after_action()
             time.sleep(1 / self.config.frequency)
 
     def stop(self):
@@ -130,6 +197,7 @@ class OpenPIRobotClient:
         state = np.array(state)
 
         observation['observation.state'] = state
+        observation['prompt'] = self.config.task
         return observation
     
     def _prepare_action(self, action):
@@ -138,17 +206,29 @@ class OpenPIRobotClient:
         action = np.array(action)
 
         # 判断gripper值是否小于600，如果是则设为20
-        if action[7] > 1000:
-            action[7] = 1000
-        if action[7] < 300:
-           action[7] = 0
+        if action[6] > 1000:
+            action[6] = 1000
+        if action[6] < 300:
+           action[6] = 0
         if action[-1] > 1000:
             action[-1] = 1000
         if action[-1] < 300:
            action[-1] = 0
 
-
         return {key: action[i].item() for i, key in enumerate(self.robot.action_features.keys())}
+
+    def _after_action(self):
+        obs = self.robot.get_observation()
+        frames = [obs[key] for key in self.config.camera_keys]
+        self.video_recorder.add(frames)
+
+        if self.keyboard_listener._quit:
+            print('Success? (y/n): ', end='', flush=True)
+            while self.keyboard_listener._success is None:
+                time.sleep(0.1)
+            print('Got:', self.keyboard_listener._success)
+            self.video_recorder.save(task=self.config.task, success=self.keyboard_listener._success)
+            self._is_finished = True
 
 
 @draccus.wrap()

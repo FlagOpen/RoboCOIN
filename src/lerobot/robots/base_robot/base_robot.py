@@ -27,10 +27,9 @@ class BaseRobot(Robot):
             list(self._cameras_ft.keys()), ['arm'], config.draw_2d, config.draw_3d) \
             if config.visualize else None
 
-        self.model_transform = UnitsTransform(config.model_units)
         self.joint_transform = UnitsTransform(config.joint_units)
         self.pose_transform = UnitsTransform(config.pose_units)
-
+        self.model_joint_transform = UnitsTransform(config.model_joint_units)
 
         self._init_state = None
         self._current_state = None
@@ -112,7 +111,7 @@ class BaseRobot(Robot):
         
         action = np.array([action[each] for each in self._motors_ft.keys()])
         # model -> standard
-        action = self.model_transform.input_transform(action)
+        action = self.model_joint_transform.input_transform(action)
 
         action = self.prepare_and_send_action(action)
 
@@ -128,7 +127,7 @@ class BaseRobot(Robot):
         
         state = self.get_joint_state()
         # standard -> model
-        state_to_send = self.model_transform.output_transform(state)
+        state_to_send = self.model_joint_transform.output_transform(state)
         obs_dict = {k: v for k, v in zip(self._motors_ft.keys(), state_to_send)}
 
         for cam_key, cam in self.cameras.items():

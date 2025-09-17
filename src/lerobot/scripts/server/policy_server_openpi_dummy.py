@@ -98,7 +98,7 @@ class WebsocketDummyServer:
                 action = self.action.copy()
                 
                 action = {
-                    "actions": [action],
+                    "action": [action],
                 }
 
                 infer_time = time.monotonic() - infer_time

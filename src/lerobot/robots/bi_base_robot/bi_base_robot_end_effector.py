@@ -14,8 +14,7 @@ class BiBaseRobotEndEffector(BiBaseRobot):
         self.config = config
 
     def _prepare_robots(self):
-        self.left_robot = BaseRobotEndEffector(self.left_config)
-        self.right_robot = BaseRobotEndEffector(self.right_config)
+        raise NotImplementedError
 
     @property
     def action_features(self) -> dict[str, Any]:

@@ -14,5 +14,39 @@ class BiRealmanEndEffector(BiRealman, BiBaseRobotEndEffector):
         self.config = config
     
     def _prepare_robots(self):
-        self.left_robot = RealmanEndEffector(self.left_config)
-        self.right_robot = RealmanEndEffector(self.right_config)
+        left_config = BiRealmanEndEffectorConfig(
+            ip=self.config.ip_left,
+            port=self.config.port_left,
+            block=self.config.block,
+            joint_names=self.config.joint_names,
+            init_type=self.config.init_type,
+            init_state=self.config.init_state_left,
+            joint_units=self.config.joint_units,
+            pose_units=self.config.pose_units,
+            model_joint_units=self.config.model_joint_units,
+            delta_with=self.config.delta_with,
+            visualize=False,
+            base_euler=self.config.base_euler,
+            model_pose_units=self.config.model_pose_units,
+            id=f"{self.config.id}_left" if self.config.id else None,
+            cameras={},
+        )
+        right_config = BiRealmanEndEffectorConfig(
+            ip=self.config.ip_right,
+            port=self.config.port_right,
+            block=self.config.block,
+            joint_names=self.config.joint_names,
+            init_type=self.config.init_type,
+            init_state=self.config.init_state_right,
+            joint_units=self.config.joint_units,
+            pose_units=self.config.pose_units,
+            model_joint_units=self.config.model_joint_units,
+            delta_with=self.config.delta_with,
+            visualize=False,
+            base_euler=self.config.base_euler,
+            model_pose_units=self.config.model_pose_units,
+            id=f"{self.config.id}_right" if self.config.id else None,
+            cameras={},
+        )
+        self.left_robot = RealmanEndEffector(left_config)
+        self.right_robot = RealmanEndEffector(right_config)

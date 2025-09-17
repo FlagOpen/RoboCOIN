@@ -1,4 +1,5 @@
 import copy
+import numpy as np
 from functools import cached_property
 from typing import Any
 
@@ -23,26 +24,10 @@ class BiBaseRobot(Robot):
             list(self._cameras_ft.keys()), ['arm_left', 'arm_right'], config.draw_2d, config.draw_3d) \
             if config.visualize else None
 
-        left_config, right_config = self._prepare_robot_configs()
-        self._prepare_robots(left_config, right_config)
+        self._prepare_robots()
 
     def _prepare_robots(self):
-        config = copy.deepcopy(self.config)
-        config.cameras = {}
-        config.visualize = False
-
-        left_config = copy.deepcopy(config)
-        right_config = copy.deepcopy(config)
-        left_config.init_state = self.config.init_state_left
-        left_config.id = f"{config.id}_left" if config.id else None
-        right_config.init_state = self.config.init_state_right
-        right_config.id = f"{config.id}_right" if config.id else None
-
-        return left_config, right_config
-    
-    def _prepare_robots(self, left_config, right_config):
-        self.left_robot = BaseRobot(left_config)
-        self.right_robot = BaseRobot(right_config)
+        raise NotImplementedError
 
     @property
     def _motors_ft(self) -> dict[str, type]:
@@ -69,6 +54,26 @@ class BiBaseRobot(Robot):
         return self.left_robot.is_connected and self.right_robot.is_connected and all(
             cam.is_connected for cam in self.cameras.values()
         )
+    
+    def get_joint_state(self) -> np.ndarray:
+        state_left = self.left_robot.get_joint_state()
+        state_right = self.right_robot.get_joint_state()
+        return np.concatenate([state_left, state_right])
+    
+    def set_joint_state(self, state: np.ndarray):
+        n_left = len(self.left_robot._motors_ft)
+        self.left_robot.set_joint_state(state[:n_left])
+        self.right_robot.set_joint_state(state[n_left:])
+    
+    def get_ee_state(self) -> np.ndarray:
+        state_left = self.left_robot.get_ee_state()
+        state_right = self.right_robot.get_ee_state()
+        return np.concatenate([state_left, state_right])
+    
+    def set_ee_state(self, state: np.ndarray):
+        n_left = 7 
+        self.left_robot.set_ee_state(state[:n_left])
+        self.right_robot.set_ee_state(state[n_left:])
     
     def connect(self):
         self.left_robot.connect()

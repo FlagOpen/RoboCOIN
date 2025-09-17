@@ -1,7 +1,7 @@
 from .configuration_bi_realman import BiRealmanEndEffectorConfig
 from .bi_realman import BiRealman
 from ..bi_base_robot import BiBaseRobotEndEffector
-from ..realman import RealmanEndEffector
+from ..realman import RealmanEndEffector, RealmanEndEffectorConfig
 
 
 class BiRealmanEndEffector(BiRealman, BiBaseRobotEndEffector):
@@ -14,7 +14,7 @@ class BiRealmanEndEffector(BiRealman, BiBaseRobotEndEffector):
         self.config = config
     
     def _prepare_robots(self):
-        left_config = BiRealmanEndEffectorConfig(
+        left_config = RealmanEndEffectorConfig(
             ip=self.config.ip_left,
             port=self.config.port_left,
             block=self.config.block,
@@ -31,7 +31,7 @@ class BiRealmanEndEffector(BiRealman, BiBaseRobotEndEffector):
             id=f"{self.config.id}_left" if self.config.id else None,
             cameras={},
         )
-        right_config = BiRealmanEndEffectorConfig(
+        right_config = RealmanEndEffectorConfig(
             ip=self.config.ip_right,
             port=self.config.port_right,
             block=self.config.block,

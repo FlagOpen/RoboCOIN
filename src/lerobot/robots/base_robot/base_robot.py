@@ -59,15 +59,15 @@ class BaseRobot(Robot):
         # joint -> standard
         return self.joint_transform.input_transform(state)
     
-    def get_ee_state(self) -> np.ndarray:
-        state = self._get_ee_state()
-        # end_effector -> standard
-        return self.pose_transform.input_transform(state)
-
     def set_ee_state(self, state: np.ndarray):
         # standard -> end_effector
         state = self.pose_transform.output_transform(state)
         self._set_ee_state(state)
+    
+    def get_ee_state(self) -> np.ndarray:
+        state = self._get_ee_state()
+        # end_effector -> standard
+        return self.pose_transform.input_transform(state)
     
     def prepare_and_send_action(self, action: np.ndarray) -> np.ndarray:
         if self.config.delta_with == 'previous':
@@ -97,7 +97,7 @@ class BaseRobot(Robot):
         if self.config.init_type == 'joint':
             self.set_joint_state(self.config.init_state)
         elif self.config.init_type == 'end_effector':
-            self.set_ee_state(self.config.init_ee_state)
+            self.set_ee_state(self.config.init_state)
         self._init_state = self.get_joint_state()
 
     def disconnect(self):

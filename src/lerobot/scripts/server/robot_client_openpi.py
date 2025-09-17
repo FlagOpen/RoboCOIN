@@ -21,8 +21,9 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
 python src/lerobot/scripts/server/robot_client_openpi.py \
     --host="127.0.0.1" \
     --port=18000 \
-    --robot.type=realman \
+    --robot.type=bi_realman \
     --robot.cameras="{ observation.images.cam_high: {type: dummy, width: 640, height: 480, fps: 5},observation.images.cam_left_wrist: {type: dummy, width: 640, height: 480, fps: 5},observation.images.cam_right_wrist: {type: dummy, width: 640, height: 480, fps: 5}}" \
+    --robot.init_type="joint"
     --robot.init_ee_state="[0, 0, 0, 0, 0, 0, 0]" \
     --robot.base_euler="[0, 0, 0]" \
     --robot.id=black 
@@ -31,9 +32,10 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
 peach
 ```python
 python src/lerobot/scripts/server/robot_client_openpi.py \
-  --host="172.16.19.138"     \
+  --host="127.0.0.1"     \
   --port=18000     \
-  --robot.type=bi_realman     \
+  --task="put peach into basket"    \
+  --robot.type=bi_realman_end_effector     \
   --robot.ip_left="169.254.128.18"    \
   --robot.port_left=8080     \
   --robot.ip_right="169.254.128.19"     \
@@ -41,9 +43,8 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
   --robot.block=False \
   --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30}}"     \
   --robot.init_type="joint"     \
-  --robot.init_state_left="[-0.77616538, -2.04976705,  1.6935104,   1.34390352, -0.24169319, -1.75644702,  0.86908667,  0.861     ]" \
-  --robot.init_state_right="[ 0.91439543,  1.89743463, -1.03691755, -0.70560173, -2.48657061, -1.54884003, 1.88523482,  0.853     ]" \
-  --robot.id=black 
+  --robot.id=black    \
+  --robot.delta_with=previous
 ```
 
 """

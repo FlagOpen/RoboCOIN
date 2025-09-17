@@ -1,3 +1,4 @@
+import importlib
 import time
 from ..base_robot import BaseRobot
 from .configuration_realman import RealmanConfig
@@ -13,11 +14,7 @@ class Realman(BaseRobot):
         self.config = config
 
     def _check_dependency(self):
-        try:
-            from Robotic_Arm.rm_robot_interface import (
-                RoboticArm, 
-            )
-        except ImportError:
+        if importlib.util.find_spec("Robotic_Arm") is None:
             raise ImportError(
                 "Realman robot requires the Robotic_Arm package. "
                 "Please install it using 'pip install Robotic_Arm'."

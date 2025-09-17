@@ -13,6 +13,13 @@ class Piper(BaseRobot):
         super().__init__(config)
         self.config = config
     
+    def _check_dependency(self):
+        if importlib.util.find_spec("piper_sdk") is None:
+            raise ImportError(
+                "Piper robot requires the piper_sdk package. "
+                "Please install it using 'pip install piper_sdk'."
+            )
+    
     def _connect_arm(self):
         from piper_sdk import C_PiperInterface_V2
         self.arm = C_PiperInterface_V2(self.config.can)

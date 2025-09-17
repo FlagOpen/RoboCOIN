@@ -27,6 +27,13 @@ class BiRealmanConfig(BiBaseRobotConfig):
          1.16,  2.01, -0.79, -0.68, -2.84, -1.61,  2.37, 832.00,
     ])
 
+    joint_units: list[str] = field(default_factory=lambda: [
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm',
+    ])
+    pose_units: list[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'degree', 'degree', 'degree', 'm',
+    ])
+
 
 @RobotConfig.register_subclass("bi_realman_end_effector")
 @dataclass

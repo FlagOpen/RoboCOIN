@@ -34,4 +34,4 @@ class RealmanConfig(BaseRobotConfig):
 @RobotConfig.register_subclass("realman_end_effector")
 @dataclass
 class RealmanEndEffectorConfig(RealmanConfig, BaseRobotEndEffectorConfig):
-    base_euler: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    pass

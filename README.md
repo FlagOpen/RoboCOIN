@@ -1,365 +1,296 @@
-<p align="center">
-  <img alt="LeRobot, Hugging Face Robotics Library" src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/lerobot-logo-thumbnail.png" width="100%">
-  <br/>
-  <br/>
-</p>
+# RoboCoin-LeRobot说明文档
 
-<div align="center">
+## 概述
 
-[![Tests](https://github.com/huggingface/lerobot/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/huggingface/lerobot/actions/workflows/nightly.yml?query=branch%3Amain)
-[![Python versions](https://img.shields.io/pypi/pyversions/lerobot)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/huggingface/lerobot/blob/main/LICENSE)
-[![Status](https://img.shields.io/pypi/status/lerobot)](https://pypi.org/project/lerobot/)
-[![Version](https://img.shields.io/pypi/v/lerobot)](https://pypi.org/project/lerobot/)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.1-ff69b4.svg)](https://github.com/huggingface/lerobot/blob/main/CODE_OF_CONDUCT.md)
-[![Discord](https://dcbadge.vercel.app/api/server/C5P34WJ68S?style=flat)](https://discord.gg/s3KuuzsPFb)
+RoboCoin-LeRobot是一个基于LeRobot扩展的机器人部署环境，主要修改为：
 
-<!-- [![Coverage](https://codecov.io/gh/huggingface/lerobot/branch/main/graph/badge.svg?token=TODO)](https://codecov.io/gh/huggingface/lerobot) -->
+1. 新增与真实机器人平台的交互逻辑：Agilex Piper、Realman，以及虚拟机器人平台的交互逻辑
+2. 优化机器人控制逻辑：如单位转换、绝对与相对位置控制、关节与末端控制、相机与轨迹可视化等
+3. 优化客户端推理逻辑：加入键盘交互、视频记录等功能
+4. 提供与$\pi_0$服务端交互的客户端部署工具
+5. 提供扩展机器人平台的良好封装
 
-</div>
-
-<h2 align="center">
-    <p><a href="https://huggingface.co/docs/lerobot/hope_jr">
-        Build Your Own HopeJR Robot!</a></p>
-</h2>
-
-<div align="center">
-  <img
-    src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/hope_jr/hopejr.png"
-    alt="HopeJR robot"
-    title="HopeJR robot"
-    width="60%"
-  />
-
-  <p><strong>Meet HopeJR – A humanoid robot arm and hand for dexterous manipulation!</strong></p>
-  <p>Control it with exoskeletons and gloves for precise hand movements.</p>
-  <p>Perfect for advanced manipulation tasks! 🤖</p>
-
-  <p><a href="https://huggingface.co/docs/lerobot/hope_jr">
-      See the full HopeJR tutorial here.</a></p>
-</div>
-
-<br/>
-
-<h2 align="center">
-    <p><a href="https://huggingface.co/docs/lerobot/so101">
-        Build Your Own SO-101 Robot!</a></p>
-</h2>
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/so101/so101.webp" alt="SO-101 follower arm" title="SO-101 follower arm" width="90%"/></td>
-      <td align="center"><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/so101/so101-leader.webp" alt="SO-101 leader arm" title="SO-101 leader arm" width="90%"/></td>
-    </tr>
-  </table>
-
-  <p><strong>Meet the updated SO100, the SO-101 – Just €114 per arm!</strong></p>
-  <p>Train it in minutes with a few simple moves on your laptop.</p>
-  <p>Then sit back and watch your creation act autonomously! 🤯</p>
-
-  <p><a href="https://huggingface.co/docs/lerobot/so101">
-      See the full SO-101 tutorial here.</a></p>
-
-  <p>Want to take it to the next level? Make your SO-101 mobile by building LeKiwi!</p>
-  <p>Check out the <a href="https://huggingface.co/docs/lerobot/lekiwi">LeKiwi tutorial</a> and bring your robot to life on wheels.</p>
-
-  <img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/lekiwi/kiwi.webp" alt="LeKiwi mobile robot" title="LeKiwi mobile robot" width="50%">
-</div>
-
-<br/>
-
-<h3 align="center">
-    <p>LeRobot: State-of-the-art AI for real-world robotics</p>
-</h3>
-
----
-
-🤗 LeRobot aims to provide models, datasets, and tools for real-world robotics in PyTorch. The goal is to lower the barrier to entry to robotics so that everyone can contribute and benefit from sharing datasets and pretrained models.
-
-🤗 LeRobot contains state-of-the-art approaches that have been shown to transfer to the real-world with a focus on imitation learning and reinforcement learning.
-
-🤗 LeRobot already provides a set of pretrained models, datasets with human collected demonstrations, and simulation environments to get started without assembling a robot. In the coming weeks, the plan is to add more and more support for real-world robotics on the most affordable and capable robots out there.
-
-🤗 LeRobot hosts pretrained models and datasets on this Hugging Face community page: [huggingface.co/lerobot](https://huggingface.co/lerobot)
-
-#### Examples of pretrained models on simulation environments
-
-<table>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/gym/aloha_act.gif" width="100%" alt="ACT policy on ALOHA env"/></td>
-    <td><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/gym/simxarm_tdmpc.gif" width="100%" alt="TDMPC policy on SimXArm env"/></td>
-    <td><img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/gym/pusht_diffusion.gif" width="100%" alt="Diffusion policy on PushT env"/></td>
-  </tr>
-  <tr>
-    <td align="center">ACT policy on ALOHA env</td>
-    <td align="center">TDMPC policy on SimXArm env</td>
-    <td align="center">Diffusion policy on PushT env</td>
-  </tr>
-</table>
-
-## Installation
-
-LeRobot works with Python 3.10+ and PyTorch 2.2+.
-
-### Environment Setup
-
-Create a virtual environment with Python 3.10 and activate it, e.g. with [`miniconda`](https://docs.anaconda.com/free/miniconda/index.html):
-
-```bash
-conda create -y -n lerobot python=3.10
-conda activate lerobot
-```
-
-When using `miniconda`, install `ffmpeg` in your environment:
-
-```bash
-conda install ffmpeg -c conda-forge
-```
-
-> **NOTE:** This usually installs `ffmpeg 7.X` for your platform compiled with the `libsvtav1` encoder. If `libsvtav1` is not supported (check supported encoders with `ffmpeg -encoders`), you can:
->
-> - _[On any platform]_ Explicitly install `ffmpeg 7.X` using:
->
-> ```bash
-> conda install ffmpeg=7.1.1 -c conda-forge
-> ```
->
-> - _[On Linux only]_ Install [ffmpeg build dependencies](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu#GettheDependencies) and [compile ffmpeg from source with libsvtav1](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu#libsvtav1), and make sure you use the corresponding ffmpeg binary to your install with `which ffmpeg`.
-
-### Install LeRobot 🤗
-
-#### From Source
-
-First, clone the repository and navigate into the directory:
-
-```bash
-git clone https://github.com/huggingface/lerobot.git
-cd lerobot
-```
-
-Then, install the library in editable mode. This is useful if you plan to contribute to the code.
+## 安装
 
 ```bash
 pip install -e .
+pip install -e third_party/openpi-client
 ```
 
-> **NOTE:** If you encounter build errors, you may need to install additional dependencies (`cmake`, `build-essential`, and `ffmpeg libs`). On Linux, run:
-> `sudo apt-get install cmake build-essential python3-dev pkg-config libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev`. For other systems, see: [Compiling PyAV](https://pyav.org/docs/develop/overview/installation.html#bring-your-own-ffmpeg)
+## 了解机器人平台的控制逻辑
 
-For simulations, 🤗 LeRobot comes with gymnasium environments that can be installed as extras:
-
-- [aloha](https://github.com/huggingface/gym-aloha)
-- [xarm](https://github.com/huggingface/gym-xarm)
-- [pusht](https://github.com/huggingface/gym-pusht)
-
-For instance, to install 🤗 LeRobot with aloha and pusht, use:
+所有机器人平台都在`src/lerobot/robots`下，以Realman机器人平台为例，相应的所有文件位于`src/lerobot/robots/realman`（单臂）与`src/lerobot/robots/bi_realman`（双臂）下:
 
 ```bash
-pip install -e ".[aloha, pusht]"
+realman # 单臂
+├── __init__.py
+├── configuration_realman.py # 配置类
+├── realman.py               # 关节控制
+└── realman_end_effector.py  # 末端控制
+
+bi_realman # 双臂
+├── __init__.py
+├── bi_realman.py               # 关节控制
+├── bi_realman_end_effector.py  # 末端控制
+└── configuration_bi_realman.py # 配置类
 ```
 
-### Installation from PyPI
+机器人平台的基础配置位于`src/lerobot/robots/base_robot/configuration_base_robot.py`：
 
-**Core Library:**
-Install the base package with:
+```python
+# 关节控制的基础配置类
+@RobotConfig.register_subclass("base_robot")
+@dataclass
+class BaseRobotConfig(RobotConfig):
+    # 相机设置，表示为字典，字典key为相机名，value为相机配置类，如
+    # {
+    #     head: {type: opencv, index_or_path:0, height: 480, width: 640, fps: 30}, 
+    #     wrist: {type: opencv, index_or_path:1, height: 480, width: 640, fps: 30},
+    # }
+    # 上述示例创建了head和wrist两个相机，分别加载了/dev/video0, /dev/video1
+    # 最终发送给模型的将是{"observation.head": shape(480, 640, 3), "observation.wrist": shape(480, 640, 3)}
+    cameras: dict[str, CameraConfig] = field(default_factory=dict)
+    # 关节名称，包含夹爪
+    joint_names: list[str] = field(default_factory=lambda: [
+        'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
+    ]) 
+
+    # 初始化模式：none表示不进行初始化，joint/end_effector表示基于关节/末端初始化
+    init_type: str = 'none'
+    # 根据初始化模式，在开始推理之前要初始化的值
+    # 对于joint，单位为radian
+    # 对于end_effector，单位为m(前3个值) / radian（3~6个值）
+    init_state: list[float] = field(default_factory=lambda: [
+        0, 0, 0, 0, 0, 0, 0, 0,
+    ])
+
+    # 各关节控制单位，视SDK而定，如Realman SDK共7个关节，接收角度作为参数，则应设为：
+    # ['degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm']
+    # 最后一维为m，表示夹爪值不用进行单位转换
+    joint_units: list[str] = field(default_factory=lambda: [
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
+    ])
+    # 末端控制单位，视SDK而定，如Realman SDK接收米作为xyz和角度作为rpy，则应设为：
+    # ['m', 'm', 'm', 'degree', 'degree', 'degree', 'm']
+    # 最后一维为m，表示夹爪值不用进行单位转换
+    pose_units: list[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'radian', 'radian', 'radian', 'm',
+    ])
+    # 模型接收的关节控制单位，视数据集而定，如数据集中保存的单位为弧度，则应设为：
+    # ['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']
+    # 最后一维为m，表示夹爪值不用进行单位转换
+    model_joint_units: list[str] = field(default_factory=lambda: [
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
+    ])
+    
+    # 相对位置控制模式：none表示绝对位置控制，previous/init表示基于上一状态或初始状态进行相对转换
+    # 以关节控制为例:
+    # - 若为previous：则得到的state + 上一个state -> 要达到的state
+    # - 若为init：则得到的state + 初始state -> 要达到的state
+    delta_with: str = 'none'
+
+    # 是否启用可视化
+    visualize: bool = True
+    # 是否绘制2D轨迹图，包含XY, XZ, YZ平面上的末端轨迹
+    draw_2d: bool = True
+    # 是否绘制3D轨迹图
+    draw_3d: bool = True
+
+
+# 末端控制的基础配置类
+@RobotConfig.register_subclass("base_robot_end_effector")
+@dataclass
+class BaseRobotEndEffectorConfig(BaseRobotConfig):
+    # 相对变换角，适用于跨本体的情况，即不同本体的零姿态具有不同的朝向，则需要通过该参数进行变换
+    base_euler: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+    # 模型接收的末端控制单位，视数据集而定，如数据集中保存的单位是米和弧度，则应设为：
+    # ['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']
+    # 最后一维为m，表示夹爪值不用进行单位转换
+    model_pose_units: list[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'radian', 'radian', 'radian', 'm',
+    ])
+```
+
+每个机器人平台都有专门的扩展配置，以realman为例：
+
+```python
+@RobotConfig.register_subclass("realman")
+@dataclass
+class RealmanConfig(BaseRobotConfig):
+    ip: str = "169.254.128.18" # Realman SDK连接ip
+    port: int = 8080           # Realman SDK连接端口
+    block: bool = False        # 是否阻塞控制
+    wait_second: float = 0.1   # 如果非阻塞，每次行动后延迟多久
+    velocity: int = 30         # 移动速度
+
+    # Realman共有7个关节 + 夹爪
+    joint_names: list[str] = field(default_factory=lambda: [
+        'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
+    ])
+
+    # 使用joint控制达到Realman执行任务的初始姿态
+    init_type: str = "joint"
+    init_state: list[float] = field(default_factory=lambda: [
+        -0.84, -2.03,  1.15,  1.15,  2.71,  1.60, -2.99, 888.00,
+    ])
+
+    # Realman SDK默认采用米 + 角度
+    joint_units: list[str] = field(default_factory=lambda: [
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm',
+    ])
+    pose_units: list[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'degree', 'degree', 'degree', 'm',
+    ])
+
+
+@RobotConfig.register_subclass("realman_end_effector")
+@dataclass
+class RealmanEndEffectorConfig(RealmanConfig, BaseRobotEndEffectorConfig):
+    pass
+```
+
+## 轨迹重播
+
+机器人平台的配置选项可以在配置类文件中修改，也可以通过命令行传入，以双臂Realman为例，命令如下：
 
 ```bash
-pip install lerobot
+python src/lerobot/scripts/replay.py \
+    --repo_id=<your_lerobot_repo_id> \
+    --robot.type=bi_realman \
+    --robot.ip_left="169.254.128.18" \
+    --robot.port_left=8080 \
+    --robot.ip_right="169.254.128.19" \
+    --robot.port_right=8080 \
+    --robot.block=True \
+    --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30}}" \
+    --robot.id=black \
+    --robot.visualize=True
 ```
 
-_This installs only the default dependencies._
+上述命令指定了Realman左臂与右臂的IP/端口，提供了相机索引。该命令将打开一个可视化窗口，从中可以查看相机图像与轨迹。
 
-**Extra Features:**
-To install additional functionality, use one of the following:
+## 模型推理
+
+**基于LeRobot Policy的推理**
+
+TODO
+
+**基于OpenPI Policy的推理**
+
+1. 运行OpenPI Server
+2. 运行客户端程序，以Realman为例，命令如下：
 
 ```bash
-pip install 'lerobot[all]'          # All available features
-pip install 'lerobot[aloha,pusht]'  # Specific features (Aloha & Pusht)
-pip install 'lerobot[feetech]'      # Feetech motor support
+python src/lerobot/scripts/server/robot_client_openpi.py \
+  --host="127.0.0.1" \ # 服务端IP
+  --port=8000 \ # 服务端端口号
+  --task="put peach into basket" \ # 任务指令
+  --robot.type=bi_realman \ # Realman的配置项
+  --robot.ip_left="169.254.128.18" \ 
+  --robot.port_left=8080 \ 
+  --robot.ip_right="169.254.128.19" \ 
+  --robot.port_right=8080 \ 
+  --robot.block=False \ 
+  --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30}}" \ # 
+  --robot.init_type="joint" \
+  --robot.id=black
 ```
 
-_Replace `[...]` with your desired features._
+上述命令将初始化realman姿态，加载头部、左手、右手相机，传入"put peach into basket"作为prompt，并获取action对机器人平台进行控制。
 
-**Available Tags:**
-For a full list of optional dependencies, see:
-https://pypi.org/project/lerobot/
+推理时，可以在控制台中按"q"随时退出，之后按"y/n"表示当前任务成功或失败，视频将被存放到`results/`目录中。
 
-### Weights & Biases
+**层次化任务描述的推理 (目前仅支持OpenPI)**
 
-To use [Weights and Biases](https://docs.wandb.ai/quickstart) for experiment tracking, log in with
+首先为当前任务编写一个配置类，如`src/lerobot/scripts/server/task_configs/towel_basket.py`:
+
+```python
+@dataclass
+class TaskConfig:
+    # 场景描述
+    scene: str = "a yellow basket and a grey towel are place on a white table, the basket is on the left and the towel is on the right."
+    # 任务指令
+    task: str = "put the towel into the basket."
+    # 子任务指令
+    subtasks: List[str] = field(default_factory=lambda: [
+        "left gripper catch basket",
+        "left gripper move basket to center",
+        "right gripper catch towel",
+        "right gripper move towel over basket and release",
+        "end",
+    ])
+    # 状态统计算子
+    operaters: List[Dict] = field(default_factory=lambda: [
+        {
+            'type': 'position',
+            'name': 'position_left',
+            'window_size': 1,
+            'state_key': 'observation.state',
+            'xyz_range': (0, 3),
+        }, {
+            'type': 'position',
+            'name': 'position_right',
+            'window_size': 1,
+            'state_key': 'observation.state',
+            'xyz_range': (7, 10),
+        }, {
+            'type': 'position_rotation',
+            'name': 'position_aligned_left',
+            'window_size': 1,
+            'position_key': 'position_left',
+            'rotation_euler': (0, 0, 0.5 * math.pi),
+        }, {
+            'type': 'position_rotation',
+            'name': 'position_aligned_right',
+            'window_size': 1,
+            'position_key': 'position_right',
+            'rotation_euler': (0, 0, 0.5 * math.pi),
+        }, {
+            'type': 'movement',
+            'name': 'movement_left',
+            'window_size': 3,
+            'position_key': 'position_aligned_left',
+        }, {
+            'type': 'movement',
+            'name': 'movement_right',
+            'window_size': 3,
+            'position_key': 'position_aligned_right',
+        },{
+            'type': 'movement_summary',
+            'name': 'movement_summary_left',
+            'movement_key': 'movement_left',
+            'threshold': 2e-3,
+        }, {
+            'type': 'movement_summary',
+            'name': 'movement_summary_right',
+            'movement_key': 'movement_right',
+            'threshold': 2e-3,
+        }, 
+    ])
+```
+
+之后运行命令：
 
 ```bash
-wandb login
+python src/lerobot/scripts/server/robot_client_openpi_anno.py \
+  --host="127.0.0.1" \
+  --port=8000 \
+  --task_config_path="lerobot/scripts/server/task_configs/towel_basket.py" \
+  --robot.type=bi_realman_end_effector \
+  --robot.ip_left="169.254.128.18" \
+  --robot.port_left=8080 \
+  --robot.ip_right="169.254.128.19" \
+  --robot.port_right=8080 \
+  --robot.block=False \
+  --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30}}" \
+  --robot.init_type="joint" \
+  --robot.id=black
 ```
 
-(note: you will also need to enable WandB in the configuration. See below.)
+推理时，将从第一个子任务开始，按"s"切换到下一个子任务。
+可以在控制台中按"q"随时退出，之后按"y/n"表示当前任务成功或失败，视频将被存放到`results/`目录中。
 
-### Visualize datasets
+## 新增自定义机器人
 
-Check out [example 1](https://github.com/huggingface/lerobot/blob/main/examples/1_load_lerobot_dataset.py) that illustrates how to use our dataset class which automatically downloads data from the Hugging Face hub.
-
-You can also locally visualize episodes from a dataset on the hub by executing our script from the command line:
-
-```bash
-python -m lerobot.scripts.visualize_dataset \
-    --repo-id lerobot/pusht \
-    --episode-index 0
-```
-
-or from a dataset in a local folder with the `root` option and the `--local-files-only` (in the following case the dataset will be searched for in `./my_local_data_dir/lerobot/pusht`)
-
-```bash
-python -m lerobot.scripts.visualize_dataset \
-    --repo-id lerobot/pusht \
-    --root ./my_local_data_dir \
-    --local-files-only 1 \
-    --episode-index 0
-```
-
-It will open `rerun.io` and display the camera streams, robot states and actions, like this:
-
-https://github-production-user-asset-6210df.s3.amazonaws.com/4681518/328035972-fd46b787-b532-47e2-bb6f-fd536a55a7ed.mov?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240505%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240505T172924Z&X-Amz-Expires=300&X-Amz-Signature=d680b26c532eeaf80740f08af3320d22ad0b8a4e4da1bcc4f33142c15b509eda&X-Amz-SignedHeaders=host&actor_id=24889239&key_id=0&repo_id=748713144
-
-Our script can also visualize datasets stored on a distant server. See `python -m lerobot.scripts.visualize_dataset --help` for more instructions.
-
-### The `LeRobotDataset` format
-
-A dataset in `LeRobotDataset` format is very simple to use. It can be loaded from a repository on the Hugging Face hub or a local folder simply with e.g. `dataset = LeRobotDataset("lerobot/aloha_static_coffee")` and can be indexed into like any Hugging Face and PyTorch dataset. For instance `dataset[0]` will retrieve a single temporal frame from the dataset containing observation(s) and an action as PyTorch tensors ready to be fed to a model.
-
-A specificity of `LeRobotDataset` is that, rather than retrieving a single frame by its index, we can retrieve several frames based on their temporal relationship with the indexed frame, by setting `delta_timestamps` to a list of relative times with respect to the indexed frame. For example, with `delta_timestamps = {"observation.image": [-1, -0.5, -0.2, 0]}` one can retrieve, for a given index, 4 frames: 3 "previous" frames 1 second, 0.5 seconds, and 0.2 seconds before the indexed frame, and the indexed frame itself (corresponding to the 0 entry). See example [1_load_lerobot_dataset.py](https://github.com/huggingface/lerobot/blob/main/examples/1_load_lerobot_dataset.py) for more details on `delta_timestamps`.
-
-Under the hood, the `LeRobotDataset` format makes use of several ways to serialize data which can be useful to understand if you plan to work more closely with this format. We tried to make a flexible yet simple dataset format that would cover most type of features and specificities present in reinforcement learning and robotics, in simulation and in real-world, with a focus on cameras and robot states but easily extended to other types of sensory inputs as long as they can be represented by a tensor.
-
-Here are the important details and internal structure organization of a typical `LeRobotDataset` instantiated with `dataset = LeRobotDataset("lerobot/aloha_static_coffee")`. The exact features will change from dataset to dataset but not the main aspects:
-
-```
-dataset attributes:
-  ├ hf_dataset: a Hugging Face dataset (backed by Arrow/parquet). Typical features example:
-  │  ├ observation.images.cam_high (VideoFrame):
-  │  │   VideoFrame = {'path': path to a mp4 video, 'timestamp' (float32): timestamp in the video}
-  │  ├ observation.state (list of float32): position of an arm joints (for instance)
-  │  ... (more observations)
-  │  ├ action (list of float32): goal position of an arm joints (for instance)
-  │  ├ episode_index (int64): index of the episode for this sample
-  │  ├ frame_index (int64): index of the frame for this sample in the episode ; starts at 0 for each episode
-  │  ├ timestamp (float32): timestamp in the episode
-  │  ├ next.done (bool): indicates the end of an episode ; True for the last frame in each episode
-  │  └ index (int64): general index in the whole dataset
-  ├ episode_data_index: contains 2 tensors with the start and end indices of each episode
-  │  ├ from (1D int64 tensor): first frame index for each episode — shape (num episodes,) starts with 0
-  │  └ to: (1D int64 tensor): last frame index for each episode — shape (num episodes,)
-  ├ stats: a dictionary of statistics (max, mean, min, std) for each feature in the dataset, for instance
-  │  ├ observation.images.cam_high: {'max': tensor with same number of dimensions (e.g. `(c, 1, 1)` for images, `(c,)` for states), etc.}
-  │  ...
-  ├ info: a dictionary of metadata on the dataset
-  │  ├ codebase_version (str): this is to keep track of the codebase version the dataset was created with
-  │  ├ fps (float): frame per second the dataset is recorded/synchronized to
-  │  ├ video (bool): indicates if frames are encoded in mp4 video files to save space or stored as png files
-  │  └ encoding (dict): if video, this documents the main options that were used with ffmpeg to encode the videos
-  ├ videos_dir (Path): where the mp4 videos or png images are stored/accessed
-  └ camera_keys (list of string): the keys to access camera features in the item returned by the dataset (e.g. `["observation.images.cam_high", ...]`)
-```
-
-A `LeRobotDataset` is serialised using several widespread file formats for each of its parts, namely:
-
-- hf_dataset stored using Hugging Face datasets library serialization to parquet
-- videos are stored in mp4 format to save space
-- metadata are stored in plain json/jsonl files
-
-Dataset can be uploaded/downloaded from the HuggingFace hub seamlessly. To work on a local dataset, you can specify its location with the `root` argument if it's not in the default `~/.cache/huggingface/lerobot` location.
-
-### Evaluate a pretrained policy
-
-Check out [example 2](https://github.com/huggingface/lerobot/blob/main/examples/2_evaluate_pretrained_policy.py) that illustrates how to download a pretrained policy from Hugging Face hub, and run an evaluation on its corresponding environment.
-
-We also provide a more capable script to parallelize the evaluation over multiple environments during the same rollout. Here is an example with a pretrained model hosted on [lerobot/diffusion_pusht](https://huggingface.co/lerobot/diffusion_pusht):
-
-```bash
-lerobot-eval \
-    --policy.path=lerobot/diffusion_pusht \
-    --env.type=pusht \
-    --eval.batch_size=10 \
-    --eval.n_episodes=10 \
-    --policy.use_amp=false \
-    --policy.device=cuda
-```
-
-Note: After training your own policy, you can re-evaluate the checkpoints with:
-
-```bash
-lerobot-eval --policy.path={OUTPUT_DIR}/checkpoints/last/pretrained_model
-```
-
-See `lerobot-eval --help` for more instructions.
-
-### Train your own policy
-
-Check out [example 3](https://github.com/huggingface/lerobot/blob/main/examples/3_train_policy.py) that illustrates how to train a model using our core library in python, and [example 4](https://github.com/huggingface/lerobot/blob/main/examples/4_train_policy_with_script.md) that shows how to use our training script from command line.
-
-To use wandb for logging training and evaluation curves, make sure you've run `wandb login` as a one-time setup step. Then, when running the training command above, enable WandB in the configuration by adding `--wandb.enable=true`.
-
-A link to the wandb logs for the run will also show up in yellow in your terminal. Here is an example of what they look like in your browser. Please also check [here](https://github.com/huggingface/lerobot/blob/main/examples/4_train_policy_with_script.md#typical-logs-and-metrics) for the explanation of some commonly used metrics in logs.
-
-\<img src="https://raw.githubusercontent.com/huggingface/lerobot/main/media/wandb.png" alt="WandB logs example"\>
-
-Note: For efficiency, during training every checkpoint is evaluated on a low number of episodes. You may use `--eval.n_episodes=500` to evaluate on more episodes than the default. Or, after training, you may want to re-evaluate your best checkpoints on more episodes or change the evaluation settings. See `lerobot-eval --help` for more instructions.
-
-#### Reproduce state-of-the-art (SOTA)
-
-We provide some pretrained policies on our [hub page](https://huggingface.co/lerobot) that can achieve state-of-the-art performances.
-You can reproduce their training by loading the config from their run. Simply running:
-
-```bash
-lerobot-train --config_path=lerobot/diffusion_pusht
-```
-
-reproduces SOTA results for Diffusion Policy on the PushT task.
-
-## Contribute
-
-If you would like to contribute to 🤗 LeRobot, please check out our [contribution guide](https://github.com/huggingface/lerobot/blob/main/CONTRIBUTING.md).
-
-### Add a pretrained policy
-
-Once you have trained a policy you may upload it to the Hugging Face hub using a hub id that looks like `${hf_user}/${repo_name}` (e.g. [lerobot/diffusion_pusht](https://huggingface.co/lerobot/diffusion_pusht)).
-
-You first need to find the checkpoint folder located inside your experiment directory (e.g. `outputs/train/2024-05-05/20-21-12_aloha_act_default/checkpoints/002500`). Within that there is a `pretrained_model` directory which should contain:
-
-- `config.json`: A serialized version of the policy configuration (following the policy's dataclass config).
-- `model.safetensors`: A set of `torch.nn.Module` parameters, saved in [Hugging Face Safetensors](https://huggingface.co/docs/safetensors/index) format.
-- `train_config.json`: A consolidated configuration containing all parameters used for training. The policy configuration should match `config.json` exactly. This is useful for anyone who wants to evaluate your policy or for reproducibility.
-
-To upload these to the hub, run the following:
-
-```bash
-huggingface-cli upload ${hf_user}/${repo_name} path/to/pretrained_model
-```
-
-See [eval.py](https://github.com/huggingface/lerobot/blob/main/src/lerobot/scripts/eval.py) for an example of how other people may use your policy.
-
-### Acknowledgment
-
-- The LeRobot team 🤗 for building SmolVLA [Paper](https://arxiv.org/abs/2506.01844), [Blog](https://huggingface.co/blog/smolvla).
-- Thanks to Tony Zhao, Zipeng Fu and colleagues for open sourcing ACT policy, ALOHA environments and datasets. Ours are adapted from [ALOHA](https://tonyzhaozh.github.io/aloha) and [Mobile ALOHA](https://mobile-aloha.github.io).
-- Thanks to Cheng Chi, Zhenjia Xu and colleagues for open sourcing Diffusion policy, Pusht environment and datasets, as well as UMI datasets. Ours are adapted from [Diffusion Policy](https://diffusion-policy.cs.columbia.edu) and [UMI Gripper](https://umi-gripper.github.io).
-- Thanks to Nicklas Hansen, Yunhai Feng and colleagues for open sourcing TDMPC policy, Simxarm environments and datasets. Ours are adapted from [TDMPC](https://github.com/nicklashansen/tdmpc) and [FOWM](https://www.yunhaifeng.com/FOWM).
-- Thanks to Antonio Loquercio and Ashish Kumar for their early support.
-- Thanks to [Seungjae (Jay) Lee](https://sjlee.cc/), [Mahi Shafiullah](https://mahis.life/) and colleagues for open sourcing [VQ-BeT](https://sjlee.cc/vq-bet/) policy and helping us adapt the codebase to our repository. The policy is adapted from [VQ-BeT repo](https://github.com/jayLEE0301/vq_bet_official).
-
-## Citation
-
-If you want, you can cite this work with:
-
-```bibtex
-@misc{cadene2024lerobot,
-    author = {Cadene, Remi and Alibert, Simon and Soare, Alexander and Gallouedec, Quentin and Zouitine, Adil and Palma, Steven and Kooijmans, Pepijn and Aractingi, Michel and Shukor, Mustafa and Aubakirova, Dana and Russi, Martino and Capuano, Francesco and Pascal, Caroline and Choghari, Jade and Moss, Jess and Wolf, Thomas},
-    title = {LeRobot: State-of-the-art Machine Learning for Real-World Robotics in Pytorch},
-    howpublished = "\url{https://github.com/huggingface/lerobot}",
-    year = {2024}
-}
-```
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=huggingface/lerobot&type=Timeline)](https://star-history.com/#huggingface/lerobot&Timeline)
+TODO

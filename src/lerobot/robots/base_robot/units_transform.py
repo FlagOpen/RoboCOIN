@@ -10,6 +10,7 @@ class LengthTransform:
     def input_transform(self, value: float) -> float:
         # convert to m
         unit_map = {
+            '001mm': 0.000001,
             'mm': 0.001,
             'cm': 0.01,
             'm': 1.0,
@@ -19,6 +20,7 @@ class LengthTransform:
     def output_transform(self, value: float) -> float:
         # convert from m
         unit_map = {
+            '001mm': 1000000.0,
             'mm': 1000.0,
             'cm': 100.0,
             'm': 1.0,
@@ -34,6 +36,7 @@ class AngleTransform:
     def input_transform(self, value: float) -> float:
         # convert to radian
         unit_map = {
+            '001degree': math.pi / 180000.0,
             'degree': math.pi / 180.0,
             'radian': 1.0,
         }
@@ -42,6 +45,7 @@ class AngleTransform:
     def output_transform(self, value: float) -> float:
         # convert from radian
         unit_map = {
+            '001degree': 180000.0 / math.pi,
             'degree': 180.0 / math.pi,
             'radian': 1.0,
         }

@@ -22,6 +22,13 @@ class BiPiperConfig(BiBaseRobotConfig):
     init_state_right: list[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 60000,
     ])
+    
+    joint_units: list[str] = field(default_factory=lambda: [
+        '001degree', '001degree', '001degree', '001degree', '001degree', '001degree', 'm',
+    ])
+    pose_units: list[str] = field(default_factory=lambda: [
+        '001mm', '001mm', '001mm', '001degree', '001degree', '001degree', 'm',
+    ])
 
 
 @RobotConfig.register_subclass("bi_piper_end_effector")

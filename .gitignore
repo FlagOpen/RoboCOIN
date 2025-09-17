@@ -14,8 +14,6 @@
 
 results/*
 datasets/*
-third_party/*
-!third_party/install.sh
 
 
 ### Environments & Dependencies ###

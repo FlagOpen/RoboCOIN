@@ -21,10 +21,10 @@ class PiperConfig(BaseRobotConfig):
     ])
 
     joint_units: list[str] = field(default_factory=lambda: [
-        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm',
+        '001degree', '001degree', '001degree', '001degree', '001degree', '001degree', 'm',
     ])
     pose_units: list[str] = field(default_factory=lambda: [
-        'm', 'm', 'm', 'degree', 'degree', 'degree', 'm',
+        '001mm', '001mm', '001mm', '001degree', '001degree', '001degree', 'm',
     ])
 
 

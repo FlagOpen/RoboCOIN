@@ -154,7 +154,7 @@ class OpenPIWithAnnotationRobotClient(OpenPIRobotClient):
             self._subtasks[self._subtask_index],
             annotation[-1]['movement_summary_left'],
             annotation[-1]['movement_summary_right'],
-        )
+        ).lower()
         prompt = (
             prompt.replace('. ', '')
             .replace('.', '')

@@ -1,17 +1,17 @@
 import math
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import Any, List, Dict
 
 
 @dataclass
 class TaskConfig:
-    scene: str = "a yellow basket and a grey towel are place on a white table, the basket is on the left and the towel is on the right."
-    task: str = "put the towel into the basket."
+    scene: str = "a brown drawer and a pink peach are place on a white table, the drawer is in the middle and the peach is in front of the drawer."
+    task: str = "put the peach in the drawer and close it."
     subtasks: List[str] = field(default_factory=lambda: [
-        "left gripper catch basket",
-        "left gripper move basket to center",
-        "right gripper catch towel",
-        "right gripper move towel over basket and release",
+        "right gripper catch peach",
+        "right gripper move peach over top drawer and release",
+        "left gripper touch top drawer",
+        "left gripper close top drawer",
         "end",
     ])
     operaters: List[Dict] = field(default_factory=lambda: [

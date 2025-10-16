@@ -50,6 +50,7 @@ EPISODES_PATH = "meta/episodes.jsonl"
 STATS_PATH = "meta/stats.json"
 EPISODES_STATS_PATH = "meta/episodes_stats.jsonl"
 TASKS_PATH = "meta/tasks.jsonl"
+SUBTASKS_PATH = "annotations/subtasks.jsonl"
 
 DEFAULT_VIDEO_PATH = "videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4"
 DEFAULT_PARQUET_PATH = "data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet"
@@ -210,6 +211,18 @@ def load_tasks(local_dir: Path) -> tuple[dict, dict]:
     tasks = {item["task_index"]: item["task"] for item in sorted(tasks, key=lambda x: x["task_index"])}
     task_to_task_index = {task: task_index for task_index, task in tasks.items()}
     return tasks, task_to_task_index
+
+
+def load_subtasks(local_dir: Path) -> dict:
+    subtasks_file_path = local_dir / SUBTASKS_PATH
+    if not subtasks_file_path.exists():
+        return None, None
+    subtasks = load_jsonlines(subtasks_file_path)
+    subtasks = {
+        item["subtask_index"]: item["subtask"] for item in sorted(subtasks, key=lambda x: x["subtask_index"])
+    }
+    subtask_to_subtask_index = {subtask: subtask_index for subtask_index, subtask in subtasks.items()}
+    return subtasks, subtask_to_subtask_index
 
 
 def write_episode(episode: dict, local_dir: Path):

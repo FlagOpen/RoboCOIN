@@ -58,6 +58,7 @@ from lerobot.datasets.utils import (
     load_episodes_stats,
     load_info,
     load_stats,
+    load_subtasks,
     load_tasks,
     validate_episode_buffer,
     validate_frame,
@@ -105,6 +106,7 @@ class LeRobotDatasetMetadata:
         self.info = load_info(self.root)
         check_version_compatibility(self.repo_id, self._version, CODEBASE_VERSION)
         self.tasks, self.task_to_task_index = load_tasks(self.root)
+        self.subtasks, self.subtask_to_subtask_index = load_subtasks(self.root)
         self.episodes = load_episodes(self.root)
         if self._version < packaging.version.parse("v2.1"):
             self.stats = load_stats(self.root)
@@ -732,6 +734,12 @@ class LeRobotDataset(torch.utils.data.Dataset):
         # Add task as a string
         task_idx = item["task_index"].item()
         item["task"] = self.meta.tasks[task_idx]
+
+        if item.get("subtask_indices", None) is not None and self.meta.subtasks is not None:
+            subtask_indices = item["subtask_indices"].tolist()
+            item["subtasks"] = [self.meta.subtasks[idx] for idx in subtask_indices]
+        else:
+            item["subtasks"] = []
 
         return item
 

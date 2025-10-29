@@ -366,11 +366,70 @@ class BiRealmanEndEffectorConfig(BiRealmanConfig, BiBaseRobotEndEffectorConfig):
 
 #### 统一单位转换
 
-...
+该模块位于`src/lerobot/robots/base_robot/units_transform.py`，提供长度和角度测量的单位转换功能，支持在机器人控制系统中进行统一的单位管理：长度使用米（m），角度使用弧度（rad）
+
+**长度单位转换**：标准单位为米（m），支持微米、毫米、厘米、米之间的转换
+
+| 单位 | 符号 | 换算关系 | 
+|-----|------|----------|
+| 微米 | 001mm   | 1 um = 1e-6 m |
+| 毫米 | mm   | 1 mm = 1e-3 m |
+| 厘米 | cm   | 1 cm = 1e-2 m |
+| 米   | m    | 1 m = 1 m |
+
+**角度单位转换**：标准单位为弧度（rad），支持毫度、度和弧度之间的转换
+
+| 单位 | 符号 | 换算关系 |
+|-----|------|----------|
+| 毫度 | 001deg | 1(001deg) = π/18000 rad |
+| 度   | deg  | 1 deg = π/180 rad |
+| 弧度 | rad  | 1 rad = 1 rad |
+
+推理过程中，机器人平台的控制单位与模型输入/输出单位可能不同，该模块提供了统一的转换接口，确保在控制过程中单位的一致性与正确性：
+1. 机器人状态到模型输入的转换：机器人特定单位 -> 标准单位 -> 模型特定单位
+2. 模型输出到机器人控制的转换：模型特定单位 -> 标准单位 -> 机器人特定单位
+
+```mermaid
+sequenceDiagram
+    participant A as 机器人状态（特定单位）
+    participant B as 标准单位
+    participant C as 模型输入/输出（特定单位）
+    A -->> B: 1.转换到标准单位
+    B -->> C: 2.转换到模型特定单位
+    C -->> B: 3.转换到标准单位
+    B -->> A: 4.转换到机器人特定单位
+```
 
 #### 绝对与相对位置控制
 
-...
+提供绝对与相对（相对上一状态、相对初始状态）位置控制3种模式，适用于关节控制与末端执行器控制：
+1. 绝对位置控制（absolute）：直接使用模型输出的位置作为目标位置
+2. 相对上一状态位置控制（relative to previous）：将模型输出的位置作为相对于上一个状态的增量，计算目标位置
+   - 不使用action chunking: 动作 = 当前状态 + 模型输出
+   - 使用action chunking: 动作 = 当前状态 + 模型输出的所有chunk，全部执行结束后再更新当前状态
+3. 相对初始状态位置控制（relative to initial）：将模型输出的位置作为相对于初始状态的增量，计算目标位置
+
+基于相对上一状态位置控制时，使用action chunking的控制流程示例：
+
+```mermaid
+sequenceDiagram
+    participant Model as 模型
+    participant Controller as 控制器
+    participant Robot as 机器人
+    
+    Note over Robot: 当前状态: st
+    
+    Model->>Controller: 输出动作序列: [at+1, at+2, ..., at+n]
+    
+    Note over Controller: 动作始终相对于初始状态 st 进行计算
+
+    loop 执行动作序列 i = 1 to n
+        Controller->>Robot: 执行动作: st + at+i
+        Robot-->>Controller: 达到状态 st+i = st + at+i
+    end
+    
+    Note over Robot: 最终状态: st+n
+```
 
 ## 使用说明
 

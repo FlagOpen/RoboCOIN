@@ -13,7 +13,7 @@ RoboCoin-LeRobot是一个基于LeRobot扩展的机器人部署环境，旨在为
 ```mermaid
 graph LR
     subgraph 机器人底层接口
-    A1[统一单位进制转换]
+    A1[统一单位转换]
     A2[绝对与相对位置控制]
     A3[相机与轨迹可视化]
     A[机器人底层接口]
@@ -85,12 +85,13 @@ graph LR
 
 ```bash
 pip install -e .
-pip install -e third_party/openpi-client
 ```
 
-## 了解机器人平台的控制逻辑
+## 机器人控制逻辑
 
-所有机器人平台都在`src/lerobot/robots`下，以Realman机器人平台为例，相应的所有文件位于`src/lerobot/robots/realman`（单臂）与`src/lerobot/robots/bi_realman`（双臂）下:
+### 机器人目录结构
+
+所有机器人脚本都在`src/lerobot/robots`下，以Realman机器人平台为例，相应的所有文件位于`src/lerobot/robots/realman`（单臂）与`src/lerobot/robots/bi_realman`（双臂）下:
 
 ```bash
 realman # 单臂
@@ -104,6 +105,18 @@ bi_realman # 双臂
 ├── bi_realman.py               # 关节控制
 ├── bi_realman_end_effector.py  # 末端控制
 └── configuration_bi_realman.py # 配置类
+```
+
+### 机器人基础配置类
+
+**继承关系**：
+```mermaid
+graph LR
+    A[RobotConfig] --> B[BaseRobotConfig]
+    B --> C[BaseRobotEndEffectorConfig]
+    B --> D[BiBaseRobotConfig]
+    D --> E[BiBaseRobotEndEffectorConfig]
+    C --> E
 ```
 
 机器人平台的基础配置位于`src/lerobot/robots/base_robot/configuration_base_robot.py`：
@@ -183,7 +196,68 @@ class BaseRobotEndEffectorConfig(BaseRobotConfig):
     ])
 ```
 
-每个机器人平台都有专门的扩展配置，以realman为例：
+参数详解：
+
+| 参数名 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `cameras` | `dict[str, CameraConfig]` | `{}` | 相机配置字典，键为相机名称，值为相机配置 |
+| `joint_names` | `List[str]` | `['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper']` | 关节名称列表，包括夹爪 |
+| `init_type` | `str` | `'none'` | 初始化类型，可选：`'none'`, `'joint'`, `'end_effector'` |
+| `init_state` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | 初始状态：`init_type='joint'`时为关节状态，`init_type='end_effector'`时为末端执行器状态 |
+| `joint_units` | `List[str]` | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']` | 机器人关节单位，用于SDK控制 |
+| `pose_units` | `List[str]` | `['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']` | 末端执行器位姿单位，用于SDK控制 |
+| `model_joint_units` | `List[str]` | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']` | 模型关节单位，用于模型输入/输出 |
+| `delta_with` | `str` | `'none'` | 增量控制模式：`'none'`(绝对控制), `'previous'`(相对上一状态), `'initial'`(相对初始状态) |
+| `visualize` | `bool` | `True` | 是否启用可视化 |
+| `draw_2d` | `bool` | `True` | 是否绘制2D轨迹 |
+| `draw_3d` | `bool` | `True` | 是否绘制3D轨迹 |
+
+双臂机器人的基础配置类位于`src/lerobot/robots/base_robot/configuration_bi_base_robot.py`，继承自单臂基础配置类：
+
+```python
+# 双臂机器人配置
+@RobotConfig.register_subclass("bi_base_robot")
+@dataclass
+class BiBaseRobotConfig(BaseRobotConfig):
+    # 左臂初始姿态
+    init_state_left: List[float] = field(default_factory=lambda: [
+        0, 0, 0, 0, 0, 0, 0, 0,
+    ])
+    # 右臂初始姿态
+    init_state_right: List[float] = field(default_factory=lambda: [
+        0, 0, 0, 0, 0, 0, 0, 0,
+    ])
+
+
+# 双臂机器人末端配置
+@RobotConfig.register_subclass("bi_base_robot_end_effector")
+@dataclass
+class BiBaseRobotEndEffectorConfig(BiBaseRobotConfig, BaseRobotEndEffectorConfig):
+    pass
+```
+
+参数详解：
+
+| 参数名 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `init_state_left` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | 左臂初始关节状态 |
+| `init_state_right` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | 右臂初始关节状态 |
+
+### 特定机器人配置类
+
+每个特定机器人都有专门配置，继承机器人基础配置，请根据具体的机器人SDK进行配置
+
+继承关系，以Realman为例：
+```mermaid
+graph LR
+    A[BaseRobotConfig] --> B[RealmanConfig]
+    A --> C[RealmanEndEffectorConfig]
+    D[BiBaseRobotConfig] --> E[BiRealmanConfig]
+    D --> F[BiRealmanEndEffectorConfig]
+    C --> F
+```
+
+以Realman为例，位于`src/lerobot/robots/realman/configuration_realman.py`：
 
 ```python
 @RobotConfig.register_subclass("realman")
@@ -221,7 +295,64 @@ class RealmanEndEffectorConfig(RealmanConfig, BaseRobotEndEffectorConfig):
     pass
 ```
 
-## 轨迹重播
+对于双臂Realman，配置类位于`src/lerobot/robots/bi_realman/configuration_bi_realman.py`：
+
+```python
+# 双臂Realman配置
+@RobotConfig.register_subclass("bi_realman")
+@dataclass
+class BiRealmanConfig(BiBaseRobotConfig):
+    ip_left: str = "169.254.128.18" # Realman左臂SDK连接ip
+    port_left: int = 8080 # Realman左臂SDK连接端口
+    ip_right: str = "169.254.128.19" # Realman右臂SDK连接ip
+    port_right: int = 8080 # Realman右臂SDK连接端口
+    block: bool = False # 是否阻塞控制
+    wait_second: float = 0.1 # 如果非阻塞，每次行动后延迟多久
+    velocity: int = 30 # 移动速度
+    
+    # Realman共有7个关节 + 夹爪
+    joint_names: List[str] = field(default_factory=lambda: [
+        'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
+    ])
+    
+    # 使用joint控制达到Realman执行任务的初始姿态
+    init_type: str = "joint"
+    init_state_left: List[float] = field(default_factory=lambda: [
+        -0.84, -2.03,  1.15,  1.15,  2.71,  1.60, -2.99, 888.00,
+    ])
+    init_state_right: List[float] = field(default_factory=lambda: [
+         1.16,  2.01, -0.79, -0.68, -2.84, -1.61,  2.37, 832.00,
+    ])
+
+    # Realman SDK默认采用米 + 角度
+    joint_units: List[str] = field(default_factory=lambda: [
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm',
+    ])
+    pose_units: List[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'degree', 'degree', 'degree', 'm',
+    ])
+
+
+# 双臂Realman末端执行器配置
+@RobotConfig.register_subclass("bi_realman_end_effector")
+@dataclass
+class BiRealmanEndEffectorConfig(BiRealmanConfig, BiBaseRobotEndEffectorConfig):
+    pass
+```
+
+### 特定功能说明
+
+**统一单位转换**
+
+...
+
+**绝对与相对位置控制**
+
+...
+
+## 使用说明
+
+### 轨迹重播
 
 机器人平台的配置选项可以在配置类文件中修改，也可以通过命令行传入，以双臂Realman为例，命令如下：
 
@@ -239,17 +370,46 @@ python src/lerobot/scripts/replay.py \
     --robot.visualize=True
 ```
 
-上述命令指定了Realman左臂与右臂的IP/端口，提供了相机索引。该命令将打开一个可视化窗口，从中可以查看相机图像与轨迹。
+上述命令指定了Realman左臂与右臂的IP/端口，并加载了头部、左手、右手相机，轨迹重播时将根据`<your_lerobot_repo_id>`中的数据进行控制
 
-## 模型推理
+### 模型推理
 
 **基于LeRobot Policy的推理**
 
-TODO
+1. 运行LeRobot Server，详见`src/lerobot/scripts/server/policy_server.py`，命令如下：
+```bash
+python src/lerobot/scripts/server/policy_server.py \
+    --host=127.0.0.1 \
+    --port=18080 \
+    --fps=10 
+```
+上述命令将启动一个监听在`127.0.0.1:18080`的服务
+
+2. 运行客户端程序，以双臂Realman为例，命令如下：
+```bash
+python src/lerobot/scripts/server/robot_client.py \
+    --robot.type=bi_realman \
+    --robot.ip_left="169.254.128.18" \
+    --robot.port_left=8080 \
+    --robot.ip_right="169.254.128.19" \
+    --robot.port_right=8080 \
+    --robot.cameras="{ front: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, left_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30},right_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30}}" \
+    --robot.block=False \
+    --robot.id=black \
+    --fps=10 \
+    --task="do something" \
+    --server_address=127.0.0.1:8080 \
+    --policy_type=act \
+    --pretrained_name_or_path=path/to/checkpoint \
+    --actions_per_chunk=50 \
+    --verify_robot_cameras=False
+```
+上述命令将初始化realman姿态，加载头部、左手、右手相机，传入"do something"作为prompt，加载ACT模型进行推理，并获取action对机器人平台进行控制
 
 **基于OpenPI Policy的推理**
 
-1. 运行OpenPI Server
+1. 运行OpenPI Server，详见[OpenPI官方仓库](https://github.com/Physical-Intelligence/openpi)
+
 2. 运行客户端程序，以Realman为例，命令如下：
 
 ```bash
@@ -362,6 +522,8 @@ python src/lerobot/scripts/server/robot_client_openpi_anno.py \
 推理时，将从第一个子任务开始，按"s"切换到下一个子任务。
 可以在控制台中按"q"随时退出，之后按"y/n"表示当前任务成功或失败，视频将被存放到`results/`目录中。
 
-## 新增自定义机器人
+## 自定义功能
+
+### 新增自定义机器人
 
 TODO

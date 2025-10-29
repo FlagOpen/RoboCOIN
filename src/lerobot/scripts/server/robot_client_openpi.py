@@ -49,6 +49,11 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
 
 """
 
+import importlib
+
+if importlib.util.find_spec("openpi_client") is None:
+    raise ImportError("openpi_client is not installed. Please install it via `pip install openpi-client`.")
+
 import draccus
 import imageio
 import numpy as np

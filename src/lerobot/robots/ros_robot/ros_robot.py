@@ -3,6 +3,7 @@ ROS robot implementation.
 """
 
 import importlib
+import numpy as np
 
 from ..base_robot import BaseRobot
 from .configuration_ros_robot import ROSRobotConfig
@@ -35,6 +36,10 @@ class RosRobot(BaseRobot):
             )
     
     def _connect_arm(self) -> None:
+        """
+        Connect to the ROS robot by initializing ROS node,
+        setting up subscribers and publishers.
+        """
         import rospy
         rospy.init_node('ros_robot', anonymous=True)
         self.subscribers = [
@@ -49,6 +54,9 @@ class RosRobot(BaseRobot):
         ]
     
     def _disconnect_arm(self) -> None:
+        """
+        Disconnect from the ROS robot by unregistering subscribers and publishers.
+        """
         for sub in self.subscribers:
             sub.unregister()
         for pub in self.publishers:
@@ -56,9 +64,15 @@ class RosRobot(BaseRobot):
         import rospy
         rospy.signal_shutdown('ROS robot disconnected.')
     
-    def _set_joint_state(self, state: list[int]):
+    def _set_joint_state(self, state: np.ndarray):
+        """
+        Set the joint state of the ROS robot.
+        Params:
+        - state: list of joint positions
+        """
         import rospy
         from sensor_msgs.msg import JointState
+        state = list(state)
         if len(self.publishers) == 0:
             raise RuntimeError("No joint publishers configured for ROS robot.")
         elif len(self.publishers) == 1:
@@ -78,14 +92,14 @@ class RosRobot(BaseRobot):
                 pub.publish(msg)
         rospy.sleep(0.1)  # wait for the message to be sent
 
-    def _get_joint_state(self) -> list[int]:
+    def _get_joint_state(self) -> np.ndarray:
         if len(self.subscribers) == 0:
             raise RuntimeError("No joint subscribers configured for ROS robot.")
         elif len(self.subscribers) == 1:
             msg = self.messages.get(0, None)
             if msg is None:
                 raise RuntimeError("No joint state message received yet.")
-            return list(msg.position)
+            return np.array(list(msg.position))
         else:
             state = []
             for i in range(len(self.subscribers)):
@@ -93,10 +107,10 @@ class RosRobot(BaseRobot):
                 if msg is None:
                     raise RuntimeError(f"No joint state message received yet for subscriber {i}.")
                 state.append(msg.position[0])
-            return state
+            return np.array(state)
     
-    def _set_ee_state(self, state: list[int]):
+    def _set_ee_state(self, state: np.ndarray) -> None:
         raise NotImplementedError("Setting end-effector state is not implemented for ROS robot.")
 
-    def _get_ee_state(self) -> list[int]:
+    def _get_ee_state(self) -> np.ndarray:
         raise NotImplementedError("Getting end-effector state is not implemented for ROS robot.")

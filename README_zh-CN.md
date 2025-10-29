@@ -2,13 +2,84 @@
 
 ## 概述
 
-RoboCoin-LeRobot是一个基于LeRobot扩展的机器人部署环境，主要修改为：
+RoboCoin-LeRobot是一个基于LeRobot扩展的机器人部署环境，旨在为多种机器人平台提供统一的控制接口，实现机器人控制的标准化与简化
 
-1. 新增与真实机器人平台的交互逻辑：Agilex Piper、Realman，以及虚拟机器人平台的交互逻辑
-2. 优化机器人控制逻辑：如单位转换、绝对与相对位置控制、关节与末端控制、相机与轨迹可视化等
-3. 优化客户端推理逻辑：加入键盘交互、视频记录等功能
-4. 提供与$\pi_0$服务端交互的客户端部署工具
-5. 提供扩展机器人平台的良好封装
+**核心功能**：
+1. 实现统一机器人控制接口，支持多种机器人平台的接入与控制，如Piper/Realman等基于SDK的控制，以及基于ROS/Moveit的通用控制方式
+2. 实现统一单位转换接口，支持多种机器人平台的单位转换，如角度制与弧度制的转换
+3. 提供可视化功能，支持2D/3D轨迹绘制与相机图像显示
+4. 支持基于LeRobot Policy与OpenPI Policy的模型推理与机器人控制
+
+```mermaid
+graph LR
+    subgraph 机器人底层接口
+    A1[统一单位进制转换]
+    A2[绝对与相对位置控制]
+    A3[相机与轨迹可视化]
+    A[机器人底层接口]
+    end
+    
+    %% 机器人服务层
+    subgraph 机器人服务
+    C[机器人服务]
+    C1[SDK]
+    C2[ROS]
+    C11[Agilex Piper服务]
+    C12[Realman服务]
+    C13[其他特定机器人服务]
+    C21[通用机器人服务]
+    end
+    
+    %% 相机服务层
+    subgraph 相机服务
+    D[相机服务]
+    D1[OpenCV相机服务]
+    D2[RealSense相机服务]
+    end
+    
+    %% 推理服务层
+    subgraph 推理服务
+    E[推理服务]
+    E1[RPC]
+    E11[Lerobot Policy]
+    E2[WebSocket]
+    E21[OpenPi Policy]
+    end
+    
+    %% 连接关系
+
+    A1 --- A
+    A2 --- A
+    A3 --- A
+
+    C --- C1
+    C --- C2
+    C1 --- C11
+    C1 --- C12
+    C1 --- C13
+    C2 --- C21
+    
+    D --- D1
+    D --- D2
+
+    E --- E1
+    E1 --- E11
+    E --- E2
+    E2 --- E21
+
+    A --- C
+    A --- D
+    A --- E
+    
+    %% 样式定义
+    classDef interfaceClass fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef serviceClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef functionClass fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    
+    class A interfaceClass
+    class B,C,D,E serviceClass
+    class B1,B2,B3,B4,C31,C32 functionClass
+```
 
 ## 安装
 

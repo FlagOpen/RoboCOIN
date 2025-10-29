@@ -1,3 +1,7 @@
+"""
+BiRealman robot implementation.
+"""
+
 from ..bi_base_robot import BiBaseRobot
 from .configuration_bi_realman import BiRealmanConfig
 
@@ -5,6 +9,11 @@ from ..realman import Realman, RealmanConfig
 
 
 class BiRealman(BiBaseRobot):
+    """
+    BiRealman robot implementation.
+    Params:
+    - config: BiRealmanConfig
+    """
 
     config_class = BiRealmanConfig
     name = "bi_realman"
@@ -14,6 +23,10 @@ class BiRealman(BiBaseRobot):
         self.config = config
     
     def _prepare_robots(self):
+        """
+        Prepare the left and right Realman robots.
+        Initializes two Realman instances with respective configurations.
+        """
         left_config = RealmanConfig(
             ip=self.config.ip_left,
             port=self.config.port_left,

@@ -34,6 +34,7 @@ from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
 from lerobot.robots.config import RobotConfig
 from lerobot.robots.utils import make_robot_from_config
 from lerobot.robots import (
+    bi_dummy,
     bi_piper,
     bi_realman,
     dummy,
@@ -69,13 +70,35 @@ class Replay:
         self.robot.disconnect()
     
     def _prepare_action(self, action) -> dict:
-        # left_joint = action[14:21]
-        # left_gripper = action[21:22]
-        # right_joint = action[0:7]
-        # right_gripper = action[7:8]
-        # left_joint = left_joint * 180 / np.pi
-        # right_joint = right_joint * 180 / np.pi
-        # action = np.concatenate([left_joint, left_gripper, right_joint, right_gripper])
+        def rotation_6d_to_rpy(rotation_6d):
+            r1 = rotation_6d[0:3]
+            r2 = rotation_6d[3:6]
+            r3 = np.cross(r1, r2)
+            r_mat = np.stack([r1, r2, r3], axis=-1)
+            sy = np.sqrt(r_mat[0, 0] * r_mat[0, 0] + r_mat[1, 0] * r_mat[1, 0])
+            singular = sy < 1e-6
+            if not singular:
+                x = np.arctan2(r_mat[2, 1], r_mat[2, 2])
+                y = np.arctan2(-r_mat[2, 0], sy)
+                z = np.arctan2(r_mat[1, 0], r_mat[0, 0])
+            else:
+                x = np.arctan2(-r_mat[1, 2], r_mat[1, 1])
+                y = np.arctan2(-r_mat[2, 0], sy)
+                z = 0
+            return np.array([x, y, z])
+
+        left_gripper = action[7:8]
+        left_xyz = action[8:11]
+        left_rpy = action[11:17]
+        right_gripper = action[24:25]
+        right_xyz = action[25:28]
+        right_rpy = action[28:34]
+        left_rpy = rotation_6d_to_rpy(left_rpy)
+        right_rpy = rotation_6d_to_rpy(right_rpy)
+        action = np.concatenate([
+            left_xyz, left_rpy, left_gripper, 
+            right_xyz, right_rpy, right_gripper
+        ], axis=0)
         return {key: action[i].item() for i, key in enumerate(self.robot.action_features.keys())}
 
 

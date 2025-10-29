@@ -1,3 +1,7 @@
+"""
+Bi-Dummy robot end effector implementation.
+"""
+
 from .configuration_bi_dummy import BiDummyRobotEndEffectorConfig
 from .bi_dummy_robot import BiDummyRobot
 from ..bi_base_robot import BiBaseRobotEndEffector
@@ -5,15 +9,23 @@ from ..dummy import DummyRobotEndEffector
 
 
 class BiDummyRobotEndEffector(BiDummyRobot, BiBaseRobotEndEffector):
+    """
+    Bi-Dummy robot end effector implementation.
+    Params:
+    - config: BiDummyRobotEndEffectorConfig
+    """
     
     config_class = BiDummyRobotEndEffectorConfig
     name = "bi_dummy_end_effector"
 
-    def __init__(self, config: BiDummyRobotEndEffectorConfig):
+    def __init__(self, config: BiDummyRobotEndEffectorConfig) -> None:
         super().__init__(config)
         self.config = config
     
-    def _prepare_robots(self):
+    def _prepare_robots(self) -> None:
+        """
+        Prepare left and right DummyRobotEndEffector instances.
+        """
         left_config = BiDummyRobotEndEffectorConfig(
             joint_names=self.config.joint_names,
             init_type=self.config.init_type,

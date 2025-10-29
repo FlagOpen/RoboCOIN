@@ -1,3 +1,7 @@
+"""
+BiRealman robot end effector implementation.
+"""
+
 from .configuration_bi_realman import BiRealmanEndEffectorConfig
 from .bi_realman import BiRealman
 from ..bi_base_robot import BiBaseRobotEndEffector
@@ -5,6 +9,11 @@ from ..realman import RealmanEndEffector, RealmanEndEffectorConfig
 
 
 class BiRealmanEndEffector(BiRealman, BiBaseRobotEndEffector):
+    """
+    BiRealman robot end effector implementation.
+    Params:
+    - config: BiRealmanEndEffectorConfig
+    """
 
     config_class = BiRealmanEndEffectorConfig
     name = "bi_realman_end_effector"
@@ -14,6 +23,10 @@ class BiRealmanEndEffector(BiRealman, BiBaseRobotEndEffector):
         self.config = config
     
     def _prepare_robots(self):
+        """
+        Prepare the left and right Realman end effector robots.
+        Initializes two RealmanEndEffector instances with respective configurations.
+        """
         left_config = RealmanEndEffectorConfig(
             ip=self.config.ip_left,
             port=self.config.port_left,

@@ -1,3 +1,7 @@
+"""
+BiPiper end-effector robot class implementation.
+"""
+
 from .configuration_bi_piper import BiPiperEndEffectorConfig
 from .bi_piper import BiPiper
 from ..bi_base_robot import BiBaseRobotEndEffector
@@ -5,6 +9,11 @@ from ..piper import PiperEndEffector, PiperEndEffectorConfig
 
 
 class BiPiperEndEffector(BiPiper, BiBaseRobotEndEffector):
+    """
+    BiPiper robot class implementation with end effectors.
+    Params:
+    - config: BiPiperEndEffectorConfig
+    """
 
     config_class = BiPiperEndEffectorConfig
     name = "bi_piper_end_effector"
@@ -14,6 +23,10 @@ class BiPiperEndEffector(BiPiper, BiBaseRobotEndEffector):
         self.config = config
     
     def _prepare_robots(self):
+        """
+        Prepare the left and right PiperEndEffector robots.
+        Initializes two PiperEndEffector instances with appropriate configurations.
+        """
         left_config = PiperEndEffectorConfig(
             can=self.config.can_left,
             velocity=self.config.velocity,

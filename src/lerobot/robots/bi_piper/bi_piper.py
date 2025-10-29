@@ -1,3 +1,7 @@
+"""
+BiPiper robot class implementation.
+"""
+
 from ..bi_base_robot import BiBaseRobot
 from .configuration_bi_piper import BiPiperConfig
 
@@ -5,6 +9,11 @@ from ..piper import Piper, PiperConfig
 
 
 class BiPiper(BiBaseRobot):
+    """
+    BiPiper robot class implementation.
+    Params:
+    - config: BiPiperConfig
+    """
 
     config_class = BiPiperConfig
     name = "bi_piper"
@@ -14,6 +23,10 @@ class BiPiper(BiBaseRobot):
         self.config = config
     
     def _prepare_robots(self):
+        """
+        Prepare the left and right Piper robots.
+        Initializes two Piper instances with appropriate configurations.
+        """
         left_config = PiperConfig(
             can=self.config.can_left,
             velocity=self.config.velocity,

@@ -1,5 +1,27 @@
 # RoboCoin-LeRobot
 
+[English](README.md) | [中文](README_zh-CN.md)
+
+目录
+- [概述](#概述)
+- [安装](#安装)
+- [机器人控制逻辑](#机器人控制逻辑)
+    - [机器人目录结构](#机器人目录结构)
+    - [机器人基础配置类](#机器人基础配置类)
+    - [特定机器人配置类](#特定机器人配置类)
+    - [特定功能说明](#特定功能说明)
+        - [统一单位转换](#统一单位转换)
+        - [绝对与相对位置控制](#绝对与相对位置控制)
+- [使用说明](#使用说明)
+    - [轨迹重播](#轨迹重播)
+    - [模型推理](#模型推理)
+        - [基于LeRobot Policy的推理](#基于lerobot-policy的推理)
+        - [基于OpenPI Policy的推理](#基于openpi-policy的推理)
+        - [层次化任务描述的推理 (目前仅支持OpenPI)](#层次化任务描述的推理-目前仅支持openpi)
+- [自定义功能](#自定义功能)
+    - [新增自定义机器人](#新增自定义机器人)
+- [致谢](#致谢)
+
 ## 概述
 
 RoboCoin-LeRobot是一个基于LeRobot扩展的机器人部署环境，旨在为多种机器人平台提供统一的控制接口，实现机器人控制的标准化与简化
@@ -342,11 +364,11 @@ class BiRealmanEndEffectorConfig(BiRealmanConfig, BiBaseRobotEndEffectorConfig):
 
 ### 特定功能说明
 
-**统一单位转换**
+#### 统一单位转换
 
 ...
 
-**绝对与相对位置控制**
+#### 绝对与相对位置控制
 
 ...
 
@@ -374,7 +396,7 @@ python src/lerobot/scripts/replay.py \
 
 ### 模型推理
 
-**基于LeRobot Policy的推理**
+#### 基于LeRobot Policy的推理
 
 1. 运行LeRobot Server，详见`src/lerobot/scripts/server/policy_server.py`，命令如下：
 ```bash
@@ -406,7 +428,7 @@ python src/lerobot/scripts/server/robot_client.py \
 ```
 上述命令将初始化realman姿态，加载头部、左手、右手相机，传入"do something"作为prompt，加载ACT模型进行推理，并获取action对机器人平台进行控制
 
-**基于OpenPI Policy的推理**
+#### 基于OpenPI Policy的推理
 
 1. 运行OpenPI Server，详见[OpenPI官方仓库](https://github.com/Physical-Intelligence/openpi)
 
@@ -432,7 +454,7 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
 
 推理时，可以在控制台中按"q"随时退出，之后按"y/n"表示当前任务成功或失败，视频将被存放到`results/`目录中。
 
-**层次化任务描述的推理 (目前仅支持OpenPI)**
+#### 层次化任务描述的推理 (目前仅支持OpenPI)
 
 首先为当前任务编写一个配置类，如`src/lerobot/scripts/server/task_configs/towel_basket.py`:
 
@@ -526,4 +548,51 @@ python src/lerobot/scripts/server/robot_client_openpi_anno.py \
 
 ### 新增自定义机器人
 
-TODO
+1. 在`src/lerobot/robots/`目录下创建一个新的文件夹，命名为你的机器人名称，如`my_robot`
+2. 在该文件夹下创建以下文件：
+   - `__init__.py`：初始化文件
+   - `my_robot.py`：实现机器人控制逻辑
+   - `configuration_my_robot.py`：定义机器人配置类，继承自`RobotConfig`
+3. 在`configuration_my_robot.py`中定义机器人配置，包括SDK特定配置与所需的基础配置参数
+4. 在`my_robot.py`中实现机器人控制逻辑，继承自`BaseRobot`
+5. 实现所有抽象方法：
+   - `_check_dependencys(self)`: 检查机器人所需的依赖项
+   - `_connect_arm(self)`: 连接到机器人
+   - `_disconnect_arm(self)`: 断开与机器人的连接
+   - `_set_joint_state(self, joint_state: np.ndarray)`: 设置机器人的关节状态，输入为关节状态的numpy数组，单位为配置类中定义的`joint_units`
+   - `_get_joint_state(self) -> np.ndarray`: 获取机器人的当前关节状态，返回值为关节状态的numpy数组，单位为配置类中定义的`joint_units`
+   - `_set_ee_state(self, ee_state: np.ndarray)`: 设置机器人的末端执行器状态，输入为末端执行器状态的numpy数组，单位为配置类中定义的`pose_units`
+   - `_get_ee_state(self) -> np.ndarray`: 获取机器人的当前末端执行器状态，返回值为末端执行器状态的numpy数组，单位为配置类中定义的`pose_units`
+6. 参照其他机器人实现类，实现其他控制方式（可选）：
+   - `my_robot_end_effector.py`：实现基于末端执行器的控制逻辑，继承自`BaseRobotEndEffector`与`my_robot.py`
+   - `bi_my_robot.py`：实现双臂机器人的控制逻辑，继承自`BiBaseRobot`与`my_robot.py`
+   - `bi_my_robot_end_effector.py`：实现双臂机器人基于末端执行器的控制逻辑，继承自`BiBaseRobotEndEffector`与`my_robot_end_effector.py`
+7. 在`src/lerobot/robots/utils.py`中注册你的机器人配置类：
+   ```python
+   elif robot_type == "my_robot":
+       from .my_robot.configuration_my_robot import MyRobotConfig
+       return MyRobotConfig(**config_dict)
+   elif robot_type == "my_robot_end_effector":
+       from .my_robot.configuration_my_robot import MyRobotEndEffectorConfig
+       return MyRobotEndEffectorConfig(**config_dict)
+   elif robot_type == "bi_my_robot":
+       from .my_robot.configuration_my_robot import BiMyRobotConfig
+       return BiMyRobotConfig(**config_dict)
+   elif robot_type == "bi_my_robot_end_effector":
+       from .my_robot.configuration_my_robot import BiMyRobotEndEffectorConfig
+       return BiMyRobotEndEffectorConfig(**config_dict)
+   ```
+8. 在推理脚本开头导入你的机器人实现类：
+   ```python
+   from lerobot.robots.my_robot.my_robot import MyRobot
+   from lerobot.robots.my_robot.my_robot_end_effector import MyRobotEndEffector
+   from lerobot.robots.my_robot.bi_my_robot import BiMyRobot
+   from lerobot.robots.my_robot.bi_my_robot_end_effector import BiMyRobotEndEffector
+   ```
+9. 现在你可以通过命令行参数`--robot.type=my_robot`来使用你的自定义机器人了
+
+## 致谢
+
+感谢以下开源项目对RoboCoin-LeRobot的支持与帮助：
+- [LeRobot](https://github.com/huggingface/lerobot)
+- [OpenPI](https://github.com/Physical-Intelligence/openpi)

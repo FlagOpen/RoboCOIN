@@ -1,6 +1,6 @@
 # RoboCoin-LeRobot
 
-[English](README.md) | [中文](README_zh-CN.md)
+[English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
 
 目录
 - [概述](#概述)

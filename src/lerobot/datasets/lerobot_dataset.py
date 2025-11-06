@@ -54,9 +54,15 @@ from lerobot.datasets.utils import (
     get_safe_version,
     hf_transform_to_torch,
     is_valid_version,
+    load_eef_acc_mag_annotation,
+    load_eef_direction_annotation,
+    load_eef_velocity_annotation,
     load_episodes,
     load_episodes_stats,
+    load_gripper_activity_annotation,
+    load_gripper_mode_annotation,
     load_info,
+    load_scenes,
     load_stats,
     load_subtasks,
     load_tasks,
@@ -107,6 +113,12 @@ class LeRobotDatasetMetadata:
         check_version_compatibility(self.repo_id, self._version, CODEBASE_VERSION)
         self.tasks, self.task_to_task_index = load_tasks(self.root)
         self.subtasks, self.subtask_to_subtask_index = load_subtasks(self.root)
+        self.scenes, self.scene_to_index = load_scenes(self.root)
+        self.eef_acc_mags, self.eef_acc_mag_to_index = load_eef_acc_mag_annotation(self.root)
+        self.eef_directions, self.eef_direction_to_index = load_eef_direction_annotation(self.root)
+        self.eef_velocities, self.eef_velocity_to_index = load_eef_velocity_annotation(self.root)
+        self.gripper_modes, self.gripper_mode_to_index = load_gripper_mode_annotation(self.root)
+        self.gripper_activities, self.gripper_activity_to_index = load_gripper_activity_annotation(self.root)
         self.episodes = load_episodes(self.root)
         if self._version < packaging.version.parse("v2.1"):
             self.stats = load_stats(self.root)
@@ -735,11 +747,124 @@ class LeRobotDataset(torch.utils.data.Dataset):
         task_idx = item["task_index"].item()
         item["task"] = self.meta.tasks[task_idx]
 
-        if item.get("subtask_indices", None) is not None and self.meta.subtasks is not None:
-            subtask_indices = item["subtask_indices"].tolist()
-            item["subtasks"] = [self.meta.subtasks[idx] for idx in subtask_indices]
+        # Subtask Annotation
+        if item.get("subtask_annotation", None) is not None and self.meta.subtasks is not None:
+            subtask_indices = item["subtask_annotation"].tolist()
+            item["subtasks"] = " ".join(
+                self.meta.subtasks[idx] for idx in subtask_indices if self.meta.subtasks[idx] != "null"
+            )
         else:
-            item["subtasks"] = []
+            item["subtasks"] = "null"
+
+        # Scene Annotation
+        if item.get("scene_annotation", None) is not None:
+            scene_index = item["scene_annotation"].item()
+            item["scene"] = self.meta.scenes[scene_index]
+
+        # End Effector Acceleration Magnitude Annotation
+        eef_acc_mag_indices = item.get("eef_acc_mag_state", None)
+        if eef_acc_mag_indices is not None:
+            eef_acc_mag_indices = eef_acc_mag_indices.tolist()
+        if eef_acc_mag_indices is not None and self.meta.eef_acc_mags is not None:
+            item["left_eef_acc_mag_state"] = self.meta.eef_acc_mags[eef_acc_mag_indices[0]]
+            item["right_eef_acc_mag_state"] = self.meta.eef_acc_mags[eef_acc_mag_indices[1]]
+        else:
+            item["left_eef_acc_mag_state"] = "unknown"
+            item["right_eef_acc_mag_state"] = "unknown"
+
+        eef_acc_mag_indices = item.get("eef_acc_mag_action", None)
+        if eef_acc_mag_indices is not None:
+            eef_acc_mag_indices = eef_acc_mag_indices.tolist()
+        if eef_acc_mag_indices is not None and self.meta.eef_acc_mags is not None:
+            item["left_eef_acc_mag_action"] = self.meta.eef_acc_mags[eef_acc_mag_indices[0]]
+            item["right_eef_acc_mag_action"] = self.meta.eef_acc_mags[eef_acc_mag_indices[1]]
+        else:
+            item["left_eef_acc_mag_action"] = "unknown"
+            item["right_eef_acc_mag_action"] = "unknown"
+
+        # End Effector Direction Annotation
+        eef_direction_indices = item.get("eef_direction_state", None)
+        if eef_direction_indices is not None:
+            eef_direction_indices = eef_direction_indices.tolist()
+        if eef_direction_indices is not None and self.meta.eef_directions is not None:
+            item["left_eef_direction_state"] = self.meta.eef_directions[eef_direction_indices[0]]
+            item["right_eef_direction_state"] = self.meta.eef_directions[eef_direction_indices[1]]
+        else:
+            item["left_eef_direction_state"] = "unknown"
+            item["right_eef_direction_state"] = "unknown"
+
+        eef_direction_indices = item.get("eef_direction_action", None)
+        if eef_direction_indices is not None:
+            eef_direction_indices = eef_direction_indices.tolist()
+        if eef_direction_indices is not None and self.meta.eef_directions is not None:
+            item["left_eef_direction_action"] = self.meta.eef_directions[eef_direction_indices[0]]
+            item["right_eef_direction_action"] = self.meta.eef_directions[eef_direction_indices[1]]
+        else:
+            item["left_eef_direction_action"] = "unknown"
+            item["right_eef_direction_action"] = "unknown"
+
+        # End Effector Velocity Annotation
+        eef_velocity_indices = item.get("eef_velocity_state", None)
+        if eef_velocity_indices is not None:
+            eef_velocity_indices = eef_velocity_indices.tolist()
+        if eef_velocity_indices is not None and self.meta.eef_velocities is not None:
+            item["left_eef_velocity_state"] = self.meta.eef_velocities[eef_velocity_indices[0]]
+            item["right_eef_velocity_state"] = self.meta.eef_velocities[eef_velocity_indices[1]]
+        else:
+            item["left_eef_velocity_state"] = "unknown"
+            item["right_eef_velocity_state"] = "unknown"
+
+        eef_velocity_indices = item.get("eef_velocity_action", None)
+        if eef_velocity_indices is not None:
+            eef_velocity_indices = eef_velocity_indices.tolist()
+        if eef_velocity_indices is not None and self.meta.eef_velocities is not None:
+            item["left_eef_velocity_action"] = self.meta.eef_velocities[eef_velocity_indices[0]]
+            item["right_eef_velocity_action"] = self.meta.eef_velocities[eef_velocity_indices[1]]
+        else:
+            item["left_eef_velocity_action"] = "unknown"
+            item["right_eef_velocity_action"] = "unknown"
+
+        # Gripper Mode Annotation
+        gripper_mode_indices = item.get("gripper_mode_state", None)
+        if gripper_mode_indices is not None:
+            gripper_mode_indices = gripper_mode_indices.tolist()
+        if gripper_mode_indices is not None and self.meta.gripper_modes is not None:
+            item["left_gripper_mode_state"] = self.meta.gripper_modes[gripper_mode_indices[0]]
+            item["right_gripper_mode_state"] = self.meta.gripper_modes[gripper_mode_indices[1]]
+        else:
+            item["left_gripper_mode_state"] = "unknown"
+            item["right_gripper_mode_state"] = "unknown"
+
+        gripper_mode_indices = item.get("gripper_mode_action", None)
+        if gripper_mode_indices is not None:
+            gripper_mode_indices = gripper_mode_indices.tolist()
+        if gripper_mode_indices is not None and self.meta.gripper_modes is not None:
+            item["left_gripper_mode_action"] = self.meta.gripper_modes[gripper_mode_indices[0]]
+            item["right_gripper_mode_action"] = self.meta.gripper_modes[gripper_mode_indices[1]]
+        else:
+            item["left_gripper_mode_action"] = "unknown"
+            item["right_gripper_mode_action"] = "unknown"
+
+        # Gripper Activity Annotation
+        gripper_activity_indices = item.get("gripper_activity_state", None)
+        if gripper_activity_indices is not None:
+            gripper_activity_indices = gripper_activity_indices.tolist()
+        if gripper_activity_indices is not None and self.meta.gripper_activities is not None:
+            item["left_gripper_activity_state"] = self.meta.gripper_activities[gripper_activity_indices[0]]
+            item["right_gripper_activity_state"] = self.meta.gripper_activities[gripper_activity_indices[1]]
+        else:
+            item["left_gripper_activity_state"] = "unknown"
+            item["right_gripper_activity_state"] = "unknown"
+
+        gripper_activity_indices = item.get("gripper_activity_action", None)
+        if gripper_activity_indices is not None:
+            gripper_activity_indices = gripper_activity_indices.tolist()
+        if gripper_activity_indices is not None and self.meta.gripper_activities is not None:
+            item["left_gripper_activity_action"] = self.meta.gripper_activities[gripper_activity_indices[0]]
+            item["right_gripper_activity_action"] = self.meta.gripper_activities[gripper_activity_indices[1]]
+        else:
+            item["left_gripper_activity_action"] = "unknown"
+            item["right_gripper_activity_action"] = "unknown"
 
         return item
 

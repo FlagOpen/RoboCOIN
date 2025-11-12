@@ -174,18 +174,6 @@ def visualize_dataset(
             if "next.success" in batch:
                 rr.log("next.success", rr.Scalar(batch["next.success"][i].item()))
 
-            annotation_text = ""
-            if "tasks" in batch:
-                annotation_text += f"Tasks: {batch['tasks'][i]};"
-            if "subtasks" in batch:
-                annotation_text += f"Subtasks: {batch['subtasks'][i]};"
-            if "left_eef_acc_mag_state" in batch:
-                annotation_text += f"Left EEF acc mag: {batch['left_eef_acc_mag_state'][i]};"
-            if "right_eef_acc_mag_state" in batch:
-                annotation_text += f"Right EEF acc mag: {batch['right_eef_acc_mag_state'][i]};"
-            if "left_eef_acc_mag_" in batch:"
-
-
             rr.log("subtasks", rr.TextLog(batch["subtasks"][i]))
 
     if mode == "local" and save:

@@ -108,7 +108,6 @@ def decode_video_frames_torchvision(
     # TODO(rcadene): also load audio stream at the same time
     # video_path = "/home/lxc/.cache/huggingface/lerobot/robocoin/stir_coffee/videos/chunk-000/observation.images.cam_high_rgb/episode_000037.mp4"
     reader = torchvision.io.VideoReader(video_path, "video")
-    print(video_path)
 
     # set the first and last requested timestamps
     # Note: previous timestamps are usually loaded, since we need to access the previous key frame

@@ -50,6 +50,12 @@ EPISODES_PATH = "meta/episodes.jsonl"
 STATS_PATH = "meta/stats.json"
 EPISODES_STATS_PATH = "meta/episodes_stats.jsonl"
 TASKS_PATH = "meta/tasks.jsonl"
+SUBTASKS_PATH = "annotations/subtask_annotations.jsonl"
+EEF_ACC_MAG_PATH = "annotations/eef_acc_mag_annotation.jsonl"
+EEF_DIRECTION_PATH = "annotations/eef_direction_annotation.jsonl"
+EEF_VELOCITY_PATH = "annotations/eef_velocity_annotation.jsonl"
+GRIPPER_ACTIVITY_ANNOTATION_PATH = "annotations/gripper_activity_annotation.jsonl"
+GRIPPER_MODE_ANNOTATION_PATH = "annotations/gripper_mode_annotation.jsonl"
 
 DEFAULT_VIDEO_PATH = "videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4"
 DEFAULT_PARQUET_PATH = "data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet"
@@ -210,6 +216,93 @@ def load_tasks(local_dir: Path) -> tuple[dict, dict]:
     tasks = {item["task_index"]: item["task"] for item in sorted(tasks, key=lambda x: x["task_index"])}
     task_to_task_index = {task: task_index for task_index, task in tasks.items()}
     return tasks, task_to_task_index
+
+
+def load_subtasks(local_dir: Path) -> tuple[dict[int, str], dict[str, int]]:
+    subtasks_file_path = local_dir / SUBTASKS_PATH
+    if not subtasks_file_path.exists():
+        return None, None
+    subtasks = load_jsonlines(subtasks_file_path)
+    subtasks = {
+        item["subtask_index"]: item["subtask"] for item in sorted(subtasks, key=lambda x: x["subtask_index"])
+    }
+    subtask_to_subtask_index = {subtask: subtask_index for subtask_index, subtask in subtasks.items()}
+    return subtasks, subtask_to_subtask_index
+
+
+def load_scenes(local_dir: Path) -> tuple[dict[int, str], dict[str, int]]:
+    scenes_file_path = local_dir / "annotations/scene_annotations.jsonl"
+    if not scenes_file_path.exists():
+        return None, None
+    scenes = load_jsonlines(scenes_file_path)
+    scenes = {
+        item["scene_index"]: item["scene"] for item in sorted(scenes, key=lambda x: x["scene_index"])
+    }
+    scene_to_index = {scene: scene_index for scene_index, scene in scenes.items()}
+    return scenes, scene_to_index
+def load_eef_acc_mag_annotation(local_dir: Path) -> tuple[dict[int, str], dict[str, int]]:
+    file_path = local_dir / EEF_ACC_MAG_PATH
+    if not file_path.exists():
+        return None, None
+    eef_acc_mags = load_jsonlines(file_path)
+    eef_acc_mags = {
+        item["eef_acc_mag_index"]: item["eef_acc_mag"]
+        for item in sorted(eef_acc_mags, key=lambda x: x["eef_acc_mag_index"])
+    }
+    eef_acc_mag_to_index = {eef_acc_mag: i for i, eef_acc_mag in eef_acc_mags.items()}
+    return eef_acc_mags, eef_acc_mag_to_index
+
+
+def load_eef_direction_annotation(local_dir: Path) -> tuple[dict[int, str], dict[str, int]]:
+    file_path = local_dir / EEF_DIRECTION_PATH
+    if not file_path.exists():
+        return None, None
+    eef_directions = load_jsonlines(file_path)
+    eef_directions = {
+        item["eef_direction_index"]: item["eef_direction"]
+        for item in sorted(eef_directions, key=lambda x: x["eef_direction_index"])
+    }
+    eef_direction_to_index = {eef_direction: i for i, eef_direction in eef_directions.items()}
+    return eef_directions, eef_direction_to_index
+
+
+def load_eef_velocity_annotation(local_dir: Path) -> tuple[dict[int, str], dict[str, int]]:
+    file_path = local_dir / EEF_VELOCITY_PATH
+    if not file_path.exists():
+        return None, None
+    eef_velocities = load_jsonlines(file_path)
+    eef_velocities = {
+        item["eef_velocity_index"]: item["eef_velocity"]
+        for item in sorted(eef_velocities, key=lambda x: x["eef_velocity_index"])
+    }
+    eef_velocity_to_index = {eef_velocity: i for i, eef_velocity in eef_velocities.items()}
+    return eef_velocities, eef_velocity_to_index
+
+
+def load_gripper_activity_annotation(local_dir: Path) -> tuple[dict[int, str], dict[str, int]]:
+    file_path = local_dir / GRIPPER_ACTIVITY_ANNOTATION_PATH
+    if not file_path.exists():
+        return None, None
+    gripper_activities = load_jsonlines(file_path)
+    gripper_activities = {
+        item["gripper_activity_index"]: item["gripper_activity"]
+        for item in sorted(gripper_activities, key=lambda x: x["gripper_activity_index"])
+    }
+    gripper_activity_to_index = {gripper_activity: i for i, gripper_activity in gripper_activities.items()}
+    return gripper_activities, gripper_activity_to_index
+
+
+def load_gripper_mode_annotation(local_dir: Path) -> tuple[dict[int, str], dict[str, int]]:
+    file_path = local_dir / GRIPPER_MODE_ANNOTATION_PATH
+    if not file_path.exists():
+        return None, None
+    gripper_modes = load_jsonlines(file_path)
+    gripper_modes = {
+        item["gripper_mode_index"]: item["gripper_mode"]
+        for item in sorted(gripper_modes, key=lambda x: x["gripper_mode_index"])
+    }
+    gripper_mode_to_index = {gripper_mode: i for i, gripper_mode in gripper_modes.items()}
+    return gripper_modes, gripper_mode_to_index
 
 
 def write_episode(episode: dict, local_dir: Path):

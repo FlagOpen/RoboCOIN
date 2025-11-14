@@ -174,6 +174,8 @@ def visualize_dataset(
             if "next.success" in batch:
                 rr.log("next.success", rr.Scalar(batch["next.success"][i].item()))
 
+            rr.log("subtasks", rr.TextLog(batch["subtasks"][i]))
+
     if mode == "local" and save:
         # save .rrd locally
         output_dir = Path(output_dir)

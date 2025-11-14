@@ -19,6 +19,7 @@ import shutil
 from collections.abc import Callable
 from pathlib import Path
 
+import av
 import datasets
 import numpy as np
 import packaging.version
@@ -53,10 +54,17 @@ from lerobot.datasets.utils import (
     get_safe_version,
     hf_transform_to_torch,
     is_valid_version,
+    load_eef_acc_mag_annotation,
+    load_eef_direction_annotation,
+    load_eef_velocity_annotation,
     load_episodes,
     load_episodes_stats,
+    load_gripper_activity_annotation,
+    load_gripper_mode_annotation,
     load_info,
+    load_scenes,
     load_stats,
+    load_subtasks,
     load_tasks,
     validate_episode_buffer,
     validate_frame,
@@ -104,6 +112,13 @@ class LeRobotDatasetMetadata:
         self.info = load_info(self.root)
         check_version_compatibility(self.repo_id, self._version, CODEBASE_VERSION)
         self.tasks, self.task_to_task_index = load_tasks(self.root)
+        self.subtasks, self.subtask_to_subtask_index = load_subtasks(self.root)
+        self.scenes, self.scene_to_index = load_scenes(self.root)
+        self.eef_acc_mags, self.eef_acc_mag_to_index = load_eef_acc_mag_annotation(self.root)
+        self.eef_directions, self.eef_direction_to_index = load_eef_direction_annotation(self.root)
+        self.eef_velocities, self.eef_velocity_to_index = load_eef_velocity_annotation(self.root)
+        self.gripper_modes, self.gripper_mode_to_index = load_gripper_mode_annotation(self.root)
+        self.gripper_activities, self.gripper_activity_to_index = load_gripper_activity_annotation(self.root)
         self.episodes = load_episodes(self.root)
         if self._version < packaging.version.parse("v2.1"):
             self.stats = load_stats(self.root)
@@ -458,6 +473,9 @@ class LeRobotDataset(torch.utils.data.Dataset):
         self.batch_encoding_size = batch_encoding_size
         self.episodes_since_last_encoding = 0
 
+        # using a temp directory to cache images
+        self.image_cache_root = Path(f"./temp/{repo_id.replace('/', '_')}")
+
         # Unused attributes
         self.image_writer = None
         self.episode_buffer = None
@@ -729,6 +747,125 @@ class LeRobotDataset(torch.utils.data.Dataset):
         task_idx = item["task_index"].item()
         item["task"] = self.meta.tasks[task_idx]
 
+        # Subtask Annotation
+        if item.get("subtask_annotation", None) is not None and self.meta.subtasks is not None:
+            subtask_indices = item["subtask_annotation"].tolist()
+            item["subtasks"] = " ".join(
+                self.meta.subtasks[idx] for idx in subtask_indices if self.meta.subtasks[idx] != "null"
+            )
+        else:
+            item["subtasks"] = "null"
+
+        # Scene Annotation
+        if item.get("scene_annotation", None) is not None:
+            scene_index = item["scene_annotation"].item()
+            item["scene"] = self.meta.scenes[scene_index]
+
+        # End Effector Acceleration Magnitude Annotation
+        eef_acc_mag_indices = item.get("eef_acc_mag_state", None)
+        if eef_acc_mag_indices is not None:
+            eef_acc_mag_indices = eef_acc_mag_indices.tolist()
+        if eef_acc_mag_indices is not None and self.meta.eef_acc_mags is not None:
+            item["left_eef_acc_mag_state"] = self.meta.eef_acc_mags[eef_acc_mag_indices[0]]
+            item["right_eef_acc_mag_state"] = self.meta.eef_acc_mags[eef_acc_mag_indices[1]]
+        else:
+            item["left_eef_acc_mag_state"] = "unknown"
+            item["right_eef_acc_mag_state"] = "unknown"
+
+        eef_acc_mag_indices = item.get("eef_acc_mag_action", None)
+        if eef_acc_mag_indices is not None:
+            eef_acc_mag_indices = eef_acc_mag_indices.tolist()
+        if eef_acc_mag_indices is not None and self.meta.eef_acc_mags is not None:
+            item["left_eef_acc_mag_action"] = self.meta.eef_acc_mags[eef_acc_mag_indices[0]]
+            item["right_eef_acc_mag_action"] = self.meta.eef_acc_mags[eef_acc_mag_indices[1]]
+        else:
+            item["left_eef_acc_mag_action"] = "unknown"
+            item["right_eef_acc_mag_action"] = "unknown"
+
+        # End Effector Direction Annotation
+        eef_direction_indices = item.get("eef_direction_state", None)
+        if eef_direction_indices is not None:
+            eef_direction_indices = eef_direction_indices.tolist()
+        if eef_direction_indices is not None and self.meta.eef_directions is not None:
+            item["left_eef_direction_state"] = self.meta.eef_directions[eef_direction_indices[0]]
+            item["right_eef_direction_state"] = self.meta.eef_directions[eef_direction_indices[1]]
+        else:
+            item["left_eef_direction_state"] = "unknown"
+            item["right_eef_direction_state"] = "unknown"
+
+        eef_direction_indices = item.get("eef_direction_action", None)
+        if eef_direction_indices is not None:
+            eef_direction_indices = eef_direction_indices.tolist()
+        if eef_direction_indices is not None and self.meta.eef_directions is not None:
+            item["left_eef_direction_action"] = self.meta.eef_directions[eef_direction_indices[0]]
+            item["right_eef_direction_action"] = self.meta.eef_directions[eef_direction_indices[1]]
+        else:
+            item["left_eef_direction_action"] = "unknown"
+            item["right_eef_direction_action"] = "unknown"
+
+        # End Effector Velocity Annotation
+        eef_velocity_indices = item.get("eef_velocity_state", None)
+        if eef_velocity_indices is not None:
+            eef_velocity_indices = eef_velocity_indices.tolist()
+        if eef_velocity_indices is not None and self.meta.eef_velocities is not None:
+            item["left_eef_velocity_state"] = self.meta.eef_velocities[eef_velocity_indices[0]]
+            item["right_eef_velocity_state"] = self.meta.eef_velocities[eef_velocity_indices[1]]
+        else:
+            item["left_eef_velocity_state"] = "unknown"
+            item["right_eef_velocity_state"] = "unknown"
+
+        eef_velocity_indices = item.get("eef_velocity_action", None)
+        if eef_velocity_indices is not None:
+            eef_velocity_indices = eef_velocity_indices.tolist()
+        if eef_velocity_indices is not None and self.meta.eef_velocities is not None:
+            item["left_eef_velocity_action"] = self.meta.eef_velocities[eef_velocity_indices[0]]
+            item["right_eef_velocity_action"] = self.meta.eef_velocities[eef_velocity_indices[1]]
+        else:
+            item["left_eef_velocity_action"] = "unknown"
+            item["right_eef_velocity_action"] = "unknown"
+
+        # Gripper Mode Annotation
+        gripper_mode_indices = item.get("gripper_mode_state", None)
+        if gripper_mode_indices is not None:
+            gripper_mode_indices = gripper_mode_indices.tolist()
+        if gripper_mode_indices is not None and self.meta.gripper_modes is not None:
+            item["left_gripper_mode_state"] = self.meta.gripper_modes[gripper_mode_indices[0]]
+            item["right_gripper_mode_state"] = self.meta.gripper_modes[gripper_mode_indices[1]]
+        else:
+            item["left_gripper_mode_state"] = "unknown"
+            item["right_gripper_mode_state"] = "unknown"
+
+        gripper_mode_indices = item.get("gripper_mode_action", None)
+        if gripper_mode_indices is not None:
+            gripper_mode_indices = gripper_mode_indices.tolist()
+        if gripper_mode_indices is not None and self.meta.gripper_modes is not None:
+            item["left_gripper_mode_action"] = self.meta.gripper_modes[gripper_mode_indices[0]]
+            item["right_gripper_mode_action"] = self.meta.gripper_modes[gripper_mode_indices[1]]
+        else:
+            item["left_gripper_mode_action"] = "unknown"
+            item["right_gripper_mode_action"] = "unknown"
+
+        # Gripper Activity Annotation
+        gripper_activity_indices = item.get("gripper_activity_state", None)
+        if gripper_activity_indices is not None:
+            gripper_activity_indices = gripper_activity_indices.tolist()
+        if gripper_activity_indices is not None and self.meta.gripper_activities is not None:
+            item["left_gripper_activity_state"] = self.meta.gripper_activities[gripper_activity_indices[0]]
+            item["right_gripper_activity_state"] = self.meta.gripper_activities[gripper_activity_indices[1]]
+        else:
+            item["left_gripper_activity_state"] = "unknown"
+            item["right_gripper_activity_state"] = "unknown"
+
+        gripper_activity_indices = item.get("gripper_activity_action", None)
+        if gripper_activity_indices is not None:
+            gripper_activity_indices = gripper_activity_indices.tolist()
+        if gripper_activity_indices is not None and self.meta.gripper_activities is not None:
+            item["left_gripper_activity_action"] = self.meta.gripper_activities[gripper_activity_indices[0]]
+            item["right_gripper_activity_action"] = self.meta.gripper_activities[gripper_activity_indices[1]]
+        else:
+            item["left_gripper_activity_action"] = "unknown"
+            item["right_gripper_activity_action"] = "unknown"
+
         return item
 
     def __repr__(self):
@@ -757,6 +894,12 @@ class LeRobotDataset(torch.utils.data.Dataset):
             image_key=image_key, episode_index=episode_index, frame_index=frame_index
         )
         return self.root / fpath
+
+    def _get_cached_image_file_path(self, episode_index: int, image_key: str, frame_index: int) -> Path:
+        fpath = DEFAULT_IMAGE_PATH.format(
+            image_key=image_key, episode_index=episode_index, frame_index=frame_index
+        )
+        return self.image_cache_root / fpath
 
     def _save_image(self, image: torch.Tensor | np.ndarray | PIL.Image.Image, fpath: Path) -> None:
         if self.image_writer is None:
@@ -798,9 +941,14 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 )
 
             if self.features[key]["dtype"] in ["image", "video"]:
-                img_path = self._get_image_file_path(
+                # img_path = self._get_image_file_path(
+                #     episode_index=self.episode_buffer["episode_index"], image_key=key, frame_index=frame_index
+                # )
+
+                img_path = self._get_cached_image_file_path(
                     episode_index=self.episode_buffer["episode_index"], image_key=key, frame_index=frame_index
                 )
+
                 if frame_index == 0:
                     img_path.parent.mkdir(parents=True, exist_ok=True)
                 self._save_image(frame[key], img_path)
@@ -916,9 +1064,14 @@ class LeRobotDataset(torch.utils.data.Dataset):
         # Clean up image files for the current episode buffer
         if self.image_writer is not None:
             for cam_key in self.meta.camera_keys:
-                img_dir = self._get_image_file_path(
+                # img_dir = self._get_image_file_path(
+                #     episode_index=episode_index, image_key=cam_key, frame_index=0
+                # ).parent
+
+                img_dir = self._get_cached_image_file_path(
                     episode_index=episode_index, image_key=cam_key, frame_index=0
                 ).parent
+
                 if img_dir.is_dir():
                     shutil.rmtree(img_dir)
 
@@ -969,16 +1122,41 @@ class LeRobotDataset(torch.utils.data.Dataset):
             if video_path.is_file():
                 # Skip if video is already encoded. Could be the case when resuming data recording.
                 continue
-            img_dir = self._get_image_file_path(
+            # img_dir = self._get_image_file_path(
+            #     episode_index=episode_index, image_key=key, frame_index=0
+            # ).parent
+
+            img_dir = self._get_cached_image_file_path(
                 episode_index=episode_index, image_key=key, frame_index=0
             ).parent
             encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
+
+            if not self._validate_video_pyav(video_path):
+                encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
+                if not self._validate_video_pyav(video_path):
+                    raise RuntimeError(f"Video {video_path} is invalid")
             shutil.rmtree(img_dir)
 
         # Update video info (only needed when first episode is encoded since it reads from episode 0)
         if len(self.meta.video_keys) > 0 and episode_index == 0:
             self.meta.update_video_info()
             write_info(self.meta.info, self.meta.root)  # ensure video info always written properly
+
+    def _validate_video_pyav(self, video_path: Path) -> bool:
+        try:
+            container = av.open(str(video_path))
+            stream = container.streams.video[0]
+            stream.thread_count = 1  # 单线程更稳定解码错误捕获
+
+            for frame in container.decode(video=0):
+                try:
+                    frame.to_rgb()  # 触发解码
+                except Exception:
+                    return False
+            container.close()
+        except Exception:
+            return False
+        return True
 
     def batch_encode_videos(self, start_episode: int = 0, end_episode: int | None = None) -> None:
         """
@@ -1046,6 +1224,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
         obj.delta_indices = None
         obj.episode_data_index = None
         obj.video_backend = video_backend if video_backend is not None else get_safe_default_codec()
+        obj.image_cache_root = Path(f"./temp/{repo_id.replace('/', '_')}")
         return obj
 
 

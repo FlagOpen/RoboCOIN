@@ -23,7 +23,19 @@ DEFAULT_INFERENCE_LATENCY = 1 / DEFAULT_FPS
 DEFAULT_OBS_QUEUE_TIMEOUT = 2
 
 # All action chunking policies
-SUPPORTED_POLICIES = ["act", "smolvla", "diffusion", "pi0", "tdmpc", "vqbet"]
+SUPPORTED_POLICIES = [
+    "act", "smolvla", "diffusion", "pi0", "tdmpc", "vqbet",
+    # extension policies
+    "dummy",
+]
 
 # TODO: Add all other robots
-SUPPORTED_ROBOTS = ["so100_follower", "so101_follower"]
+SUPPORTED_ROBOTS = [
+    "so100_follower", "so101_follower", 
+    # extension robots
+    "dummy", 
+    "piper", "bi_piper", "piper_end_effector", "bi_piper_end_effector",
+    "realman", "bi_realman", "realman_end_effector", "bi_realman_end_effector",
+    "ros_robot", "ros_robot_end_effector",
+    "moveit_robot", "moveit_robot_end_effector",
+]

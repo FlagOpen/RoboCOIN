@@ -74,6 +74,11 @@ def get_policy_class(name: str) -> PreTrainedPolicy:
         from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
 
         return SmolVLAPolicy
+    # extension policies
+    elif name == "dummy":
+        from lerobot.policies.dummy.modeling_dummy import DummyPolicy
+
+        return DummyPolicy
     else:
         raise NotImplementedError(f"Policy with name {name} is not implemented.")
 
@@ -97,6 +102,11 @@ def make_policy_config(policy_type: str, **kwargs) -> PreTrainedConfig:
         return SmolVLAConfig(**kwargs)
     elif policy_type == "reward_classifier":
         return RewardClassifierConfig(**kwargs)
+    # extension policies
+    elif policy_type == "dummy":
+        from lerobot.policies.dummy.configuration_dummy import DummyConfig
+
+        return DummyConfig(**kwargs)
     else:
         raise ValueError(f"Policy type '{policy_type}' is not available.")
 
@@ -159,6 +169,10 @@ def make_policy(
 
     cfg.output_features = {key: ft for key, ft in features.items() if ft.type is FeatureType.ACTION}
     cfg.input_features = {key: ft for key, ft in features.items() if key not in cfg.output_features}
+
+    if cfg.input_keys is not None:
+        cfg.input_features = {key: ft for key, ft in cfg.input_features.items() if key in cfg.input_keys}
+
     kwargs["config"] = cfg
 
     if cfg.pretrained_path:

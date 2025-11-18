@@ -65,6 +65,72 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from tests.mocks.mock_robot import MockRobot
 
         return MockRobot(config)
+
+    # extension robots
+    elif config.type == "dummy":
+        from .dummy.dummy_robot import DummyRobot
+
+        return DummyRobot(config)
+    elif config.type == "dummy_end_effector":
+        from .dummy.dummy_robot_end_effector import DummyRobotEndEffector
+
+        return DummyRobotEndEffector(config)
+    elif config.type == "bi_dummy":
+        from .bi_dummy.bi_dummy_robot import BiDummyRobot
+
+        return BiDummyRobot(config)
+    elif config.type == "bi_dummy_end_effector":
+        from .bi_dummy.bi_dummy_robot_end_effector import BiDummyRobotEndEffector
+
+        return BiDummyRobotEndEffector(config)
+    elif config.type == "piper":
+        from .piper.piper import Piper
+
+        return Piper(config)
+    elif config.type == "piper_end_effector":
+        from .piper.piper_end_effector import PiperEndEffector
+
+        return PiperEndEffector(config)
+    elif config.type == "bi_piper":
+        from .bi_piper.bi_piper import BiPiper
+
+        return BiPiper(config)
+    elif config.type == "bi_piper_end_effector":
+        from .bi_piper.bi_piper_end_effector import BiPiperEndEffector
+
+        return BiPiperEndEffector(config)
+    elif config.type == "realman":
+        from .realman.realman import Realman
+
+        return Realman(config)
+    elif config.type == "realman_end_effector":
+        from .realman.realman_end_effector import RealmanEndEffector
+
+        return RealmanEndEffector(config)
+    elif config.type == "bi_realman":
+        from .bi_realman.bi_realman import BiRealman
+
+        return BiRealman(config)
+    elif config.type == "bi_realman_end_effector":
+        from .bi_realman.bi_realman_end_effector import BiRealmanEndEffector
+
+        return BiRealmanEndEffector(config)
+    elif config.type == "ros_robot":
+        from .ros_robot.ros_robot import ROSRobot
+
+        return ROSRobot(config)
+    elif config.type == "ros_robot_end_effector":
+        from .ros_robot.ros_robot_end_effector import ROSRobotEndEffector
+
+        return ROSRobotEndEffector(config)
+    elif config.type == "moveit_robot":
+        from .moveit_robot.moveit_robot import MoveitRobot
+
+        return MoveitRobot(config)
+    elif config.type == "moveit_robot_end_effector":
+        from .moveit_robot.moveit_robot_end_effector import MoveitRobotEndEffector
+
+        return MoveitRobotEndEffector(config)
     else:
         raise ValueError(config.type)
 

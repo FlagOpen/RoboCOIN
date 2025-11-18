@@ -64,8 +64,13 @@ class TrainPipelineConfig(HubMixin):
     eval: EvalConfig = field(default_factory=EvalConfig)
     wandb: WandBConfig = field(default_factory=WandBConfig)
 
+    # extension configs
+    # If not None, only feature keywords in `input_keys` will be used as inputs to the policy.
+    input_keys: list[str] | None = None
+
     def __post_init__(self):
         self.checkpoint_path = None
+        self.policy.input_keys = self.input_keys
 
     def validate(self):
         # HACK: We parse again the cli args here to get the pretrained paths if there was some.

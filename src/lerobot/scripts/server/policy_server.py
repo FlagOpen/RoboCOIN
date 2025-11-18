@@ -17,10 +17,8 @@ Example:
 ```shell
 python src/lerobot/scripts/server/policy_server.py \
      --host=127.0.0.1 \
-     --port=8080 \
-     --fps=30 \
-     --inference_latency=0.033 \
-     --obs_queue_timeout=1
+     --port=18080 \
+     --fps=10 
 ```
 """
 
@@ -36,6 +34,9 @@ from queue import Empty, Queue
 import draccus
 import grpc
 import torch
+
+import sys
+sys.path.append('src/')
 
 from lerobot.policies.factory import get_policy_class
 from lerobot.scripts.server.configs import PolicyServerConfig
@@ -248,6 +249,7 @@ class PolicyServer(services_pb2_grpc.AsyncInferenceServicer):
 
     def _obs_sanity_checks(self, obs: TimedObservation, previous_obs: TimedObservation) -> bool:
         """Check if the observation is valid to be processed by the policy"""
+        return True
         with self._predicted_timesteps_lock:
             predicted_timesteps = self._predicted_timesteps
 
@@ -255,11 +257,14 @@ class PolicyServer(services_pb2_grpc.AsyncInferenceServicer):
             self.logger.debug(f"Skipping observation #{obs.get_timestep()} - Timestep predicted already!")
             return False
 
-        elif observations_similar(obs, previous_obs, lerobot_features=self.lerobot_features):
-            self.logger.debug(
-                f"Skipping observation #{obs.get_timestep()} - Observation too similar to last obs predicted!"
-            )
-            return False
+        # comment here to disable skipping similar observations
+        # because we add end effector delta control and it can lead to similar observations
+        # TODO: support checking delta control
+        # elif observations_similar(obs, previous_obs, lerobot_features=self.lerobot_features):
+        #     self.logger.debug(
+        #         f"Skipping observation #{obs.get_timestep()} - Observation too similar to last obs predicted!"
+        #     )
+        #     return False
 
         else:
             return True

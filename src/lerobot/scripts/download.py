@@ -16,7 +16,7 @@ from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import Literal
 
-DEFAULT_NAMESPACE = "robocoin-dataset"
+DEFAULT_NAMESPACE = "RoboCOIN"
 DEFAULT_MAX_RETRIES = 5
 DEFAULT_SLEEP_SECONDS = 5
 MAX_SLEEP_SECONDS = 120
@@ -54,6 +54,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=1,
         help="Only used for HuggingFace downloads.",
+    )
+    parser.add_argument(
+        "--max_retry_time",
+        type=int,
+        default=DEFAULT_MAX_RETRIES,
+        help="Maximum number of retry attempts per dataset.",
     )
     parser.add_argument("--dry_run", action="store_true", help="Print plan and exit.")
     return parser

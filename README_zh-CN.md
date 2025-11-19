@@ -1,13 +1,13 @@
-# RoboCoin-LeRobot
+# RoboCOIN
 
 [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
 
 目录
-- [RoboCoin-LeRobot](#robocoin-lerobot)
+- [RoboCOIN](#robocoin)
   - [概述](#概述)
   - [安装](#安装)
   - [数据集检索、下载与加载](#数据集检索下载与加载)
-    - [🔍 检索数据集](#-检索数据集)
+    - [🔍 检索和下载数据集](#-检索和下载数据集)
     - [📥 加载数据集](#-加载数据集)
     - [重点预告:](#重点预告)
   - [机器人控制逻辑](#机器人控制逻辑)
@@ -29,7 +29,7 @@
 ---
 ## 概述
 
-作为 RoboCoin 数据集的官方配套工具，本项目基于 LeRobot v2.1 框架构建，在完全兼容其数据格式的基础上，增加对子任务、场景描述与运动描述等元数据的支持，并提供从数据集检索、下载到标准化加载的完整流程，并提供了多款机器人的模型部署功能。
+作为 RoboCOIN 数据集的官方配套工具，本项目基于 LeRobot v2.1 框架构建，在完全兼容其数据格式的基础上，增加对子任务、场景描述与运动描述等元数据的支持，并提供从数据集检索、下载到标准化加载的完整流程，并提供了多款机器人的模型部署功能。
 
 **核心功能**：
 1. 支持便捷的数据集检索、下载及 DataLoader 加载功能，支持子任务、场景描述与运动描述等元数据的读取。
@@ -46,19 +46,35 @@ pip install robocoin
 ---
 ## 数据集检索、下载与加载
 
-### 🔍 检索数据集
-> 数据集目录请访问：[https://todo](https://todo)（即将上线）
+### 🔍 检索和下载数据集
+> 数据集目录请访问：[https://flagopen.github.io/RoboCOIN-DataManage/]
+我们将持续更新数据集，您可以在上方页面中找到最新的数据集
 
 ```bash
-python -m robocoin.download --dataset_name=RoboCoin
+# you can copy the bash command from the website and paste it here, such as:
+robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven
+
+# the default download path is ~/.cache/huggingface/lerobot/, which will be used as default dir of LerobotDataset.
+# if you want to speicifiy download dir, please add --target-dir YOUR_DOWNLOAD_DIR, such as:
+# robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven --target-dir /path/to/your/download/dir
+
+# we also provide a download option via ModelScope, such as:
+# robocoin-download --hub modelscope --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven 
 ```
 
 ### 📥 加载数据集
 ```python
-from lerobot.datasets import LeRobotDataset  # 注意：模块名为 datasets（复数）
-dataset = LeRobotDataset("RoboCoin")
-```
+import torch
+from lerobot.datasets.lerobot_dataset import LeRobotDataset  # Note: module name is 'datasets' (plural)
 
+dataset = LeRobotDataset("RoboCOIN/Cobot_Magic_move_the_bread")
+
+dataloader = torch.utils.data.DataLoader(
+    dataset,
+    num_workers=8,
+    batch_size=32,
+)
+```
 
 ### 重点预告:
 
@@ -679,6 +695,6 @@ python src/lerobot/scripts/server/robot_client_openpi_anno.py \
 ---
 ## 致谢
 
-感谢以下开源项目对RoboCoin-LeRobot的支持与帮助：
+感谢以下开源项目对RoboCOIN的支持与帮助：
 - [LeRobot](https://github.com/huggingface/lerobot)
 - [OpenPI](https://github.com/Physical-Intelligence/openpi)

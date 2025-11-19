@@ -1,14 +1,14 @@
-# RoboCoin-LeRobot
+# RoboCOIN
 
 [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
 
 Table of Contents
-- [RoboCoin-LeRobot](#robocoin-lerobot)
+- [RoboCOIN](#robocoin)
   - [Overview](#overview)
   - [Installation](#installation)
     - [Demo](#demo)
   - [Dataset Discovery, Download, and Loading](#dataset-discovery-download-and-loading)
-    - [🔍 Discover Datasets](#-discover-datasets)
+    - [🔍 Discover and Download Datasets](#-discover-and-download-datasets)
     - [📥 Load a Dataset](#-load-a-dataset)
     - [🚀 Upcoming Highlights](#-upcoming-highlights)
   - [Robot Control](#robot-control)
@@ -29,7 +29,7 @@ Table of Contents
   - [Acknowledgements](#acknowledgements)
 ## Overview
 
-As the official companion toolkit for the **RoboCoin Dataset**, this project is built upon the **LeRobot v2.1** framework. It maintains full compatibility with LeRobot’s data format while adding support for rich metadata—including **subtasks**, **scene descriptions**, and **motion descriptions**. RoboCoin provides an end-to-end pipeline for dataset discovery, download, and standardized loading, along with model deployment capabilities across multiple robotic platforms.
+As the official companion toolkit for the **RoboCOIN Dataset**, this project is built upon the **LeRobot v2.1** framework. It maintains full compatibility with LeRobot’s data format while adding support for rich metadata—including **subtasks**, **scene descriptions**, and **motion descriptions**. RoboCOIN provides an end-to-end pipeline for dataset discovery, download, and standardized loading, along with model deployment capabilities across multiple robotic platforms.
 
 **Key Features**:
 1. **Dataset Management**: Seamless retrieval, downloading, and `DataLoader`-based loading of datasets, with full support for subtask, scene, and motion annotation metadata.
@@ -56,22 +56,39 @@ pip install robocoin
 The GIF above shows shows how to discovery, download, and standardized loading RoboCOIN datasets.
 ## Dataset Discovery, Download, and Loading
 
-### 🔍 Discover Datasets  
-> Browse available datasets at: [https://todo](https://todo) (coming soon)
+### 🔍 Discover and Download Datasets  
+> Browse available datasets at: [https://flagopen.github.io/RoboCOIN-DataManage/]
+We will continuously update the datasets. You can find the latest datasets on the page above.
 
 ```bash
-python -m robocoin.download --dataset_name=RoboCoin
+# you can copy the bash command from the website and paste it here, such as:
+robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven
+
+# the default download path is ~/.cache/huggingface/lerobot/, which will be used as default dir of LerobotDataset.
+# if you want to speicifiy download dir, please add --target-dir YOUR_DOWNLOAD_DIR, such as:
+# robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven --target-dir /path/to/your/download/dir
+
+# we also provide a download option via ModelScope, such as:
+# robocoin-download --hub modelscope --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven 
 ```
 
 ### 📥 Load a Dataset
 ```python
-from lerobot.datasets import LeRobotDataset  # Note: module name is 'datasets' (plural)
-dataset = LeRobotDataset("RoboCoin")
+import torch
+from lerobot.datasets.lerobot_dataset import LeRobotDataset  # Note: module name is 'datasets' (plural)
+
+dataset = LeRobotDataset("RoboCOIN/R1_Lite_open_and_close_microwave_oven")
+
+dataloader = torch.utils.data.DataLoader(
+    dataset,
+    num_workers=8,
+    batch_size=32,
+)
 ```
 
 ### 🚀 Upcoming Highlights
 
-- **Version Compatibility**: RoboCoin currently supports **LeRobot v2.1** data format. Support for **v3.0** is coming soon.
+- **Version Compatibility**: RoboCOIN currently supports **LeRobot v2.1** data format. Support for **v3.0** is coming soon.
 - **Codebase Origin**: This project is currently based on **LeRobot v0.3.4**. Future releases will evolve into a fully compatible **LeRobot extension plugin**, maintaining seamless interoperability with the official LeRobot repository.
 ---
 ## Robot Control
@@ -689,6 +706,6 @@ Press "q" in console to exit anytime, then press "y/n" to indicate task success/
 ---
 ## Acknowledgements
 
-Thanks to the following open-source projects for their support and assistance to RoboCoin-LeRobot:
+Thanks to the following open-source projects for their support and assistance to RoboCOIN:
 - [LeRobot](https://github.com/huggingface/lerobot)
 - [OpenPI](https://github.com/Physical-Intelligence/openpi)

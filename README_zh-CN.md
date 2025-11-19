@@ -3,34 +3,69 @@
 [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
 
 目录
-- [概述](#概述)
-- [安装](#安装)
-- [机器人控制逻辑](#机器人控制逻辑)
+- [RoboCoin-LeRobot](#robocoin-lerobot)
+  - [概述](#概述)
+  - [安装](#安装)
+  - [数据集检索、下载与加载](#数据集检索下载与加载)
+    - [🔍 检索数据集](#-检索数据集)
+    - [📥 加载数据集](#-加载数据集)
+    - [重点预告:](#重点预告)
+  - [机器人控制逻辑](#机器人控制逻辑)
     - [机器人目录结构](#机器人目录结构)
     - [机器人基础配置类](#机器人基础配置类)
     - [特定机器人配置类](#特定机器人配置类)
     - [特定功能说明](#特定功能说明)
-        - [统一单位转换](#统一单位转换)
-        - [绝对与相对位置控制](#绝对与相对位置控制)
-- [使用说明](#使用说明)
-    - [轨迹重播](#轨迹重播)
-    - [模型推理](#模型推理)
+      - [统一单位转换](#统一单位转换)
+      - [绝对与相对位置控制](#绝对与相对位置控制)
+    - [使用说明](#使用说明)
+      - [轨迹重播](#轨迹重播)
+      - [模型推理](#模型推理)
         - [基于LeRobot Policy的推理](#基于lerobot-policy的推理)
         - [基于OpenPI Policy的推理](#基于openpi-policy的推理)
         - [层次化任务描述的推理 (目前仅支持OpenPI)](#层次化任务描述的推理-目前仅支持openpi)
-- [自定义功能](#自定义功能)
-    - [新增自定义机器人](#新增自定义机器人)
-- [致谢](#致谢)
-
+    - [自定义功能](#自定义功能)
+      - [新增自定义机器人](#新增自定义机器人)
+  - [致谢](#致谢)
+---
 ## 概述
 
-RoboCoin-LeRobot是一个基于LeRobot扩展的机器人部署环境，旨在为多种机器人平台提供统一的控制接口，实现机器人控制的标准化与简化
+作为 RoboCoin 数据集的官方配套工具，本项目基于 LeRobot v2.1 框架构建，在完全兼容其数据格式的基础上，增加对子任务、场景描述与运动描述等元数据的支持，并提供从数据集检索、下载到标准化加载的完整流程，并提供了多款机器人的模型部署功能。
 
 **核心功能**：
-1. 实现统一机器人控制接口，支持多种机器人平台的接入与控制，如Piper/Realman等基于SDK的控制，以及基于ROS/Moveit的通用控制方式
-2. 实现统一单位转换接口，支持多种机器人平台的单位转换，如角度制与弧度制的转换
-3. 提供可视化功能，支持2D/3D轨迹绘制与相机图像显示
-4. 支持基于LeRobot Policy与OpenPI Policy的模型推理与机器人控制
+1. 支持便捷的数据集检索、下载及 DataLoader 加载功能，支持子任务、场景描述与运动描述等元数据的读取。
+2. 实现统一机器人控制接口，支持多种机器人平台的接入与控制，如Piper/Realman等基于SDK的控制，以及基于ROS/Moveit的通用控制方式
+3. 实现统一单位转换接口，支持多种机器人平台的单位转换，如角度制与弧度制的转换
+4. 提供可视化功能，支持2D/3D轨迹绘制与相机图像显示
+5. 支持基于LeRobot Policy与OpenPI Policy的模型推理与机器人控制
+---
+## 安装
+
+```bash
+pip install robocoin
+```
+---
+## 数据集检索、下载与加载
+
+### 🔍 检索数据集
+> 数据集目录请访问：[https://todo](https://todo)（即将上线）
+
+```bash
+python -m robocoin.download --dataset_name=RoboCoin
+```
+
+### 📥 加载数据集
+```python
+from lerobot.datasets import LeRobotDataset  # 注意：模块名为 datasets（复数）
+dataset = LeRobotDataset("RoboCoin")
+```
+
+
+### 重点预告:
+
+- **版本兼容性**：当前 RoboCOIN 支持 **LeRobot v2.1** 数据格式，**v3.0 版本**支持将很快推出。
+- **代码来源**：当前本项目基于 LeRobot v0.3.4 开发，未来RoboCOIN将提供LeRobot扩展功能模块，并完全兼容LeRobot官方仓库。
+---
+## 机器人控制逻辑
 
 ```mermaid
 graph LR
@@ -102,14 +137,6 @@ graph LR
     class B,C,D,E serviceClass
     class B1,B2,B3,B4,C31,C32 functionClass
 ```
-
-## 安装
-
-```bash
-pip install -e .
-```
-
-## 机器人控制逻辑
 
 ### 机器人目录结构
 
@@ -220,19 +247,19 @@ class BaseRobotEndEffectorConfig(BaseRobotConfig):
 
 参数详解：
 
-| 参数名 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `cameras` | `dict[str, CameraConfig]` | `{}` | 相机配置字典，键为相机名称，值为相机配置 |
-| `joint_names` | `List[str]` | `['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper']` | 关节名称列表，包括夹爪 |
-| `init_type` | `str` | `'none'` | 初始化类型，可选：`'none'`, `'joint'`, `'end_effector'` |
-| `init_state` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | 初始状态：`init_type='joint'`时为关节状态，`init_type='end_effector'`时为末端执行器状态 |
-| `joint_units` | `List[str]` | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']` | 机器人关节单位，用于SDK控制 |
-| `pose_units` | `List[str]` | `['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']` | 末端执行器位姿单位，用于SDK控制 |
-| `model_joint_units` | `List[str]` | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']` | 模型关节单位，用于模型输入/输出 |
-| `delta_with` | `str` | `'none'` | 增量控制模式：`'none'`(绝对控制), `'previous'`(相对上一状态), `'initial'`(相对初始状态) |
-| `visualize` | `bool` | `True` | 是否启用可视化 |
-| `draw_2d` | `bool` | `True` | 是否绘制2D轨迹 |
-| `draw_3d` | `bool` | `True` | 是否绘制3D轨迹 |
+| 参数名              | 类型                      | 默认值                                                                                     | 说明                                                                                    |
+| ------------------- | ------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `cameras`           | `dict[str, CameraConfig]` | `{}`                                                                                       | 相机配置字典，键为相机名称，值为相机配置                                                |
+| `joint_names`       | `List[str]`               | `['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper']` | 关节名称列表，包括夹爪                                                                  |
+| `init_type`         | `str`                     | `'none'`                                                                                   | 初始化类型，可选：`'none'`, `'joint'`, `'end_effector'`                                 |
+| `init_state`        | `List[float]`             | `[0, 0, 0, 0, 0, 0, 0, 0]`                                                                 | 初始状态：`init_type='joint'`时为关节状态，`init_type='end_effector'`时为末端执行器状态 |
+| `joint_units`       | `List[str]`               | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']`              | 机器人关节单位，用于SDK控制                                                             |
+| `pose_units`        | `List[str]`               | `['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']`                                       | 末端执行器位姿单位，用于SDK控制                                                         |
+| `model_joint_units` | `List[str]`               | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']`              | 模型关节单位，用于模型输入/输出                                                         |
+| `delta_with`        | `str`                     | `'none'`                                                                                   | 增量控制模式：`'none'`(绝对控制), `'previous'`(相对上一状态), `'initial'`(相对初始状态) |
+| `visualize`         | `bool`                    | `True`                                                                                     | 是否启用可视化                                                                          |
+| `draw_2d`           | `bool`                    | `True`                                                                                     | 是否绘制2D轨迹                                                                          |
+| `draw_3d`           | `bool`                    | `True`                                                                                     | 是否绘制3D轨迹                                                                          |
 
 双臂机器人的基础配置类位于`src/lerobot/robots/base_robot/configuration_bi_base_robot.py`，继承自单臂基础配置类：
 
@@ -260,9 +287,9 @@ class BiBaseRobotEndEffectorConfig(BiBaseRobotConfig, BaseRobotEndEffectorConfig
 
 参数详解：
 
-| 参数名 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `init_state_left` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | 左臂初始关节状态 |
+| 参数名             | 类型          | 默认值                     | 说明             |
+| ------------------ | ------------- | -------------------------- | ---------------- |
+| `init_state_left`  | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | 左臂初始关节状态 |
 | `init_state_right` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | 右臂初始关节状态 |
 
 ### 特定机器人配置类
@@ -370,20 +397,20 @@ class BiRealmanEndEffectorConfig(BiRealmanConfig, BiBaseRobotEndEffectorConfig):
 
 **长度单位转换**：标准单位为米（m），支持微米、毫米、厘米、米之间的转换
 
-| 单位 | 符号 | 换算关系 | 
-|-----|------|----------|
-| 微米 | 001mm   | 1 um = 1e-6 m |
-| 毫米 | mm   | 1 mm = 1e-3 m |
-| 厘米 | cm   | 1 cm = 1e-2 m |
-| 米   | m    | 1 m = 1 m |
+| 单位 | 符号  | 换算关系      |
+| ---- | ----- | ------------- |
+| 微米 | 001mm | 1 um = 1e-6 m |
+| 毫米 | mm    | 1 mm = 1e-3 m |
+| 厘米 | cm    | 1 cm = 1e-2 m |
+| 米   | m     | 1 m = 1 m     |
 
 **角度单位转换**：标准单位为弧度（rad），支持毫度、度和弧度之间的转换
 
-| 单位 | 符号 | 换算关系 |
-|-----|------|----------|
+| 单位 | 符号   | 换算关系                |
+| ---- | ------ | ----------------------- |
 | 毫度 | 001deg | 1(001deg) = π/18000 rad |
-| 度   | deg  | 1 deg = π/180 rad |
-| 弧度 | rad  | 1 rad = 1 rad |
+| 度   | deg    | 1 deg = π/180 rad       |
+| 弧度 | rad    | 1 rad = 1 rad           |
 
 推理过程中，机器人平台的控制单位与模型输入/输出单位可能不同，该模块提供了统一的转换接口，确保在控制过程中单位的一致性与正确性：
 1. 机器人状态到模型输入的转换：机器人特定单位 -> 标准单位 -> 模型特定单位
@@ -431,9 +458,9 @@ sequenceDiagram
     Note over Robot: 最终状态: st+n
 ```
 
-## 使用说明
+### 使用说明
 
-### 轨迹重播
+#### 轨迹重播
 
 机器人平台的配置选项可以在配置类文件中修改，也可以通过命令行传入，以双臂Realman为例，命令如下：
 
@@ -453,9 +480,9 @@ python src/lerobot/scripts/replay.py \
 
 上述命令指定了Realman左臂与右臂的IP/端口，并加载了头部、左手、右手相机，轨迹重播时将根据`<your_lerobot_repo_id>`中的数据进行控制
 
-### 模型推理
+#### 模型推理
 
-#### 基于LeRobot Policy的推理
+##### 基于LeRobot Policy的推理
 
 1. 运行LeRobot Server，详见`src/lerobot/scripts/server/policy_server.py`，命令如下：
 ```bash
@@ -487,7 +514,7 @@ python src/lerobot/scripts/server/robot_client.py \
 ```
 上述命令将初始化realman姿态，加载头部、左手、右手相机，传入"do something"作为prompt，加载ACT模型进行推理，并获取action对机器人平台进行控制
 
-#### 基于OpenPI Policy的推理
+##### 基于OpenPI Policy的推理
 
 1. 运行OpenPI Server，详见[OpenPI官方仓库](https://github.com/Physical-Intelligence/openpi)
 
@@ -513,7 +540,7 @@ python src/lerobot/scripts/server/robot_client_openpi.py \
 
 推理时，可以在控制台中按"q"随时退出，之后按"y/n"表示当前任务成功或失败，视频将被存放到`results/`目录中。
 
-#### 层次化任务描述的推理 (目前仅支持OpenPI)
+##### 层次化任务描述的推理 (目前仅支持OpenPI)
 
 首先为当前任务编写一个配置类，如`src/lerobot/scripts/server/task_configs/towel_basket.py`:
 
@@ -603,9 +630,9 @@ python src/lerobot/scripts/server/robot_client_openpi_anno.py \
 推理时，将从第一个子任务开始，按"s"切换到下一个子任务。
 可以在控制台中按"q"随时退出，之后按"y/n"表示当前任务成功或失败，视频将被存放到`results/`目录中。
 
-## 自定义功能
+### 自定义功能
 
-### 新增自定义机器人
+#### 新增自定义机器人
 
 1. 在`src/lerobot/robots/`目录下创建一个新的文件夹，命名为你的机器人名称，如`my_robot`
 2. 在该文件夹下创建以下文件：
@@ -649,7 +676,7 @@ python src/lerobot/scripts/server/robot_client_openpi_anno.py \
    from lerobot.robots.my_robot.bi_my_robot_end_effector import BiMyRobotEndEffector
    ```
 9. 现在你可以通过命令行参数`--robot.type=my_robot`来使用你的自定义机器人了
-
+---
 ## 致谢
 
 感谢以下开源项目对RoboCoin-LeRobot的支持与帮助：

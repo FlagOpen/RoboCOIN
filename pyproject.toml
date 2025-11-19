@@ -24,7 +24,7 @@ issues = "https://github.com/todo"
 
 [project]
 name = "robocoin"
-version = "0.1.0"
+version = "0.1.0.1"
 description = "RoboCOIN: A toolkit for the RoboCOIN dataset"
 readme = "README.md"
 license = { text = "Apache-2.0" }

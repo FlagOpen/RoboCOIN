@@ -20,6 +20,7 @@ DEFAULT_NAMESPACE = "RoboCOIN"
 DEFAULT_MAX_RETRIES = 5
 DEFAULT_SLEEP_SECONDS = 5
 MAX_SLEEP_SECONDS = 120
+DEFAULT_OUTPUT_DIR = "~/.cache/huggingface/lerobot/"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,7 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--target-dir",
         dest="output_dir",
         default=None,
-        help="Where datasets should be stored. If not provided, uses the hub's default cache directory (e.g., ~/.cache/modelscope/hub for ModelScope, ~/.cache/huggingface/hub for HuggingFace).",
+        help=f"Where datasets should be stored. If not provided, uses the default directory: {DEFAULT_OUTPUT_DIR}",
     )
     parser.add_argument("--token", help="Authentication token (else env vars are used).")
     parser.add_argument(
@@ -136,7 +137,7 @@ def _resolve_token(hub: Literal["huggingface", "modelscope"], explicit: str | No
 # --------------------------------------------------------------------------- #
 # Hub specific downloaders
 # --------------------------------------------------------------------------- #
-def _download_from_hf(repo_id: str, target_dir: Path | None, token: str | None, max_workers: int) -> Path:
+def _download_from_hf(repo_id: str, target_dir: Path, token: str | None, max_workers: int) -> Path:
     try:
         from huggingface_hub import snapshot_download
         from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
@@ -151,10 +152,8 @@ def _download_from_hf(repo_id: str, target_dir: Path | None, token: str | None, 
                 "token": token,
                 "resume_download": True,
                 "max_workers": max_workers,
+                "local_dir": str(target_dir),
             }
-            # Only pass local_dir if target_dir is provided, otherwise use library default
-            if target_dir is not None:
-                download_kwargs["local_dir"] = str(target_dir)
             path = snapshot_download(**download_kwargs)
             return Path(path)
         except RepositoryNotFoundError as exc:
@@ -184,7 +183,7 @@ def _download_from_hf(repo_id: str, target_dir: Path | None, token: str | None, 
     return _run()
 
 
-def _download_from_ms(repo_id: str, target_dir: Path | None, token: str | None) -> Path:
+def _download_from_ms(repo_id: str, target_dir: Path, token: str | None) -> Path:
     try:
         from modelscope import dataset_snapshot_download
         from modelscope.hub.api import HubApi
@@ -213,10 +212,10 @@ def _download_from_ms(repo_id: str, target_dir: Path | None, token: str | None) 
             # Use dataset_snapshot_download for downloading dataset files
             # This downloads all raw files from the dataset repository
             LOGGER.info("Downloading dataset using dataset_snapshot_download...")
-            download_kwargs = {"dataset_id": repo_id}
-            # Only pass local_dir if target_dir is provided, otherwise use library default
-            if target_dir is not None:
-                download_kwargs["local_dir"] = str(target_dir)
+            download_kwargs = {
+                "dataset_id": repo_id,
+                "local_dir": str(target_dir),
+            }
             path = dataset_snapshot_download(**download_kwargs)
 
             # The dataset files are now downloaded to target_dir (or default cache)
@@ -277,7 +276,7 @@ def _download_from_ms(repo_id: str, target_dir: Path | None, token: str | None) 
 def download_dataset(
     hub: Literal["huggingface", "modelscope"],
     dataset_name: str,
-    output_dir: Path | None,
+    output_dir: Path,
     namespace: str | None,
     token: str | None,
     max_workers: int,
@@ -286,18 +285,12 @@ def download_dataset(
     namespace = namespace or DEFAULT_NAMESPACE
     repo_id = f"{namespace}/{dataset_name}"
     
-    # If output_dir is provided, create a subdirectory for this dataset
-    # Otherwise, let the library use its default cache directory
-    dataset_path: Path | None = None
-    if output_dir is not None:
-        dataset_path = output_dir / dataset_name
-        dataset_path.mkdir(parents=True, exist_ok=True)
+    # Create a subdirectory for this dataset
+    dataset_path: Path = output_dir / dataset_name
+    dataset_path.mkdir(parents=True, exist_ok=True)
 
     LOGGER.info("Downloading repo_id: %s from %s", repo_id, hub)
-    if dataset_path is not None:
-        LOGGER.debug("Target path: %s", dataset_path)
-    else:
-        LOGGER.debug("Using hub's default cache directory")
+    LOGGER.debug("Target path: %s", dataset_path)
     LOGGER.debug("Token provided: %s", bool(token))
 
     def _perform_download() -> Path:
@@ -325,7 +318,7 @@ def download_datasets(
     Args:
         hub: Target hub name.
         dataset_names: Iterable of dataset identifiers (unique entries recommended).
-        output_dir: Directory where dataset folders will be stored. If None, uses the hub's default cache directory.
+        output_dir: Directory where dataset folders will be stored. If None, uses the default directory: ~/.cache/huggingface/lerobot/
         namespace: Optional namespace override.
         token: Optional authentication token, falling back to env vars when None.
         max_workers: Parallel worker hint for HuggingFace.
@@ -335,19 +328,18 @@ def download_datasets(
     if not datasets:
         raise ValueError("No datasets provided.")
 
-    out_dir: Path | None = None
-    if output_dir is not None:
-        out_dir = Path(output_dir).expanduser().resolve()
-        out_dir.mkdir(parents=True, exist_ok=True)
+    # Use default output directory if not provided
+    if output_dir is None:
+        output_dir = DEFAULT_OUTPUT_DIR
+
+    out_dir: Path = Path(output_dir).expanduser().resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     resolved_token = _resolve_token(hub, token)
 
     LOGGER.info("Hub: %s", hub)
     LOGGER.info("Namespace: %s", namespace or DEFAULT_NAMESPACE)
-    if out_dir is not None:
-        LOGGER.info("Output: %s", out_dir)
-    else:
-        LOGGER.info("Output: Using hub's default cache directory")
+    LOGGER.info("Output: %s", out_dir)
     LOGGER.info("Datasets: %s", ", ".join(datasets))
     LOGGER.info("Retry budget: %d attempt(s) per dataset", int(max_retries))
     LOGGER.info("Token: %s", "provided" if resolved_token else "not provided")
@@ -393,19 +385,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not dataset_names:
         parser.error("No datasets supplied. Use --ds_lists and/or --ds_file.")
 
-    # Only resolve output_dir if it's provided, otherwise pass None to use hub defaults
-    output_dir: Path | None = None
-    if args.output_dir is not None:
+    # Use default output directory if not provided
+    if args.output_dir is None:
+        output_dir = _resolve_output_dir(DEFAULT_OUTPUT_DIR)
+    else:
         output_dir = _resolve_output_dir(args.output_dir)
 
     if args.dry_run:
         LOGGER.info("Dry run")
         LOGGER.info("  Hub: %s", args.hub)
         LOGGER.info("  Namespace: %s", args.namespace or DEFAULT_NAMESPACE)
-        if output_dir is not None:
-            LOGGER.info("  Output: %s", output_dir)
-        else:
-            LOGGER.info("  Output: Using hub's default cache directory")
+        LOGGER.info("  Output: %s", output_dir)
         LOGGER.info("  Datasets (%d): %s", len(dataset_names), ", ".join(dataset_names))
         LOGGER.info("  Max retries: %d", args.max_retry_time)
         LOGGER.info("  Token: %s", "provided" if args.token else "not provided")

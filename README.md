@@ -29,7 +29,7 @@ Table of Contents
   - [Acknowledgements](#acknowledgements)
 ## Overview
 
-As the official companion toolkit for the **RoboCOIN Dataset**, this project is built upon the **LeRobot v2.1** framework. It maintains full compatibility with LeRobot’s data format while adding support for rich metadata—including **subtasks**, **scene descriptions**, and **motion descriptions**. RoboCOIN provides an end-to-end pipeline for dataset discovery, download, and standardized loading, along with model deployment capabilities across multiple robotic platforms.
+As the official companion toolkit for the [**RoboCOIN Dataset**], this project is built upon the [**LeRobot**](https://github.com/huggingface/lerobot) repository. It maintains full compatibility with LeRobot’s data format while adding support for rich metadata—including **subtasks**, **scene descriptions**, and **motion descriptions**. RoboCOIN provides an end-to-end pipeline for dataset discovery, download, and standardized loading, along with model deployment capabilities across multiple robotic platforms.
 
 **Key Features**:
 1. **Dataset Management**: Seamless retrieval, downloading, and `DataLoader`-based loading of datasets, with full support for subtask, scene, and motion annotation metadata.
@@ -53,7 +53,7 @@ pip install robocoin
   <img src="assets/how_to_use.gif" alt="This demo shows how to discovery, download, and standardized loading RoboCOIN datasets" width="700">
 </p>
 
-The GIF above shows shows how to discovery, download, and standardized loading RoboCOIN datasets.
+The GIF above shows shows how to discovery, download, and use RoboCOIN datasets.
 ## Dataset Discovery, Download, and Loading
 
 ### 🔍 Discover and Download Datasets  
@@ -88,7 +88,7 @@ dataloader = torch.utils.data.DataLoader(
 
 ### 🚀 Upcoming Highlights
 
-- **Version Compatibility**: RoboCOIN currently supports **LeRobot v2.1** data format. Support for **v3.0** is coming soon.
+- **Version Compatibility**: RoboCOIN currently supports **LeRobot v2.1** data format. Support for **v3.0** data format is coming soon.
 - **Codebase Origin**: This project is currently based on **LeRobot v0.3.4**. Future releases will evolve into a fully compatible **LeRobot extension plugin**, maintaining seamless interoperability with the official LeRobot repository.
 ---
 ## Robot Control

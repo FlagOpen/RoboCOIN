@@ -29,7 +29,7 @@
 ---
 ## 概述
 
-作为 RoboCOIN 数据集的官方配套工具，本项目基于 LeRobot v2.1 框架构建，在完全兼容其数据格式的基础上，增加对子任务、场景描述与运动描述等元数据的支持，并提供从数据集检索、下载到标准化加载的完整流程，并提供了多款机器人的模型部署功能。
+作为 [**RoboCOIN数据集**]()的官方配套工具，本项目基于 [**LeRobot**](https://github.com/huggingface/lerobot) 仓库构建，在完全兼容其数据格式的基础上，增加对子任务、场景描述与运动描述等元数据的支持，并提供从数据集检索、下载到标准化加载的完整流程，并提供了多款机器人的模型部署功能。
 
 **核心功能**：
 1. 支持便捷的数据集检索、下载及 DataLoader 加载功能，支持子任务、场景描述与运动描述等元数据的读取。
@@ -47,7 +47,7 @@ pip install robocoin
 ## 数据集检索、下载与加载
 
 ### 🔍 检索和下载数据集
-> 数据集目录请访问：[https://flagopen.github.io/RoboCOIN-DataManage/]
+> 数据集目录请访问：https://flagopen.github.io/RoboCOIN-DataManage/
 我们将持续更新数据集，您可以在上方页面中找到最新的数据集
 
 ```bash
@@ -78,7 +78,7 @@ dataloader = torch.utils.data.DataLoader(
 
 ### 重点预告:
 
-- **版本兼容性**：当前 RoboCOIN 支持 **LeRobot v2.1** 数据格式，**v3.0 版本**支持将很快推出。
+- **版本兼容性**：当前 RoboCOIN 支持 **LeRobot v2.1** 数据格式，**v3.0 版本**数据格式支持将很快推出。
 - **代码来源**：当前本项目基于 LeRobot v0.3.4 开发，未来RoboCOIN将提供LeRobot扩展功能模块，并完全兼容LeRobot官方仓库。
 ---
 ## 机器人控制逻辑

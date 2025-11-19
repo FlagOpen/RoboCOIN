@@ -6,7 +6,6 @@ Table of Contents
 - [RoboCOIN](#robocoin)
   - [Overview](#overview)
   - [Installation](#installation)
-    - [Demo](#demo)
   - [Dataset Discovery, Download, and Loading](#dataset-discovery-download-and-loading)
     - [🔍 Discover and Download Datasets](#-discover-and-download-datasets)
     - [📥 Load a Dataset](#-load-a-dataset)
@@ -47,18 +46,18 @@ pip install robocoin
 ```
 
 ---
-### Demo
-
-<p align="center">
-  <img src="assets/how_to_use.gif" alt="This demo shows how to discovery, download, and standardized loading RoboCOIN datasets" width="700">
-</p>
-
-The GIF above shows shows how to discovery, download, and use RoboCOIN datasets.
 ## Dataset Discovery, Download, and Loading
 
 ### 🔍 Discover and Download Datasets  
 > Browse available datasets at: [https://flagopen.github.io/RoboCOIN-DataManage/]
 We will continuously update the datasets. You can find the latest datasets on the page above.
+
+
+<p align="center">
+  <img src="assets/how-to-use.gif" alt="This demo shows how to discovery, download, and standardized loading RoboCOIN datasets" width="700">
+</p>
+<p align="center">The above GIF shows shows how to discovery, download, and use RoboCOIN datasets.</p>
+
 
 ```bash
 # you can copy the bash command from the website and paste it here, such as:

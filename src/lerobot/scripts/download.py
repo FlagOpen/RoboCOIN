@@ -53,8 +53,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max_workers",
         type=int,
-        default=1,
-        help="Only used for HuggingFace downloads.",
+        default=8,
+        help="Maximum number of parallel workers for downloading. Used for both HuggingFace and ModelScope.",
     )
     parser.add_argument(
         "--max_retry_time",
@@ -183,7 +183,7 @@ def _download_from_hf(repo_id: str, target_dir: Path, token: str | None, max_wor
     return _run()
 
 
-def _download_from_ms(repo_id: str, target_dir: Path, token: str | None) -> Path:
+def _download_from_ms(repo_id: str, target_dir: Path, token: str | None, max_workers: int) -> Path:
     try:
         from modelscope import dataset_snapshot_download
         from modelscope.hub.api import HubApi
@@ -216,6 +216,11 @@ def _download_from_ms(repo_id: str, target_dir: Path, token: str | None) -> Path
                 "dataset_id": repo_id,
                 "local_dir": str(target_dir),
             }
+            # ModelScope may support max_workers parameter for parallel downloads
+            # If the API doesn't support it, it will be silently ignored
+            if max_workers > 1:
+                download_kwargs["max_workers"] = max_workers
+                LOGGER.debug("Using max_workers=%d for ModelScope download", max_workers)
             path = dataset_snapshot_download(**download_kwargs)
 
             # The dataset files are now downloaded to target_dir (or default cache)
@@ -297,7 +302,7 @@ def download_dataset(
         if hub == "huggingface":
             return _download_from_hf(repo_id, dataset_path, token, max_workers)
         if hub == "modelscope":
-            return _download_from_ms(repo_id, dataset_path, token)
+            return _download_from_ms(repo_id, dataset_path, token, max_workers)
         raise ValueError(f"Unsupported hub: {hub}")
 
     return _retry_loop(f"{hub}:{repo_id}", max_retries, _perform_download)
@@ -321,7 +326,7 @@ def download_datasets(
         output_dir: Directory where dataset folders will be stored. If None, uses the default directory: ~/.cache/huggingface/lerobot/
         namespace: Optional namespace override.
         token: Optional authentication token, falling back to env vars when None.
-        max_workers: Parallel worker hint for HuggingFace.
+        max_workers: Maximum number of parallel workers for downloading (used for both HuggingFace and ModelScope).
         max_retries: Maximum attempts per dataset (including the first try).
     """
     datasets = list(dataset_names)

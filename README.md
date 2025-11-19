@@ -75,7 +75,7 @@ robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lit
 ### 📥 Load a Dataset
 ```python
 import torch
-from lerobot.datasets.lerobot_dataset import LeRobotDataset  # Note: module name is 'datasets' (plural)
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
 dataset = LeRobotDataset("RoboCOIN/R1_Lite_open_and_close_microwave_oven")
 

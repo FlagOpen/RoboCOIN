@@ -83,43 +83,44 @@ dataloader = torch.utils.data.DataLoader(
 ---
 ## 机器人控制逻辑
 
+
 ```mermaid
 graph LR
-    subgraph 机器人底层接口
-    A1[统一单位转换]
-    A2[绝对与相对位置控制]
-    A3[相机与轨迹可视化]
-    A[机器人底层接口]
+    subgraph Robot Low-level Interfaces
+    A1[Unified Unit Conversion]
+    A2[Absolute & Relative Position Control]
+    A3[Camera & Trajectory Visualization]
+    A[Robot Low-level Interface]
     end
     
-    %% 机器人服务层
-    subgraph 机器人服务
-    C[机器人服务]
+    %% Robot Service Layer
+    subgraph Robot Services
+    C[Robot Services]
     C1[SDK]
     C2[ROS]
-    C11[Agilex Piper服务]
-    C12[Realman服务]
-    C13[其他特定机器人服务]
-    C21[通用机器人服务]
+    C11[Agilex Piper Service]
+    C12[Realman Service]
+    C13[Other Robot Services]
+    C21[Generic Robot Service]
     end
     
-    %% 相机服务层
-    subgraph 相机服务
-    D[相机服务]
-    D1[OpenCV相机服务]
-    D2[RealSense相机服务]
+    %% Camera Service Layer
+    subgraph Camera Services
+    D[Camera Services]
+    D1[OpenCV Camera Service]
+    D2[RealSense Camera Service]
     end
     
-    %% 推理服务层
-    subgraph 推理服务
-    E[推理服务]
+    %% Inference Service Layer
+    subgraph Inference Services
+    E[Inference Services]
     E1[RPC]
     E11[Lerobot Policy]
     E2[WebSocket]
     E21[OpenPi Policy]
     end
     
-    %% 连接关系
+    %% Connection Relationships
 
     A1 --- A
     A2 --- A
@@ -144,14 +145,6 @@ graph LR
     A --- D
     A --- E
     
-    %% 样式定义
-    classDef interfaceClass fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef serviceClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef functionClass fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    
-    class A interfaceClass
-    class B,C,D,E serviceClass
-    class B1,B2,B3,B4,C31,C32 functionClass
 ```
 
 ### 机器人目录结构

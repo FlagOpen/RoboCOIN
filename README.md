@@ -92,6 +92,7 @@ dataloader = torch.utils.data.DataLoader(
 - **Codebase Origin**: This project is currently based on **LeRobot v0.3.4**. Future releases will evolve into a fully compatible **LeRobot extension plugin**, maintaining seamless interoperability with the official LeRobot repository.
 ---
 ## Robot Control
+
 ```mermaid
 graph LR
     subgraph Robot Low-level Interfaces
@@ -153,14 +154,6 @@ graph LR
     A --- D
     A --- E
     
-    %% Style Definitions
-    classDef interfaceClass fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef serviceClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef functionClass fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    
-    class A interfaceClass
-    class B,C,D,E serviceClass
-    class B1,B2,B3,B4,C31,C32 functionClass
 ```
 
 ### Robot Script Structure

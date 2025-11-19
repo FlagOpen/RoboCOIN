@@ -3,35 +3,78 @@
 [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
 
 Table of Contents
-- [Overview](#overview)
-- [Installation](#installation)
-- [Robot Control](#robot-control)
-  - [Robot Script Structure](#robot-script-structure)
-  - [Base Robot Configuration Classes](#base-robot-configuration-classes)
-  - [Specific Robot Configuration Classes](#specific-robot-configuration-classes)
-  - [Specific Feature Descriptions](#specific-feature-descriptions)
-    - [Unified Unit Conversion](#unified-unit-conversion)
-    - [Absolute and Relative Position Control](#absolute-and-relative-position-control)
-- [Usage Instructions](#usage-instructions)
-  - [Trajectory Replay](#trajectory-replay)
-  - [Model Inference](#model-inference)
-    - [LeRobot Policy Based Inference](#lerobot-policy-based-inference)
-    - [OpenPI Policy Based Inference](#openpi-policy-based-inference)
-    - [Hierarchical Task Description Inference (Currently Only Supports OpenPI)](#hierarchical-task-description-inference-currently-only-supports-openpi)
-- [Customization](#customization)
-  - [Adding Custom Robots](#adding-custom-robots)
-- [Acknowledgements](#acknowledgements)
-
+- [RoboCoin-LeRobot](#robocoin-lerobot)
+  - [Overview](#overview)
+  - [Installation](#installation)
+    - [Demo](#demo)
+  - [Dataset Discovery, Download, and Loading](#dataset-discovery-download-and-loading)
+    - [🔍 Discover Datasets](#-discover-datasets)
+    - [📥 Load a Dataset](#-load-a-dataset)
+    - [🚀 Upcoming Highlights](#-upcoming-highlights)
+  - [Robot Control](#robot-control)
+    - [Robot Script Structure](#robot-script-structure)
+    - [Base Robot Configuration Classes](#base-robot-configuration-classes)
+    - [Specific Robot Configuration Classes](#specific-robot-configuration-classes)
+    - [Specific Feature Descriptions](#specific-feature-descriptions)
+      - [Unified Unit Conversion](#unified-unit-conversion)
+      - [Absolute and Relative Position Control](#absolute-and-relative-position-control)
+    - [Usage Instructions](#usage-instructions)
+      - [Trajectory Replay](#trajectory-replay)
+      - [Model Inference](#model-inference)
+        - [LeRobot Policy Based Inference](#lerobot-policy-based-inference)
+        - [OpenPI Policy Based Inference](#openpi-policy-based-inference)
+        - [Hierarchical Task Description Inference (Currently Only Supports OpenPI)](#hierarchical-task-description-inference-currently-only-supports-openpi)
+    - [Customization](#customization)
+      - [Adding Custom Robots](#adding-custom-robots)
+  - [Acknowledgements](#acknowledgements)
 ## Overview
 
-RoboCoin-LeRobot is a robot deployment environment based on LeRobot extensions, designed to provide unified control interfaces for multiple robot platforms, achieving standardization and simplification of robot control.
+As the official companion toolkit for the **RoboCoin Dataset**, this project is built upon the **LeRobot v2.1** framework. It maintains full compatibility with LeRobot’s data format while adding support for rich metadata—including **subtasks**, **scene descriptions**, and **motion descriptions**. RoboCoin provides an end-to-end pipeline for dataset discovery, download, and standardized loading, along with model deployment capabilities across multiple robotic platforms.
 
-**​Core Features**:
-1. Implements unified robot control interfaces supporting multiple robot platforms like Piper/Realman via SDK control, and generic control via ROS/Moveit
-2. Implements unified unit conversion interfaces supporting various robot platform unit conversions like angle and radian conversions
-3. Provides visualization capabilities supporting 2D/3D trajectory drawing and camera image display
-4. Supports model inference and robot control based on LeRobot Policy and OpenPI Policy
+**Key Features**:
+1. **Dataset Management**: Seamless retrieval, downloading, and `DataLoader`-based loading of datasets, with full support for subtask, scene, and motion annotation metadata.
+2. **Unified Robot Control Interface**: Supports integration with diverse robotic platforms, including SDK-based control (e.g., Piper, Realman) and general-purpose ROS/MoveIt-based control.
+3. **Standardized Unit Conversion**: Built-in utilities for cross-platform unit handling (e.g., degree ↔ radian conversion).
+4. **Visualization Tools**: 2D/3D trajectory plotting and synchronized camera image rendering.
+5. **Policy Inference & Deployment**: Ready-to-use inference pipelines for both **LeRobot Policy** and **OpenPI Policy**, enabling direct robot control from trained models.
 
+---
+
+## Installation
+
+```bash
+pip install robocoin
+```
+
+---
+### Demo
+
+<p align="center">
+  <img src="assets/how_to_use.gif" alt="This demo shows how to discovery, download, and standardized loading RoboCOIN datasets" width="700">
+</p>
+
+The GIF above shows shows how to discovery, download, and standardized loading RoboCOIN datasets.
+## Dataset Discovery, Download, and Loading
+
+### 🔍 Discover Datasets  
+> Browse available datasets at: [https://todo](https://todo) (coming soon)
+
+```bash
+python -m robocoin.download --dataset_name=RoboCoin
+```
+
+### 📥 Load a Dataset
+```python
+from lerobot.datasets import LeRobotDataset  # Note: module name is 'datasets' (plural)
+dataset = LeRobotDataset("RoboCoin")
+```
+
+### 🚀 Upcoming Highlights
+
+- **Version Compatibility**: RoboCoin currently supports **LeRobot v2.1** data format. Support for **v3.0** is coming soon.
+- **Codebase Origin**: This project is currently based on **LeRobot v0.3.4**. Future releases will evolve into a fully compatible **LeRobot extension plugin**, maintaining seamless interoperability with the official LeRobot repository.
+---
+## Robot Control
 ```mermaid
 graph LR
     subgraph Robot Low-level Interfaces
@@ -102,14 +145,6 @@ graph LR
     class B,C,D,E serviceClass
     class B1,B2,B3,B4,C31,C32 functionClass
 ```
-
-## Installation
-
-```bash
-pip install -e .
-```
-
-## Robot Control
 
 ### Robot Script Structure
 
@@ -220,19 +255,19 @@ class BaseRobotEndEffectorConfig(BaseRobotConfig):
 
 Parameter Details：
 
-| Parameter Name | Type | Default Value | Description |
-|---------------|------|---------------|-------------|
-| `cameras` | `dict[str, CameraConfig]` | `{}` | Camera configuration dictionary, key is camera name, value is camera configuration |
-| `joint_names` | `List[str]` | `['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper']` | Joint name list, including gripper |
-| `init_type` | `str` | `'none'` | Initialization type, options: `'none'`, `'joint'`, `'end_effector'` |
-| `init_state` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | Initial state: joint state when `init_type='joint'`, end effector state when `init_type='end_effector'` |
-| `joint_units` | `List[str]` | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']` | Robot joint units, for SDK control |
-| `pose_units` | `List[str]` | `['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']` | End effector pose units, for SDK control |
-| `model_joint_units` | `List[str]` | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']` | Model joint units, for model input/output |
-| `delta_with` | `str` | `'none'` | Delta control mode: `'none'`(absolute control), `'previous'`(relative to previous state), `'initial'`(relative to initial state) |
-| `visualize` | `bool` | `True` | Whether to enable visualization |
-| `draw_2d` | `bool` | `True` | Whether to draw 2D trajectory |
-| `draw_3d` | `bool` | `True` | Whether to draw 3D trajectory |
+| Parameter Name      | Type                      | Default Value                                                                              | Description                                                                                                                      |
+| ------------------- | ------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `cameras`           | `dict[str, CameraConfig]` | `{}`                                                                                       | Camera configuration dictionary, key is camera name, value is camera configuration                                               |
+| `joint_names`       | `List[str]`               | `['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper']` | Joint name list, including gripper                                                                                               |
+| `init_type`         | `str`                     | `'none'`                                                                                   | Initialization type, options: `'none'`, `'joint'`, `'end_effector'`                                                              |
+| `init_state`        | `List[float]`             | `[0, 0, 0, 0, 0, 0, 0, 0]`                                                                 | Initial state: joint state when `init_type='joint'`, end effector state when `init_type='end_effector'`                          |
+| `joint_units`       | `List[str]`               | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']`              | Robot joint units, for SDK control                                                                                               |
+| `pose_units`        | `List[str]`               | `['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']`                                       | End effector pose units, for SDK control                                                                                         |
+| `model_joint_units` | `List[str]`               | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']`              | Model joint units, for model input/output                                                                                        |
+| `delta_with`        | `str`                     | `'none'`                                                                                   | Delta control mode: `'none'`(absolute control), `'previous'`(relative to previous state), `'initial'`(relative to initial state) |
+| `visualize`         | `bool`                    | `True`                                                                                     | Whether to enable visualization                                                                                                  |
+| `draw_2d`           | `bool`                    | `True`                                                                                     | Whether to draw 2D trajectory                                                                                                    |
+| `draw_3d`           | `bool`                    | `True`                                                                                     | Whether to draw 3D trajectory                                                                                                    |
 
 The dual-arm robot base configuration class is located at `src/lerobot/robots/base_robot/configuration_bi_base_robot.py`, inheriting from the single-arm base configuration:
 
@@ -260,9 +295,9 @@ class BiBaseRobotEndEffectorConfig(BiBaseRobotConfig, BaseRobotEndEffectorConfig
 
 Parameter Details：
 
-| Parameter Name | Type | Default Value | Description |
-|---------------|------|---------------|-------------|
-| `init_state_left` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | Left arm initial joint state |
+| Parameter Name     | Type          | Default Value              | Description                   |
+| ------------------ | ------------- | -------------------------- | ----------------------------- |
+| `init_state_left`  | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | Left arm initial joint state  |
 | `init_state_right` | `List[float]` | `[0, 0, 0, 0, 0, 0, 0, 0]` | Right arm initial joint state |
 
 ### Specific Robot Configuration Classes
@@ -371,20 +406,20 @@ This module is located at `src/lerobot/robots/base_robot/units_transform.py`, pr
 
 **​Length Unit Conversion**: Standard unit is meter (m), supports conversion between micrometer, millimeter, centimeter, meter.
 
-| Unit | Symbol | Conversion Ratio | 
-|------|--------|------------------|
-| Micrometer | um (001mm) | 1 um = 1e-6 m |
-| Millimeter | mm | 1 mm = 1e-3 m |
-| Centimeter | cm | 1 cm = 1e-2 m |
-| Meter | m | 1 m = 1 m |
+| Unit       | Symbol     | Conversion Ratio |
+| ---------- | ---------- | ---------------- |
+| Micrometer | um (001mm) | 1 um = 1e-6 m    |
+| Millimeter | mm         | 1 mm = 1e-3 m    |
+| Centimeter | cm         | 1 cm = 1e-2 m    |
+| Meter      | m          | 1 m = 1 m        |
 
 **Angle Unit Conversion**: Standard unit is radian (rad), supports conversion between millidegree, degree, and radian.
 
-| Unit | Symbol | Conversion Ratio |
-|------|--------|------------------|
+| Unit        | Symbol        | Conversion Ratio     |
+| ----------- | ------------- | -------------------- |
 | Millidegree | mdeg (001deg) | 1 mdeg = π/18000 rad |
-| Degree | deg | 1 deg = π/180 rad |
-| Radian | rad | 1 rad = 1 rad |
+| Degree      | deg           | 1 deg = π/180 rad    |
+| Radian      | rad           | 1 rad = 1 rad        |
 
 During inference, the control units of the robot platform may differ from the model input/output units. This module provides unified conversion interfaces to ensure unit consistency and correctness during control:
 1. Robot state to model input conversion: Robot specific units -> Standard units -> Model specific units
@@ -432,9 +467,9 @@ sequenceDiagram
     Note over Robot: Final State: st+n
 ```
 
-## Usage Instructions
+### Usage Instructions
 
-### Trajectory Replay
+#### Trajectory Replay
 
 Robot platform configuration options can be modified in configuration class files or passed via command line. Taking dual-arm Realman as example, command is as follows:
 
@@ -454,9 +489,9 @@ python src/lerobot/scripts/replay.py \
 
 The above command specifies Realman left and right arm IP/ports, and loads head, left hand, right hand cameras. During trajectory replay, control will be based on data in <your_lerobot_repo_id>.
 
-### Model Inference
+#### Model Inference
 
-#### LeRobot Policy Based Inference
+##### LeRobot Policy Based Inference
 
 1. Run LeRobot Server, see `src/lerobot/scripts/server/policy_server.py`, command as follows:
 ```bash
@@ -489,7 +524,7 @@ python src/lerobot/scripts/server/robot_client.py \
 
 The above command initializes Realman pose, loads head, left hand, right hand cameras, passes "do something" as prompt, loads ACT model for inference, and obtains actions to control the robot platform.
 
-#### OpenPI Policy Based Inference
+##### OpenPI Policy Based Inference
 
 1. Run OpenPI Server, see [OpenPI official repository](https://github.com/Physical-Intelligence/openpi)
 2. Run client program, taking Realman as example, command as follows:
@@ -514,7 +549,7 @@ The above command initializes Realman pose, loads head, left hand, right hand ca
 
 During inference, press "q" in console to exit anytime, then press "y/n" to indicate task success/failure. Video will be saved to results/directory.
 
-#### Hierarchical Task Description Inference (Currently Only Supports OpenPI)
+##### Hierarchical Task Description Inference (Currently Only Supports OpenPI)
 
 First write a configuration class for the current task, e.g. `src/lerobot/scripts/server/task_configs/towel_basket.py`:
 
@@ -605,9 +640,9 @@ During inference, it starts from the first subtask, press "s" to switch to next 
 
 Press "q" in console to exit anytime, then press "y/n" to indicate task success/failure. Video will be saved to `results/` directory.
 
-## Customization
+### Customization
 
-### Adding Custom Robots
+#### Adding Custom Robots
 
 1. Create a new folder under src/lerobot/robots/directory named after your robot, e.g. my_robot
 2. Create the following files in this folder:
@@ -651,7 +686,7 @@ Press "q" in console to exit anytime, then press "y/n" to indicate task success/
    from lerobot.robots.my_robot.bi_my_robot_end_effector import BiMyRobotEndEffector
    ```
 9. Now you can use your custom robot via command line parameter `--robot.type=my_robot`
-
+---
 ## Acknowledgements
 
 Thanks to the following open-source projects for their support and assistance to RoboCoin-LeRobot:

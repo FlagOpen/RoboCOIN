@@ -290,8 +290,13 @@ def download_dataset(
     namespace = namespace or DEFAULT_NAMESPACE
     repo_id = f"{namespace}/{dataset_name}"
     
-    # Create a subdirectory for this dataset
-    dataset_path: Path = output_dir / dataset_name
+    # Create a subdirectory for this dataset, preserving namespace structure.
+    # This ensures consistent directory structure across HuggingFace and ModelScope:
+    # - HuggingFace default: ~/.cache/huggingface/hub/datasets--RoboCOIN--dataset/ (uses -- separator)
+    # - ModelScope default: ~/.cache/modelscope/hub/datasets/RoboCOIN/dataset/ (preserves / structure)
+    # By explicitly specifying local_dir with namespace/dataset structure, both platforms
+    # will use the same consistent path: output_dir/namespace/dataset_name/
+    dataset_path: Path = output_dir / namespace / dataset_name
     dataset_path.mkdir(parents=True, exist_ok=True)
 
     LOGGER.info("Downloading repo_id: %s from %s", repo_id, hub)

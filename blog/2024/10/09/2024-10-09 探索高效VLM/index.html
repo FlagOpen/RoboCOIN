@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文总结了面向高效的视觉语言大模型设计的方法，包括自主构造数据、对比解码、视觉提示、启发式设计等方面的方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面向高效的视觉语言大模型设计">
+<meta property="og:url" content="https://koorye.github.io/blog/2024/10/09/2024-10-09%20%E6%8E%A2%E7%B4%A2%E9%AB%98%E6%95%88VLM/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文总结了面向高效的视觉语言大模型设计的方法，包括自主构造数据、对比解码、视觉提示、启发式设计等方面的方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/YT6jiDfO7uQswxc.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/KNv5jBkf94UVDOS.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/HbBs1iIvGlKZqm8.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/Y7Ibsr3ZitSHoP6.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/Ehos2eRtDnJKxdI.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/STIdor6GBiVkRCP.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/xDK3t8p6YSyHv1R.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/QiecFEN5ZmVtkqd.png">
+<meta property="og:image" content="https://s2.loli.net/2025/03/06/6iPKNt9b4zOcjEI.png">
+<meta property="article:published_time" content="2024-10-09T01:15:00.000Z">
+<meta property="article:modified_time" content="2025-03-07T05:53:08.514Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="效率">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2025/03/06/YT6jiDfO7uQswxc.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2024/10/09/2024-10-09%20%E6%8E%A2%E7%B4%A2%E9%AB%98%E6%95%88VLM/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>面向高效的视觉语言大模型设计 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2024/10/09/2024-10-09%20%E6%8E%A2%E7%B4%A2%E9%AB%98%E6%95%88VLM/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          面向高效的视觉语言大模型设计
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-10-09 09:15:00" itemprop="dateCreated datePublished" datetime="2024-10-09T09:15:00+08:00">2024-10-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">深度学习</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>887</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+            <div class="post-description">本文总结了面向高效的视觉语言大模型设计的方法，包括自主构造数据、对比解码、视觉提示、启发式设计等方面的方法。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="引言">引言</h1>
+<p>1. 随着大模型的发展和数据量的不断增加，预训练大模型逐渐拥有作为
+<strong>“世界模型”</strong> 的潜力</p>
+<p>2. 现有工作逐渐从从头训练模型，转为大模型的 <strong>适配</strong>
+，以及 <strong>推理</strong> 时的 <strong>免训练</strong> 增强</p>
+<p>3. 比起学习新知识， <strong>利用和激发预训练大模型</strong>
+的知识成为新的热点</p>
+<h1 id="方法">方法</h1>
+<h2 id="自主构造数据">自主构造数据</h2>
+<p><strong>Learning by Correction</strong> (CVPR 24)</p>
+<p>通过词法分析构造错误答案和纠正方式，微调模型以提高泛化能力</p>
+<p><img src="https://s2.loli.net/2025/03/06/YT6jiDfO7uQswxc.png"></p>
+<p><strong>List Items One by One</strong> (COLM 24 UCSD, Microsoft)</p>
+<p>提出逐一列出图像中物体的全新任务，并利用开放词汇检测器构造带密集注释的数据集</p>
+<p><strong><img src="https://s2.loli.net/2025/03/06/KNv5jBkf94UVDOS.png"></strong></p>
+<p><strong>Visual Delta Generator</strong> (CVPR 24 Meta)</p>
+<p>学习一个生成两张图像差异的VLM，自动化构造组合检索任务的训练数据集</p>
+<p><img src="https://s2.loli.net/2025/03/06/HbBs1iIvGlKZqm8.png"></p>
+<p><strong>总结：</strong></p>
+<p>任务设计上：一种是 <strong>自定义代理任务</strong>
+，并认为这种代理任务对下游任务有所帮助；一种是某个
+<strong>特定的下游任务</strong></p>
+<p>数据构造上：一种是 <strong>提示模型自身</strong> ；一种是
+<strong>结合外部工具</strong> ，如目标检测器、分割器等</p>
+<h2 id="对比解码">对比解码</h2>
+<p><strong>Contrastive Region Guidance</strong> (ECCV 24 UNC)</p>
+<p>通过掩码前后图像的对比增强定位能力</p>
+<p><img src="https://s2.loli.net/2025/03/06/Y7Ibsr3ZitSHoP6.png"></p>
+<h2 id="视觉提示">视觉提示</h2>
+<p><strong>FALIP</strong> (ECCV 24)</p>
+<p>一种视觉提示方法，将关注区域转换为高斯分布并展平，嵌入到注意力图的cls行中，实现对目标区域的关注</p>
+<p><img src="https://s2.loli.net/2025/03/06/Ehos2eRtDnJKxdI.png"></p>
+<h2 id="启发式设计">启发式设计</h2>
+<p><strong>Rephrase, Augment, Reason</strong> (ICLR 24)</p>
+<p>获取关键词、目标和图像描述，利用LLM重述问题以精准预测</p>
+<p><img src="https://s2.loli.net/2025/03/06/STIdor6GBiVkRCP.png"></p>
+<p><strong>Chain of Symbol</strong> (COLM 24 西湖)</p>
+<p>用浓缩符号取代文字，用更少的token提升性能</p>
+<p><img src="https://s2.loli.net/2025/03/06/xDK3t8p6YSyHv1R.png"></p>
+<p><strong>LoRAHub</strong> (COLM 24)</p>
+<p>搜索一组已知任务上学习的LoRA在未知任务上权重的线性组合</p>
+<p><img src="https://s2.loli.net/2025/03/06/QiecFEN5ZmVtkqd.png"></p>
+<p><strong>Consisitency and Uncertainty</strong> (CVPR 24)</p>
+<p>学习小模型生成原问题的近似问题，评估黑盒大模型回答的一致性</p>
+<p><img src="https://s2.loli.net/2025/03/06/6iPKNt9b4zOcjEI.png"></p>
+<h2 id="总结">总结</h2>
+<ol type="1">
+<li><p>在基于预训练大模型的范式中， <strong>强大的预训练模型</strong>
+是最重要的，所有范式的关键都在于 <strong>利用预训练知识</strong>
+，而不是学习新知识</p></li>
+<li><p>上述范式通常非常直观，不存在深入的 <strong>理论</strong>
+知识</p></li>
+<li><p>因此，上述范式的重点通常是探索 <strong>有趣的问题</strong>
+（幻觉、效率、公平性等）或 <strong>特定下游任务</strong>
+（定位、组合检索等），而不是对适配过程进行深入的研究</p></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag"># 深度学习</a>
+              <a href="/blog/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 大模型</a>
+              <a href="/blog/tags/%E6%95%88%E7%8E%87/" rel="tag"># 效率</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2024/09/10/2024-09-10%20%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%AB%98%E6%95%88%E5%BE%AE%E8%B0%83%E7%BB%BC%E8%BF%B0/" rel="prev" title="大模型高效微调的调研">
+      <i class="fa fa-chevron-left"></i> 大模型高效微调的调研
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2024/10/23/2024-10-23%20%E6%8E%A2%E7%B4%A2%E5%9F%BA%E4%BA%8EVLM%E7%9A%84Embodied%20AI%202/" rel="next" title="视觉语言大模型驱动的Embodied AI探索">
+      视觉语言大模型驱动的Embodied AI探索 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E4%B8%BB%E6%9E%84%E9%80%A0%E6%95%B0%E6%8D%AE"><span class="nav-number">2.1.</span> <span class="nav-text">自主构造数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94%E8%A7%A3%E7%A0%81"><span class="nav-number">2.2.</span> <span class="nav-text">对比解码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%86%E8%A7%89%E6%8F%90%E7%A4%BA"><span class="nav-number">2.3.</span> <span class="nav-text">视觉提示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%AF%E5%8F%91%E5%BC%8F%E8%AE%BE%E8%AE%A1"><span class="nav-number">2.4.</span> <span class="nav-text">启发式设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">2.5.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

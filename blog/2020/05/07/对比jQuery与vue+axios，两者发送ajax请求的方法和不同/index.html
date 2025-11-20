@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文对比了jQuery和vue+axios发送ajax请求的方法和不同之处，包括发送请求的方式和接收数据的方式。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对比jQuery与vue+axios，两者发送ajax请求的方法和不同">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/05/07/%E5%AF%B9%E6%AF%94jQuery%E4%B8%8Evue+axios%EF%BC%8C%E4%B8%A4%E8%80%85%E5%8F%91%E9%80%81ajax%E8%AF%B7%E6%B1%82%E7%9A%84%E6%96%B9%E6%B3%95%E5%92%8C%E4%B8%8D%E5%90%8C/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文对比了jQuery和vue+axios发送ajax请求的方法和不同之处，包括发送请求的方式和接收数据的方式。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/2f7f46352e4215f8d4d6ea556ed127a0.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/515b811255bb0e28f523c37a0a21706f.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/22f18ccdd8ebc39d047851facf5bc104.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/55da432bdb985c6614353c140449aada.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/b61f2f2e91e0c58717d8cec22d1571d7.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/962a1add536461333e45c7019dffb8ac.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/6a1c905347cfa28a8e74fd927c395f8d.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/36408f935ac2e39c9e9e569b1ce55b99.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/03c6cdad4a08449ca4acd432e4612dee.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/ee9caed2563f92ea549eaf8cc8531382.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/0c70dccc8a95945c25148c5a6dae4abb.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/ad27e5cf760508ec9107f6fb026b43e7.png">
+<meta property="article:published_time" content="2020-05-07T05:23:01.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.362Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="前端">
+<meta property="article:tag" content="Vue">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/2f7f46352e4215f8d4d6ea556ed127a0.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/05/07/%E5%AF%B9%E6%AF%94jQuery%E4%B8%8Evue+axios%EF%BC%8C%E4%B8%A4%E8%80%85%E5%8F%91%E9%80%81ajax%E8%AF%B7%E6%B1%82%E7%9A%84%E6%96%B9%E6%B3%95%E5%92%8C%E4%B8%8D%E5%90%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>对比jQuery与vue+axios，两者发送ajax请求的方法和不同 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/05/07/%E5%AF%B9%E6%AF%94jQuery%E4%B8%8Evue+axios%EF%BC%8C%E4%B8%A4%E8%80%85%E5%8F%91%E9%80%81ajax%E8%AF%B7%E6%B1%82%E7%9A%84%E6%96%B9%E6%B3%95%E5%92%8C%E4%B8%8D%E5%90%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          对比jQuery与vue+axios，两者发送ajax请求的方法和不同
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-07 13:23:01" itemprop="dateCreated datePublished" datetime="2020-05-07T13:23:01+08:00">2020-05-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%89%8D%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">前端</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+            <div class="post-description">本文对比了jQuery和vue+axios发送ajax请求的方法和不同之处，包括发送请求的方式和接收数据的方式。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>axios和jQuery的ajax本质上都是对原生XHR的封装，不过axios符合最新的ES规范。因此，在用vue编写js时，使用axios而不是jQuery的ajax应该是更好的方案。</p>
+<p>axios和jQuery的ajax用法大多相同，不过还是有少数地方不一样，我们来对比一下。由于axios经常与vue结合，这里笔者采用vue+axios实现axios版ajax。</p>
+<h1 id="post请求">post请求</h1>
+<h2 id="准备控制器">准备控制器</h2>
+<p>首先实现一个后台控制器，笔者此处采用spring
+boot，可以看到，这个控制器需要一个请求参数id，然后会返回一个包含id和msg信息的json：
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.koorye.hellokotlin.controller;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> com.alibaba.fastjson.JSON;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Controller;</span><br><span class="line"><span class="keyword">import</span> org.springframework.web.bind.annotation.RequestMapping;</span><br><span class="line"><span class="keyword">import</span> org.springframework.web.bind.annotation.ResponseBody;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.HashMap;</span><br><span class="line"><span class="keyword">import</span> java.util.Map;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Controller</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MsgControllerJava</span> {</span><br><span class="line">  <span class="meta">@ResponseBody</span></span><br><span class="line">  <span class="meta">@RequestMapping("/msg")</span></span><br><span class="line">  <span class="keyword">public</span> Object <span class="title function_">getMsg</span><span class="params">(<span class="type">int</span> id)</span> {</span><br><span class="line">    Map&lt;String, Object&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"id"</span>, id);</span><br><span class="line">    map.put(<span class="string">"msg"</span>, <span class="string">"A message from Controller."</span>);</span><br><span class="line">    <span class="keyword">return</span> JSON.toJSON(map);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure></p>
+<h2 id="准备html">准备html</h2>
+<p>我们来准备两个按钮： -
+jQuery给按钮提供click事件需要用选择器，因此这里提供一个id -
+vue+axios只需要使用<code>v-on:click</code>或者简写<code>@click</code>就可以指定事件
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">button</span> <span class="attr">class</span>=<span class="string">"btn btn-primary"</span> @<span class="attr">click</span>=<span class="string">"getMsg"</span>&gt;</span>Vue + Axios<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">button</span> <span class="attr">id</span>=<span class="string">"ajaxBtn"</span> <span class="attr">class</span>=<span class="string">"btn btn-secondary"</span>&gt;</span>Vue + JQuery<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="实现ajax请求">实现ajax请求</h2>
+<p>请关注以下不同：</p>
+<ul>
+<li>发送参数的方式</li>
+<li>接收参数的方式</li>
+</ul>
+<h3 id="vueaxios版ajax">vue+axios版ajax</h3>
+<p>此处需要引入Qs来转换数据类型：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="title class_">Vue</span>({</span><br><span class="line">  <span class="attr">el</span>: <span class="string">'#app'</span>,</span><br><span class="line">  <span class="attr">methods</span>: {</span><br><span class="line">    <span class="title function_">getMsg</span>(<span class="params"></span>) {</span><br><span class="line">      <span class="title function_">axios</span>({</span><br><span class="line">        <span class="attr">method</span>: <span class="string">'post'</span>,</span><br><span class="line">        <span class="attr">url</span>: <span class="string">'/msg'</span>,</span><br><span class="line">        <span class="attr">data</span>: <span class="title class_">Qs</span>.<span class="property">stringify</span>{</span><br><span class="line">          <span class="attr">id</span>: <span class="number">111</span></span><br><span class="line">        },</span><br><span class="line">        <span class="attr">responseType</span>: <span class="string">'json'</span>,</span><br><span class="line">      }</span><br><span class="line">      .<span class="title function_">then</span>(<span class="keyword">function</span> (<span class="params">resp</span>) {</span><br><span class="line">        <span class="title function_">alert</span>(resp.<span class="property">data</span>.<span class="property">id</span> + <span class="string">", "</span> + resp.<span class="property">data</span>.<span class="property">msg</span>);</span><br><span class="line">      })</span><br><span class="line">      .<span class="title function_">catch</span>(<span class="keyword">function</span> (<span class="params">error</span>) {</span><br><span class="line">        <span class="title function_">alert</span>(error);</span><br><span class="line">      })</span><br><span class="line">    }  </span><br><span class="line">  }</span><br><span class="line">});</span><br></pre></td></tr></table></figure>
+<h3 id="jquery版ajax">jQuery版ajax</h3>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">$(<span class="keyword">function</span> (<span class="params"></span>) {</span><br><span class="line">  $(<span class="string">'#ajaxBtn'</span>).<span class="title function_">click</span>(<span class="keyword">function</span> (<span class="params"></span>) {</span><br><span class="line">    $.<span class="title function_">ajax</span>({</span><br><span class="line">      <span class="attr">method</span>: <span class="string">'post'</span>,</span><br><span class="line">      <span class="attr">url</span>: <span class="string">'/msg'</span>,</span><br><span class="line">      <span class="attr">data</span>: {</span><br><span class="line">        <span class="string">'id'</span>: <span class="number">222</span></span><br><span class="line">      },</span><br><span class="line">      <span class="attr">dataType</span>: <span class="string">'json'</span></span><br><span class="line">    })</span><br><span class="line">    .<span class="title function_">done</span>(<span class="keyword">function</span> (<span class="params">resp</span>) {</span><br><span class="line">      <span class="title function_">alert</span>(resp.<span class="property">id</span> + <span class="string">", "</span> + resp.<span class="property">msg</span>);</span><br><span class="line">    })</span><br><span class="line">    .<span class="title function_">fail</span>(<span class="keyword">function</span> (<span class="params">error</span>) {</span><br><span class="line">      <span class="title function_">alert</span>(error);</span><br><span class="line">    })</span><br><span class="line">  })</span><br><span class="line">})</span><br></pre></td></tr></table></figure>
+<h3 id="发送参数的不同">发送参数的不同</h3>
+<p>传统的jquery把请求数据封装在data中，data是json的形式，需要用引号表示成员名；</p>
+<p>而axios+qs的形式不需要使用引号，再通过<code>Qs.stringify()</code>把数据转换成json。</p>
+<p>我们来看一下axios不使用<code>Qs.stringify()</code>会发生什么： <img src="https://i-blog.csdnimg.cn/blog_migrate/2f7f46352e4215f8d4d6ea556ed127a0.png" alt="在这里插入图片描述"> 报了500错误？再来看一下发送的参数： <img src="https://i-blog.csdnimg.cn/blog_migrate/515b811255bb0e28f523c37a0a21706f.png" alt="在这里插入图片描述"> Request
+Payload？那么正常的参数是什么呢，下面是jQuery发送的参数： <img src="https://i-blog.csdnimg.cn/blog_migrate/22f18ccdd8ebc39d047851facf5bc104.png" alt="在这里插入图片描述"> 可以看到，正常发送的参数应该是Form
+Data，这样后台才能接收到一个json；如果是Request
+Payload，后台还需要额外的解析才能得到其中的json。</p>
+<p>所以，<strong>jQuery可以直接在data中编写json来发送post请求；而axios需要把编写的内容通过Qs转换成json字符串才能发送post请求。</strong></p>
+<h3 id="接收参数的不同">接收参数的不同</h3>
+<p>观察上面的脚本我们发现，jQuery可以直接通过resp.id、resp.msg得到json中的数据，axios的数据却存在resp.data中。</p>
+<p>我们来试一下把得到的json转换成字符串，使用<code>JSON.stringify(resp)</code>转换再用<code>alert(JSON.stringify(resp))</code>输出：</p>
+<p>jQuery的ajax返回的json：</p>
+<p><img src="https://i-blog.csdnimg.cn/blog_migrate/55da432bdb985c6614353c140449aada.png" alt="在这里插入图片描述"> axios返回的json: <img src="https://i-blog.csdnimg.cn/blog_migrate/b61f2f2e91e0c58717d8cec22d1571d7.png" alt="在这里插入图片描述">
+可以看到jQuery返回的json中只有数据；axios却返回了各种信息，如状态码、时间、url、请求方法等，其数据存在data成员中，这就是我们获取数据方法不同的原因。</p>
+<hr>
+<h1 id="get请求">get请求</h1>
+<p>既然请求方法只需要指定method，那么，如果我们直接把两个脚本中的method改成get，能否正常使用呢？</p>
+<p>jQuery正常运行： <img src="https://i-blog.csdnimg.cn/blog_migrate/962a1add536461333e45c7019dffb8ac.png" alt="在这里插入图片描述"> axios报500状态码错误： <img src="https://i-blog.csdnimg.cn/blog_migrate/6a1c905347cfa28a8e74fd927c395f8d.png" alt="在这里插入图片描述">
+检查请求头，<strong>我们发现axios没有传入任何信息，甚至在去掉Qs.stringify和给id加上引号之后还是一样</strong>：
+<img src="https://i-blog.csdnimg.cn/blog_migrate/36408f935ac2e39c9e9e569b1ce55b99.png" alt="在这里插入图片描述">
+这说明axios不能通过data给get请求提供参数。</p>
+<h2 id="get和post的差别">get和post的差别</h2>
+<p>事实上，get请求通过在url后直接跟上参数来发送请求，例如localhost:8080/login/?username=koorye&amp;password=123，就是给后台发送了username为koorye，password为123的参数。</p>
+<p>而post则是使用request
+body传递参数，参数不存入url中，而是以额外的键值对的方式传递。</p>
+<h2 id="jquery与axios的data在发送get请求时的不同">jQuery与axios的data在发送get请求时的不同</h2>
+<p>观察一下上文中jQuery和axios发送get请求时的url：</p>
+<p><strong>jQuery会根据请求类型自动判断把data放到url中还是request
+body中</strong>，此处jQuery发送的get请求的url就带上了参数： <img src="https://i-blog.csdnimg.cn/blog_migrate/03c6cdad4a08449ca4acd432e4612dee.png" alt="在这里插入图片描述"> 而axios就不行，axios的data只用于给request
+body提供参数，而不能在url中附加参数： <img src="https://i-blog.csdnimg.cn/blog_migrate/ee9caed2563f92ea549eaf8cc8531382.png" alt="在这里插入图片描述"> ## axios的get请求方式
+axios发送get请求时不能使用data，而要使用axios提供的一种新的类型<code>params</code>，params其中的参数会被直接加到url后，我们来试一下：
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="title class_">Vue</span>({</span><br><span class="line">  <span class="attr">el</span>: <span class="string">'#app'</span>,</span><br><span class="line">  <span class="attr">methods</span>: {</span><br><span class="line">    <span class="title function_">getMsg</span>(<span class="params"></span>) {</span><br><span class="line">      <span class="title function_">axios</span>({</span><br><span class="line">        <span class="attr">method</span>: <span class="string">'get'</span>,</span><br><span class="line">        <span class="attr">url</span>: <span class="string">'/msg'</span>,</span><br><span class="line">        <span class="attr">params</span>: {</span><br><span class="line">          <span class="string">'id'</span>: <span class="number">111</span></span><br><span class="line">        },</span><br><span class="line">        <span class="attr">responseType</span>: <span class="string">'json'</span>,</span><br><span class="line">      })</span><br><span class="line">      .<span class="title function_">then</span>(<span class="keyword">function</span> (<span class="params">resp</span>) {</span><br><span class="line">        <span class="title function_">alert</span>(resp.<span class="property">data</span>.<span class="property">id</span> + <span class="string">", "</span> + resp.<span class="property">data</span>.<span class="property">msg</span>);</span><br><span class="line">      })</span><br><span class="line">      .<span class="title function_">catch</span>(<span class="keyword">function</span> (<span class="params">error</span>) {</span><br><span class="line">        <span class="title function_">alert</span>(error);</span><br><span class="line">      })</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">});</span><br></pre></td></tr></table></figure> 成功发送请求并接收数据： <img src="https://i-blog.csdnimg.cn/blog_migrate/0c70dccc8a95945c25148c5a6dae4abb.png" alt="在这里插入图片描述"> 请求头的url中成功附上参数： <img src="https://i-blog.csdnimg.cn/blog_migrate/ad27e5cf760508ec9107f6fb026b43e7.png" alt="在这里插入图片描述"></p>
+<hr>
+<h1 id="总结">总结</h1>
+<p>到这里，我们已经成功使用jQuery和axios的ajax各自完成了get和post请求的参数发送和结果获取，我们来总结一下不同之处：</p>
+<p><strong>关于发送请求:</strong></p>
+<ul>
+<li>jQuery无论是get还是post，都使用data发送数据，jQuery会自动判断请求类型并匹配</li>
+<li>axios在get请求时使用params；在post请求时使用data，并且要注意把发送的data通过<code>Qs.stringify()</code>转换成json</li>
+</ul>
+<p><strong>关于接收数据:</strong></p>
+<ul>
+<li>jQuery接收的数据直接以json的形式存在返回的response中</li>
+<li>axios接收一个json形式的response，返回的数据存在response的data参数中</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%89%8D%E7%AB%AF/" rel="tag"># 前端</a>
+              <a href="/blog/tags/Vue/" rel="tag"># Vue</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/05/06/%E3%80%90Spring%20Boot%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%9B%9B%E3%80%91%E6%95%B4%E5%90%88MyBatis+Druid+%E4%BD%BF%E7%94%A8MyBatis%20Generator+%E5%8A%A8%E6%80%81%E6%89%AB%E6%8F%8F%E5%BC%80%E5%8F%91/" rel="prev" title="【Spring Boot自学笔记四】整合MyBatis+Druid+使用MyBatis Generator+动态扫描开发">
+      <i class="fa fa-chevron-left"></i> 【Spring Boot自学笔记四】整合MyBatis+Druid+使用MyBatis Generator+动态扫描开发
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/05/08/vue%E7%BB%84%E4%BB%B6%E9%97%B4%E7%88%B6%E5%AD%90%E4%BC%A0%E5%80%BC%E3%80%81%E7%A5%96%E7%88%B6%E5%AD%90%E5%AD%99%E4%BC%A0%E5%80%BC%E5%92%8C%E4%BB%BB%E6%84%8F%E4%BC%A0%E5%80%BC%E7%9A%845%E7%A7%8D%E6%96%B9%E6%B3%95%EF%BC%8Cprop,emit,attrs,listeners%E4%BB%A5%E5%8F%8A%E4%B8%AD%E5%A4%AE%E4%BA%8B%E4%BB%B6%E6%80%BB%E7%BA%BF/" rel="next" title="vue组件间父子传值、祖父子孙传值和任意传值的5种方法，prop,emit,attrs,listeners以及中央事件总线">
+      vue组件间父子传值、祖父子孙传值和任意传值的5种方法，prop,emit,attrs,listeners以及中央事件总线 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#post%E8%AF%B7%E6%B1%82"><span class="nav-number">1.</span> <span class="nav-text">post请求</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E6%8E%A7%E5%88%B6%E5%99%A8"><span class="nav-number">1.1.</span> <span class="nav-text">准备控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87html"><span class="nav-number">1.2.</span> <span class="nav-text">准备html</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0ajax%E8%AF%B7%E6%B1%82"><span class="nav-number">1.3.</span> <span class="nav-text">实现ajax请求</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#vueaxios%E7%89%88ajax"><span class="nav-number">1.3.1.</span> <span class="nav-text">vue+axios版ajax</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jquery%E7%89%88ajax"><span class="nav-number">1.3.2.</span> <span class="nav-text">jQuery版ajax</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E9%80%81%E5%8F%82%E6%95%B0%E7%9A%84%E4%B8%8D%E5%90%8C"><span class="nav-number">1.3.3.</span> <span class="nav-text">发送参数的不同</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A5%E6%94%B6%E5%8F%82%E6%95%B0%E7%9A%84%E4%B8%8D%E5%90%8C"><span class="nav-number">1.3.4.</span> <span class="nav-text">接收参数的不同</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#get%E8%AF%B7%E6%B1%82"><span class="nav-number">2.</span> <span class="nav-text">get请求</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#get%E5%92%8Cpost%E7%9A%84%E5%B7%AE%E5%88%AB"><span class="nav-number">2.1.</span> <span class="nav-text">get和post的差别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#jquery%E4%B8%8Eaxios%E7%9A%84data%E5%9C%A8%E5%8F%91%E9%80%81get%E8%AF%B7%E6%B1%82%E6%97%B6%E7%9A%84%E4%B8%8D%E5%90%8C"><span class="nav-number">2.2.</span> <span class="nav-text">jQuery与axios的data在发送get请求时的不同</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

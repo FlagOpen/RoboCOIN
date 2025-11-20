@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文总结了C4、MassiveText和RefinedWeb三篇论文中关于网络文本数据清洗的策略，包括内容过滤、文本提取、质量过滤、去除重复、文档去重等步骤，以及数据分析结果。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络文本数据的清洗策略">
+<meta property="og:url" content="https://koorye.github.io/blog/2023/10/27/2023-10-27%20%E7%BD%91%E7%BB%9C%E6%96%87%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%9A%84%E6%B8%85%E6%B4%97%E7%AD%96%E7%95%A5/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文总结了C4、MassiveText和RefinedWeb三篇论文中关于网络文本数据清洗的策略，包括内容过滤、文本提取、质量过滤、去除重复、文档去重等步骤，以及数据分析结果。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271131156.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271120242.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271044416.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271057493.png">
+<meta property="article:published_time" content="2023-10-27T11:47:00.000Z">
+<meta property="article:modified_time" content="2025-03-06T08:25:59.144Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="数据清洗">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271131156.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2023/10/27/2023-10-27%20%E7%BD%91%E7%BB%9C%E6%96%87%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%9A%84%E6%B8%85%E6%B4%97%E7%AD%96%E7%95%A5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>网络文本数据的清洗策略 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2023/10/27/2023-10-27%20%E7%BD%91%E7%BB%9C%E6%96%87%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%9A%84%E6%B8%85%E6%B4%97%E7%AD%96%E7%95%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          网络文本数据的清洗策略
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-27 19:47:00" itemprop="dateCreated datePublished" datetime="2023-10-27T19:47:00+08:00">2023-10-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">深度学习</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+            <div class="post-description">本文总结了C4、MassiveText和RefinedWeb三篇论文中关于网络文本数据清洗的策略，包括内容过滤、文本提取、质量过滤、去除重复、文档去重等步骤，以及数据分析结果。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="c4-2020">C4 (2020)</h1>
+<p><strong>原文</strong>：Exploring the Limits of Transfer Learning with
+a Unified Text-to-Text Transformer（仅关注2.2）、Documenting the English
+Colossal Clean Crawled Corpus</p>
+<p>采用如下步骤对大量网络数据进行清洗： 1. 只保留以标点符号结尾的行 2.
+丢弃少于3个句子的文档，只保留至少5个单词的行 3. 删除包含不良词语的文档
+4. 删除带有javascript词的行 5. 删除带有占位符“lorem ipsum”的文档 6.
+删除包含大括号的文档（这些文档可能是代码） 7. 删除引用标记，如[1] 8.
+删除带有"term of use""privacty policy""cookie policy""uses cookies""use
+of cookies""use cookies"等带有政策声明的行 9.
+如果两个文档出现多于3句话重复，则进行去重，删除其中任一文档</p>
+<p>经过上述步骤，将去除99%的文档。</p>
+<p>经过清洗后，最多的来源是专利、维基百科、新闻、出版物平台等，表明这些网站富含信息量。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271131156.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h1 id="massivetext-naacl-2021">MassiveText (NAACL 2021)</h1>
+<p><strong>原文</strong>：Scaling Language Models: Methods, Analysis
+&amp; Insights from Training Gopher（仅关注附录A）</p>
+<p>MassiveText的清洗pipeline分为6步： 1.
+<strong>内容过滤</strong>。过滤掉非英语文档 2.
+<strong>文本提取</strong>。从网页中提取文本 3.
+<strong>质量过滤</strong>。删除符合下列任一条件的文档： 1.
+单词数量小于50或大于100000 2. 平均单词长度小于3或大于10 3.
+超过90%行以·号开头 4. 超过30%行以...结尾 5. 至少多于20%的单词不包含字母
+6. 不包含the, be, to, of, and, that, have, with中至少任意2个单词 4.
+<strong>去除重复</strong>。删除符合下列任一条件的文档： 1. 重复行大于30%
+2. 重复段落大于30% 3. 行内重复单词大于20% 4. 段落内重复单词大于20% 5.
+最常出现的2-gram词大于20% 6. 最常出现的3-gram词大于18% 7.
+最常出现的4-gram词大于16% 8. 去重后的5-gram词大于15% 5.
+<strong>文档去重</strong>。采用MD5去掉完全相同的文档，并采用minhash去除相似度大于0.8的文档
+6. <strong>测试集过滤</strong>：去除测试集中的相似文档（不用关心）</p>
+<p><strong>数据分析</strong>：清洗后的数据主要与新闻、维基百科等文档重复，这些内容几乎会被包含在数据集中，而书本这些的长文本则会被舍弃</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271120242.png" alt="image.png|400">
+<figcaption aria-hidden="true">image.png|400</figcaption>
+</figure>
+<h1 id="refinedweb-2023">RefinedWeb (2023)</h1>
+<p><strong>原文</strong>：The RefinedWeb Dataset for Falcon LLM:
+Outperforming Curated Corpora with Web Data, and Web Data Only
+<strong>思想</strong>：经过筛选的少量高质量网络数据也可以达到海量网络数据的效果
+<strong>解决方案</strong>：参考C4和MassiveText，提出了一个完整的网络数据获取的pipeline，称为MDR</p>
+<p>MDR分为3个阶段： 1. <strong>文档准备</strong>： 1.
+URL过滤。过滤掉一些有害的网站（成人、赌博等） 2.
+文本提取。提取出剩余网站的文本内容 3.
+语言识别。对这些文本进行打分，仅保留富含语言信息的文本 2.
+<strong>过滤</strong>： 1.
+去除重复。文档内可能包括重复序列，去除具有过多行、段落、n-gram重复的文档（详见MassiveText部分）
+2. 逐文档过滤。去除总长度、符号、单词比例异常的文档 3.
+逐行校正。去除不需要的内容，如点赞量、导航按钮等： 1.
+去除主要由大写字符组成的行 2. 去除仅由数字字符组成的行 3.
+去除计数器行（如3 likes，赞3) 4. 去除只包含一个单词的行 5.
+去除少于10个单词且有sign-in等单词在开头、或read
+more...等单词在结尾、或items in cart等单词在行内的行 3.
+<strong>去重</strong>： 1.
+模糊去重。采用minhash删除相似的文档，这里删除的策略有很多，如仅删除重复段落本身，也可以删除整个文档
+2.
+精确去重。采用ExactSubStr寻找最长公共子串，如果子串长度&gt;50，则进行去重。同样的，可以仅删除重复段落本身，也可以删除整个文档
+3.
+URL去重。可能是删除某些文档过多的URL下的部分文档？不太理解，这里不用关心</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271044416.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<p>经过MDR后，数据量仅为原先的11.67%。</p>
+<p><strong>数据分析</strong>： 1.
+如下左图所示，多数网络文本数据集的文档长度分布在100~1000之间，清洗过程中大量短文本被删除
+2. 富含信息量的平台集中在流行网站、新闻网络、技术博客等</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202310271057493.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<p><strong>一些结论</strong>： 1. 过滤的效果可能和数据源有关，时好时坏
+2. 去重是非常有用的清洗策略</p>
+<h1 id="总结">总结</h1>
+<ol type="1">
+<li>后面核心应该就是清洗数据，即挑选高质量数据，不用关心数据的合成和其他增强方法，毕竟样本太多了</li>
+<li>去重特别有用，建议多关注，而且可以大胆去重。如果两个文档有部分段落重复，直接随机删除其中一个文档，而不要删除重复的段落，还是因为样本太多。C4也只把样本筛选到原先的1%，而我们的目标是把1B筛选3M，可以更大胆</li>
+<li>所有算子应该都只要人工设计就可以，不需要引入模型来辅助，上面的清洗方法几乎都是人工的</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag"># 深度学习</a>
+              <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E6%B8%85%E6%B4%97/" rel="tag"># 数据清洗</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2023/10/12/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/" rel="prev" title="矢量数据库的调研">
+      <i class="fa fa-chevron-left"></i> 矢量数据库的调研
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2024/03/01/2024-03-01%20%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0%E5%8F%91%E5%B1%95%E7%BB%BC%E8%BF%B0/" rel="next" title="大模型与迁移学习发展综述">
+      大模型与迁移学习发展综述 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#c4-2020"><span class="nav-number">1.</span> <span class="nav-text">C4 (2020)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#massivetext-naacl-2021"><span class="nav-number">2.</span> <span class="nav-text">MassiveText (NAACL 2021)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#refinedweb-2023"><span class="nav-number">3.</span> <span class="nav-text">RefinedWeb (2023)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

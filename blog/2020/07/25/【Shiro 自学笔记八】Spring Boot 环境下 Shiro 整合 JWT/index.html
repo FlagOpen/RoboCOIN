@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文介绍了如何在 Spring Boot 环境下使用 Shiro 整合 JWT。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Shiro 自学笔记八】Spring Boot 环境下 Shiro 整合 JWT">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/07/25/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AB%E3%80%91Spring%20Boot%20%E7%8E%AF%E5%A2%83%E4%B8%8B%20Shiro%20%E6%95%B4%E5%90%88%20JWT/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文介绍了如何在 Spring Boot 环境下使用 Shiro 整合 JWT。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/2ce1d24cef58be5d7dc83bbf01b864b3.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/7fd56d04f5fd3ae6c8a1533608ed5e08.png">
+<meta property="article:published_time" content="2020-07-25T10:03:46.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.319Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="后端">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Shiro">
+<meta property="article:tag" content="JWT">
+<meta property="article:tag" content="SpringBoot">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/2ce1d24cef58be5d7dc83bbf01b864b3.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/07/25/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AB%E3%80%91Spring%20Boot%20%E7%8E%AF%E5%A2%83%E4%B8%8B%20Shiro%20%E6%95%B4%E5%90%88%20JWT/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Shiro 自学笔记八】Spring Boot 环境下 Shiro 整合 JWT | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/07/25/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AB%E3%80%91Spring%20Boot%20%E7%8E%AF%E5%A2%83%E4%B8%8B%20Shiro%20%E6%95%B4%E5%90%88%20JWT/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Shiro 自学笔记八】Spring Boot 环境下 Shiro 整合 JWT
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-25 18:03:46" itemprop="dateCreated datePublished" datetime="2020-07-25T18:03:46+08:00">2020-07-25</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+            <div class="post-description">本文介绍了如何在 Spring Boot 环境下使用 Shiro 整合 JWT。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这一期我们用 Shiro 整合 JWT。</p>
+<h1 id="自定义-token">自定义 token</h1>
+<p>我们之前使用 Shiro 提供的
+UsernamePasswordToken，这次我们需要自定义一个
+token，实现空参构造、全参构造、GetSet：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NoArgsConstructor</span></span><br><span class="line"><span class="meta">@AllArgsConstructor</span></span><br><span class="line"><span class="meta">@Getter</span></span><br><span class="line"><span class="meta">@Setter</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JwtPasswordToken</span> <span class="keyword">implements</span> <span class="title class_">AuthenticationToken</span> {</span><br><span class="line">    <span class="keyword">private</span> String access_token;</span><br><span class="line">    <span class="keyword">private</span> String password;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">getPrincipal</span><span class="params">()</span> {</span><br><span class="line">        <span class="keyword">return</span> access_token;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">getCredentials</span><span class="params">()</span> {</span><br><span class="line">        <span class="keyword">return</span> password;</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="自定义-realm">自定义 Realm</h1>
+<p>重写 supports 修改 token 类型为自定义 token。</p>
+<p>重写登录认证过程，如果 password 存在，就走登录流程；不存在就走 token
+验证流程。</p>
+<p>由于证书不能为空，所以我们用 DEFAULT_PASSWORD 代替：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserRealm</span> <span class="keyword">extends</span> <span class="title class_">AuthorizingRealm</span> {</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> UserServiceImpl userService;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">supports</span><span class="params">(AuthenticationToken token)</span> {</span><br><span class="line">    <span class="keyword">return</span> token <span class="keyword">instanceof</span> JwtPasswordToken;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">protected</span> AuthorizationInfo <span class="title function_">doGetAuthorizationInfo</span><span class="params">(PrincipalCollection principalCollection)</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">protected</span> AuthenticationInfo <span class="title function_">doGetAuthenticationInfo</span><span class="params">(AuthenticationToken authenticationToken)</span> <span class="keyword">throws</span> AuthenticationException, MalformedJwtException, ExpiredJwtException {</span><br><span class="line">    <span class="type">Claims</span> <span class="variable">claims</span> <span class="operator">=</span> JwtUtil.parseToken((String) authenticationToken.getPrincipal());</span><br><span class="line">    <span class="type">String</span> <span class="variable">username</span> <span class="operator">=</span> claims.getAudience();</span><br><span class="line">    <span class="type">String</span> <span class="variable">password</span> <span class="operator">=</span> (String) authenticationToken.getCredentials();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="string">"DEFAULT_PASSWORD"</span>.equals(password)) {</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(</span><br><span class="line">          authenticationToken.getPrincipal(),</span><br><span class="line">          Md5Util.getMd5(<span class="string">"DEFAULT_PASSWORD"</span>),</span><br><span class="line">          ByteSource.Util.bytes(<span class="string">"koorye_love_md5"</span>),</span><br><span class="line">          <span class="built_in">this</span>.getName()</span><br><span class="line">      );</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">      <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userService.getUserByUsername(username);</span><br><span class="line">      <span class="keyword">if</span> (user == <span class="literal">null</span>) {</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">      }</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(</span><br><span class="line">          authenticationToken.getPrincipal(),</span><br><span class="line">          userService.getUserByUsername(claims.getAudience()).getPassword(),</span><br><span class="line">          ByteSource.Util.bytes(<span class="string">"koorye_love_md5"</span>),</span><br><span class="line">          <span class="built_in">this</span>.getName()</span><br><span class="line">      );</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="自定义-filter">自定义 Filter</h1>
+<p>自定义的 Filter 继承 Shiro 提供的
+BasicHttpAuthenticationFilter，重写：</p>
+<ul>
+<li>isAccessAllowed 判断是否通过</li>
+<li>isLoginAttempt 判断请求类型，此处检测是否拥有 token</li>
+<li>executeLogin 尝试认证，由于证书不能为空，此处我们传入一个
+DEFAULT_PASSWORD</li>
+</ul>
+<p>getSubject(request, response).login(token) 用于请求 Realm 认证</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JwtFilter</span> <span class="keyword">extends</span> <span class="title class_">BasicHttpAuthenticationFilter</span> {</span><br><span class="line">  <span class="meta">@SneakyThrows</span></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">protected</span> <span class="type">boolean</span> <span class="title function_">isAccessAllowed</span><span class="params">(ServletRequest request, ServletResponse response, Object mappedValue)</span> {</span><br><span class="line">    <span class="keyword">if</span> (isLoginAttempt(request, response)) {</span><br><span class="line">      <span class="keyword">return</span> executeLogin(request, response);</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">protected</span> <span class="type">boolean</span> <span class="title function_">isLoginAttempt</span><span class="params">(ServletRequest request, ServletResponse response)</span> {</span><br><span class="line">    <span class="type">HttpServletRequest</span> <span class="variable">httpServletRequest</span> <span class="operator">=</span> (HttpServletRequest) request;</span><br><span class="line">    <span class="type">String</span> <span class="variable">access_token</span> <span class="operator">=</span> httpServletRequest.getHeader(<span class="string">"access_token"</span>);</span><br><span class="line">    <span class="keyword">return</span> access_token != <span class="literal">null</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">protected</span> <span class="type">boolean</span> <span class="title function_">executeLogin</span><span class="params">(ServletRequest request, ServletResponse response)</span> <span class="keyword">throws</span> Exception {</span><br><span class="line">    <span class="type">HttpServletRequest</span> <span class="variable">httpServletRequest</span> <span class="operator">=</span> (HttpServletRequest) request;</span><br><span class="line">    <span class="type">String</span> <span class="variable">access_token</span> <span class="operator">=</span> httpServletRequest.getHeader(<span class="string">"access_token"</span>);</span><br><span class="line">    <span class="keyword">if</span> (access_token == <span class="literal">null</span>) {</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnknownAccountException</span>();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="type">JwtPasswordToken</span> <span class="variable">token</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">JwtPasswordToken</span>(access_token, <span class="string">"DEFAULT_PASSWORD"</span>);</span><br><span class="line">    getSubject(request, response).login(token);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="配置网络安全管理器">配置网络安全管理器</h1>
+<p>修改 Shiro 的配置类，关闭 Session 缓存：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean(name = "webSecurityManager")</span></span><br><span class="line"><span class="keyword">public</span> DefaultWebSecurityManager <span class="title function_">defaultWebSecurityManager</span><span class="params">(UserRealm realm)</span> {</span><br><span class="line">  <span class="type">DefaultWebSecurityManager</span> <span class="variable">defaultWebSecurityManager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultWebSecurityManager</span>();</span><br><span class="line">  defaultWebSecurityManager.setRealm(realm);</span><br><span class="line"></span><br><span class="line">  <span class="type">DefaultSubjectDAO</span> <span class="variable">subjectDAO</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultSubjectDAO</span>();</span><br><span class="line">  <span class="type">DefaultSessionStorageEvaluator</span> <span class="variable">defaultSessionStorageEvaluator</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultSessionStorageEvaluator</span>();</span><br><span class="line">  defaultSessionStorageEvaluator.setSessionStorageEnabled(<span class="literal">false</span>);</span><br><span class="line">  subjectDAO.setSessionStorageEvaluator(defaultSessionStorageEvaluator);</span><br><span class="line">  defaultWebSecurityManager.setSubjectDAO(subjectDAO);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> defaultWebSecurityManager;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="配置过滤规则">配置过滤规则</h1>
+<p>修改 Shiro 配置类，自定义过滤器和过滤规则：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="keyword">public</span> ShiroFilterFactoryBean <span class="title function_">shiroFilterFactoryBean</span><span class="params">(DefaultWebSecurityManager webSecurityManager)</span> {</span><br><span class="line">  <span class="type">ShiroFilterFactoryBean</span> <span class="variable">shiroFilterFactoryBean</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ShiroFilterFactoryBean</span>();</span><br><span class="line">  shiroFilterFactoryBean.setSecurityManager(webSecurityManager);</span><br><span class="line"></span><br><span class="line">  Map&lt;String, Filter&gt; filterMap = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">  filterMap.put(<span class="string">"jwt"</span>, <span class="keyword">new</span> <span class="title class_">JwtFilter</span>());</span><br><span class="line">  shiroFilterFactoryBean.setFilters(filterMap);</span><br><span class="line"></span><br><span class="line">  Map&lt;String, String&gt; filterRuleMap = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">  filterRuleMap.put(<span class="string">"/api/**"</span>, <span class="string">"jwt"</span>);</span><br><span class="line">  filterRuleMap.put(<span class="string">"/api/login"</span>, <span class="string">"anon"</span>);</span><br><span class="line">  filterRuleMap.put(<span class="string">"/api/register"</span>, <span class="string">"anon"</span>);</span><br><span class="line">  shiroFilterFactoryBean.setFilterChainDefinitionMap(filterRuleMap);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> shiroFilterFactoryBean;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="登录控制器">登录控制器</h1>
+<p>登录时将用户传入的用户名生成 token，再调用 login 登录：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RequestMapping("/api/login")</span></span><br><span class="line"><span class="keyword">public</span> ResponseEntity&lt;Map&lt;String, String&gt;&gt; <span class="title function_">login</span><span class="params">(String username, String password)</span> <span class="keyword">throws</span> Exception {</span><br><span class="line">  <span class="type">Subject</span> <span class="variable">subject</span> <span class="operator">=</span> SecurityUtils.getSubject();</span><br><span class="line">  <span class="type">String</span> <span class="variable">token</span> <span class="operator">=</span> JwtUtil.getToken(username, <span class="number">1800</span>);</span><br><span class="line">  <span class="type">JwtPasswordToken</span> <span class="variable">jwtToken</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">JwtPasswordToken</span>(token, password);</span><br><span class="line">  subject.login(jwtToken);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (subject.isAuthenticated()) {</span><br><span class="line">    <span class="type">String</span> <span class="variable">access_token</span> <span class="operator">=</span> JwtUtil.getToken(username, <span class="number">30</span> * <span class="number">60</span>);</span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"ret_code"</span>, <span class="string">"201"</span>);</span><br><span class="line">    map.put(<span class="string">"access_token"</span>, access_token);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ResponseEntity</span>&lt;&gt;(map, HttpStatus.OK);</span><br><span class="line">  } <span class="keyword">else</span> {</span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"ret_code"</span>, <span class="string">"403"</span>);</span><br><span class="line">    map.put(<span class="string">"err_msg"</span>, <span class="string">"Login failed."</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ResponseEntity</span>&lt;&gt;(map, HttpStatus.BAD_REQUEST);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="全局异常控制器">全局异常控制器</h1>
+<p>实现一个异常控制器类，统一处理所有异常：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="meta">@ControllerAdvice</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ExceptionController</span> {</span><br><span class="line">  <span class="meta">@ExceptionHandler(UnknownAccountException.class)</span></span><br><span class="line">  <span class="keyword">public</span> ResponseEntity&lt;Map&lt;String, String&gt;&gt; <span class="title function_">unknownAccountException</span><span class="params">()</span> {</span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"ret_code"</span>, <span class="string">"401"</span>);</span><br><span class="line">    map.put(<span class="string">"err_msg"</span>, <span class="string">"User is not EXIST!"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ResponseEntity</span>&lt;&gt;(map, HttpStatus.BAD_REQUEST);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler(IncorrectCredentialsException.class)</span></span><br><span class="line">  <span class="keyword">public</span> ResponseEntity&lt;Map&lt;String, String&gt;&gt; <span class="title function_">incorrectCredentialsException</span><span class="params">()</span> {</span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"ret_code"</span>, <span class="string">"402"</span>);</span><br><span class="line">    map.put(<span class="string">"err_msg"</span>, <span class="string">"Password is ERROR!"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ResponseEntity</span>&lt;&gt;(map, HttpStatus.BAD_REQUEST);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler(AuthenticationException.class)</span></span><br><span class="line">  <span class="keyword">public</span> ResponseEntity&lt;Map&lt;String, String&gt;&gt; <span class="title function_">authenticationException</span><span class="params">()</span> {</span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"ret_code"</span>, <span class="string">"403"</span>);</span><br><span class="line">    map.put(<span class="string">"err_msg"</span>, <span class="string">"Token is ERROR!"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ResponseEntity</span>&lt;&gt;(map, HttpStatus.BAD_REQUEST);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler(MalformedJwtException.class)</span></span><br><span class="line">  <span class="keyword">public</span> ResponseEntity&lt;Map&lt;String, String&gt;&gt; <span class="title function_">malformedJwtException</span><span class="params">()</span> {</span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"ret_code"</span>, <span class="string">"403"</span>);</span><br><span class="line">    map.put(<span class="string">"err_msg"</span>, <span class="string">"Token is ERROR!"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ResponseEntity</span>&lt;&gt;(map, HttpStatus.BAD_REQUEST);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler(ExpiredJwtException.class)</span></span><br><span class="line">  <span class="keyword">public</span> ResponseEntity&lt;Map&lt;String, String&gt;&gt; <span class="title function_">expiredJwtException</span><span class="params">()</span> {</span><br><span class="line">    Map&lt;String, String&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    map.put(<span class="string">"ret_code"</span>, <span class="string">"404"</span>);</span><br><span class="line">    map.put(<span class="string">"err_msg"</span>, <span class="string">"Token is EXPIRED!"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ResponseEntity</span>&lt;&gt;(map, HttpStatus.BAD_REQUEST);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="测试">测试</h1>
+<p>使用 postman 模拟登录：</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/2ce1d24cef58be5d7dc83bbf01b864b3.png" alt="在这里插入图片描述">
+<figcaption aria-hidden="true">在这里插入图片描述</figcaption>
+</figure>
+<p>返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"access_token"</span><span class="punctuation">:</span> <span class="string">"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJrb29yeWUiLCJzdWIiOiJzaGlyb19kZW1vIiwiYXVkIjoia29vcnllIiwiaWF0IjoxNTk1NjcwNzU2LCJleHAiOjE1OTU2NzI1NTZ9.avA3lQBzoxN-rF0qQq-36XQnRMTX-iH-FRRf98Xhykw"</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">"ret_code"</span><span class="punctuation">:</span> <span class="string">"201"</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></table></figure>
+<p>模拟访问：</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/7fd56d04f5fd3ae6c8a1533608ed5e08.png" alt="在这里插入图片描述">
+<figcaption aria-hidden="true">在这里插入图片描述</figcaption>
+</figure>
+<p>返回：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">You are an admin.</span><br></pre></td></tr></table></figure>
+<p>pc3MiOiJrb29yeWUiLCJzdWIiOiJzaGlyb19kZW1vIiwiYXVkIjoia29vcnllIiwiaWF0IjoxNTk1NjcwNzU2LCJleHAiOjE1OTU2NzI1NTZ9.avA3lQBzoxN-rF0qQq-36XQnRMTX-iH-FRRf98Xhykw",
+"ret_code": "201" } <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">模拟访问：</span><br><span class="line"></span><br><span class="line">[外链图片转存中...(img-QVmX4ugi-1595671362694)]</span><br><span class="line"></span><br><span class="line">返回：</span><br><span class="line"></span><br><span class="line">```json</span><br><span class="line">You are an admin.</span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag"># 后端</a>
+              <a href="/blog/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/blog/tags/Shiro/" rel="tag"># Shiro</a>
+              <a href="/blog/tags/JWT/" rel="tag"># JWT</a>
+              <a href="/blog/tags/SpringBoot/" rel="tag"># SpringBoot</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/25/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%83%E3%80%91%20%E4%BB%80%E4%B9%88%E6%98%AF%20JWT%EF%BC%9FShiro%20%E6%95%B4%E5%90%88JWT/" rel="prev" title="【Shiro 自学笔记七】 什么是 JWT？Shiro 整合JWT">
+      <i class="fa fa-chevron-left"></i> 【Shiro 自学笔记七】 什么是 JWT？Shiro 整合JWT
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/08/06/%E3%80%90Elasticsearch%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%80%E3%80%91%E4%BB%80%E4%B9%88%E6%98%AF%20ES%EF%BC%9F%20ES%20%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8/" rel="next" title="【Elasticsearch 自学笔记一】什么是 ES？ ES 的基本安装和使用">
+      【Elasticsearch 自学笔记一】什么是 ES？ ES 的基本安装和使用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-token"><span class="nav-number">1.</span> <span class="nav-text">自定义 token</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-realm"><span class="nav-number">2.</span> <span class="nav-text">自定义 Realm</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-filter"><span class="nav-number">3.</span> <span class="nav-text">自定义 Filter</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E7%AE%A1%E7%90%86%E5%99%A8"><span class="nav-number">4.</span> <span class="nav-text">配置网络安全管理器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E8%BF%87%E6%BB%A4%E8%A7%84%E5%88%99"><span class="nav-number">5.</span> <span class="nav-text">配置过滤规则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%99%BB%E5%BD%95%E6%8E%A7%E5%88%B6%E5%99%A8"><span class="nav-number">6.</span> <span class="nav-text">登录控制器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E5%BC%82%E5%B8%B8%E6%8E%A7%E5%88%B6%E5%99%A8"><span class="nav-number">7.</span> <span class="nav-text">全局异常控制器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">8.</span> <span class="nav-text">测试</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

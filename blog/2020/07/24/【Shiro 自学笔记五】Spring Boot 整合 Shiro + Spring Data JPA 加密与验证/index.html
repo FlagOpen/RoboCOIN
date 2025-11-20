@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文介绍了如何在 Spring Boot 环境下使用 Shiro 整合 Spring Data JPA 实现加密与验证。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Shiro 自学笔记五】Spring Boot 整合 Shiro + Spring Data JPA 加密与验证">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%94%E3%80%91Spring%20Boot%20%E6%95%B4%E5%90%88%20Shiro%20+%20Spring%20Data%20JPA%20%E5%8A%A0%E5%AF%86%E4%B8%8E%E9%AA%8C%E8%AF%81/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文介绍了如何在 Spring Boot 环境下使用 Shiro 整合 Spring Data JPA 实现加密与验证。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/87015c666df99a5d99325a7cea19e44a.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/45c4e3bbc6ad59de3c7db47848e9f671.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/3c0ba081e2b08d2c0a91572a592e9508.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/202df4d37b064ea423e4651e142d4d1b.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/28b19d7301d7581e8f8469a4002d9333.png">
+<meta property="article:published_time" content="2020-07-23T19:33:41.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.318Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="后端">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Shiro">
+<meta property="article:tag" content="SpringBoot">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/87015c666df99a5d99325a7cea19e44a.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%94%E3%80%91Spring%20Boot%20%E6%95%B4%E5%90%88%20Shiro%20+%20Spring%20Data%20JPA%20%E5%8A%A0%E5%AF%86%E4%B8%8E%E9%AA%8C%E8%AF%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Shiro 自学笔记五】Spring Boot 整合 Shiro + Spring Data JPA 加密与验证 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%94%E3%80%91Spring%20Boot%20%E6%95%B4%E5%90%88%20Shiro%20+%20Spring%20Data%20JPA%20%E5%8A%A0%E5%AF%86%E4%B8%8E%E9%AA%8C%E8%AF%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Shiro 自学笔记五】Spring Boot 整合 Shiro + Spring Data JPA 加密与验证
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-24 03:33:41" itemprop="dateCreated datePublished" datetime="2020-07-24T03:33:41+08:00">2020-07-24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+            <div class="post-description">本文介绍了如何在 Spring Boot 环境下使用 Shiro 整合 Spring Data JPA 实现加密与验证。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>上一期我们整合了 Spring
+Boot，但是用的是假数据而且是明文。这一期我们将实现数据库整合和加密。</p>
+<h1 id="配置数据库">配置数据库</h1>
+<p>建立一个数据表，设立 3 个列：</p>
+<ul>
+<li>id INT 自增主键</li>
+<li>username VARCHAR(16) 非空</li>
+<li>password VARCHAR(16) 非空</li>
+</ul>
+<p>建表语句：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">create table t_user</span><br><span class="line">(</span><br><span class="line">	id int auto_increment,</span><br><span class="line">	username varchar(16) not null,</span><br><span class="line">	password varchar(32) not null,</span><br><span class="line">	constraint t_user_pk</span><br><span class="line">		primary key (id)</span><br><span class="line">);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="编写工具类">编写工具类</h1>
+<p>实现一个 MD5 加密的工具类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.util;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.crypto.hash.Md5Hash;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Md5Util</span> {</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">getMd5</span><span class="params">(String source)</span> {</span><br><span class="line">    <span class="type">Md5Hash</span> <span class="variable">md5Hash</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Md5Hash</span>(source, <span class="string">"koorye_love_md5"</span>, <span class="number">1024</span>);</span><br><span class="line">    <span class="keyword">return</span> md5Hash.toHex();</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="整合-spring-data-jpa">整合 Spring Data JPA</h1>
+<h2 id="编写实体类">编写实体类</h2>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.pojo;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> lombok.Getter;</span><br><span class="line"><span class="keyword">import</span> lombok.NoArgsConstructor;</span><br><span class="line"><span class="keyword">import</span> lombok.Setter;</span><br><span class="line"><span class="keyword">import</span> lombok.experimental.Accessors;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.persistence.*;</span><br><span class="line"></span><br><span class="line"><span class="meta">@NoArgsConstructor</span></span><br><span class="line"><span class="meta">@Getter</span></span><br><span class="line"><span class="meta">@Setter</span></span><br><span class="line"><span class="meta">@Accessors(chain = true)</span></span><br><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="meta">@Table(name = "t_user")</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User</span> {</span><br><span class="line">  <span class="meta">@Id</span></span><br><span class="line">  <span class="meta">@GeneratedValue(strategy = GenerationType.IDENTITY)</span></span><br><span class="line">  <span class="meta">@Column(name = "id")</span></span><br><span class="line">  <span class="keyword">private</span> <span class="type">int</span> id;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Column(name = "username")</span></span><br><span class="line">  <span class="keyword">private</span> String username;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Column(name = "password")</span></span><br><span class="line">  <span class="keyword">private</span> String password;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> String <span class="title function_">toString</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"ID: "</span> + id + <span class="string">", username: "</span> + username + <span class="string">", password: "</span> + password;</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="编写-dao-层">编写 Dao 层</h2>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.dao;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.koorye.pojo.User;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.jpa.repository.JpaRepository;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.jpa.repository.JpaSpecificationExecutor;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">UserDao</span> <span class="keyword">extends</span> <span class="title class_">JpaRepository</span>&lt;User, Integer&gt;, JpaSpecificationExecutor&lt;User&gt; {</span><br><span class="line"></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="编写-service-层">编写 Service 层</h1>
+<p>编写一个接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.koorye.pojo.User;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">UserService</span> {</span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">save</span><span class="params">(User user)</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>实现接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.koorye.dao.UserDao;</span><br><span class="line"><span class="keyword">import</span> org.koorye.pojo.User;</span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Service;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserServiceImpl</span> <span class="keyword">implements</span> <span class="title class_">UserService</span> {</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> UserDao userDao;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">save</span><span class="params">(User user)</span> {</span><br><span class="line">    userDao.save(user);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="编写控制器">编写控制器</h1>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Autowired</span></span><br><span class="line"><span class="keyword">private</span> UserServiceImpl userService;</span><br><span class="line"></span><br><span class="line"><span class="meta">@RequestMapping("/api/register")</span></span><br><span class="line"><span class="keyword">public</span> String <span class="title function_">register</span><span class="params">(String username, String password)</span> {</span><br><span class="line">  <span class="type">String</span> <span class="variable">md5</span> <span class="operator">=</span> Md5Util.getMd5(password);</span><br><span class="line">  <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">User</span>().setUsername(username).setPassword(md5);</span><br><span class="line">  userService.save(user);</span><br><span class="line">  <span class="keyword">return</span> <span class="string">"Register Success!"</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h1 id="注册测试">注册测试</h1>
+<p>访问页面：<a target="_blank" rel="noopener" href="http://localhost:8080/api/register?username=koorye&amp;password=123456">http://localhost:8080/api/register?username=koorye&amp;password=123456</a></p>
+<p>用户名：koorye，密码：123456.</p>
+<p>注册成功：</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/87015c666df99a5d99325a7cea19e44a.png" alt="image-20200724025403749">
+<figcaption aria-hidden="true">image-20200724025403749</figcaption>
+</figure>
+<p>查看数据库：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">mysql&gt; </span><span class="language-bash"><span class="keyword">select</span> * from t_user;</span></span><br><span class="line">+----+----------+----------------------------------+</span><br><span class="line">| id | username | password                         |</span><br><span class="line">+----+----------+----------------------------------+</span><br><span class="line">|  1 | koorye   | 95030fceb85deaddba97489be5968abd |</span><br><span class="line">+----+----------+----------------------------------+</span><br><span class="line">1 row in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+<p>可以看到，密码成功被加密存储！</p>
+<h1 id="实现登录">实现登录</h1>
+<h2 id="编写-dao-层-1">编写 Dao 层</h2>
+<p>findById 之外的方法需要我们自行提供接口方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.dao;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.koorye.pojo.User;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.jpa.repository.JpaRepository;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.jpa.repository.JpaSpecificationExecutor;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">UserDao</span> <span class="keyword">extends</span> <span class="title class_">JpaRepository</span>&lt;User, Integer&gt;, JpaSpecificationExecutor&lt;User&gt; {</span><br><span class="line">  User <span class="title function_">findByUsername</span><span class="params">(String username)</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="编写-service-层-1">编写 Service 层</h2>
+<p>编写接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.koorye.pojo.User;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">UserService</span> {</span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">save</span><span class="params">(User user)</span>;</span><br><span class="line"></span><br><span class="line">  User <span class="title function_">getUserByUsername</span><span class="params">(String username)</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>实现接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.koorye.dao.UserDao;</span><br><span class="line"><span class="keyword">import</span> org.koorye.pojo.User;</span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Service;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserServiceImpl</span> <span class="keyword">implements</span> <span class="title class_">UserService</span> {</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> UserDao userDao;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">save</span><span class="params">(User user)</span> {</span><br><span class="line">    userDao.save(user);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> User <span class="title function_">getUserByUsername</span><span class="params">(String username)</span> {</span><br><span class="line">    <span class="keyword">return</span> userDao.findByUsername(username);</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="编写控制器-1">编写控制器</h2>
+<p>控制器和上一期相同：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RequestMapping("/api/login")</span></span><br><span class="line"><span class="keyword">public</span> String <span class="title function_">login</span><span class="params">(String username, String password)</span> {</span><br><span class="line">  <span class="type">Subject</span> <span class="variable">subject</span> <span class="operator">=</span> SecurityUtils.getSubject();</span><br><span class="line">  <span class="type">UsernamePasswordToken</span> <span class="variable">token</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UsernamePasswordToken</span>(username, password);</span><br><span class="line">  subject.login(token);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (subject.isAuthenticated()) {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Login Success!"</span>;</span><br><span class="line">  } <span class="keyword">else</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Login Failed!"</span>;</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="设置算法与散列">设置算法与散列</h2>
+<p>修改配置类中的 Realm：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean(name = "userRealm")</span></span><br><span class="line"><span class="keyword">public</span> UserRealm <span class="title function_">userRealm</span><span class="params">()</span> {</span><br><span class="line">  <span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">  matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line">  matcher.setHashIterations(<span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">UserRealm</span> <span class="variable">userRealm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRealm</span>();</span><br><span class="line">  userRealm.setCredentialsMatcher(matcher);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> userRealm;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="加盐">加盐</h2>
+<p>修改 Realm 的登录验证。通过 Spring Data JPA
+查到用户信息进行比对。</p>
+<p>注意，要讲类添加 <code>@Component</code> 注解，交与 Spring
+容器管理，才能自动注入。</p>
+<p>同时，注入后会与配置类的 Bean 名字冲突，需要再修改配置类的 Bean：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.realms;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationToken;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.SimpleAuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authz.AuthorizationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.realm.AuthorizingRealm;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.subject.PrincipalCollection;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.util.ByteSource;</span><br><span class="line"><span class="keyword">import</span> org.koorye.pojo.User;</span><br><span class="line"><span class="keyword">import</span> org.koorye.service.UserServiceImpl;</span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserRealm</span> <span class="keyword">extends</span> <span class="title class_">AuthorizingRealm</span> {</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> UserServiceImpl userService;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">protected</span> AuthorizationInfo <span class="title function_">doGetAuthorizationInfo</span><span class="params">(PrincipalCollection principalCollection)</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">protected</span> AuthenticationInfo <span class="title function_">doGetAuthenticationInfo</span><span class="params">(AuthenticationToken authenticationToken)</span> <span class="keyword">throws</span> AuthenticationException {</span><br><span class="line">    <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userService.getUserByUsername((String) authenticationToken.getPrincipal());</span><br><span class="line">    <span class="keyword">if</span> (user == <span class="literal">null</span>) {</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(</span><br><span class="line">          authenticationToken.getPrincipal(),</span><br><span class="line">          user.getPassword(),</span><br><span class="line">          ByteSource.Util.bytes(<span class="string">"koorye_love_md5"</span>),</span><br><span class="line">          <span class="built_in">this</span>.getName());</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>配置类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean(name = "realm")</span></span><br><span class="line"><span class="keyword">public</span> UserRealm <span class="title function_">userRealm</span><span class="params">()</span> {</span><br><span class="line">  <span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">  matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line">  matcher.setHashIterations(<span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">UserRealm</span> <span class="variable">userRealm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRealm</span>();</span><br><span class="line">  userRealm.setCredentialsMatcher(matcher);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> userRealm;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="meta">@Bean(name = "webSecurityManager")</span></span><br><span class="line"><span class="keyword">public</span> DefaultWebSecurityManager <span class="title function_">defaultWebSecurityManager</span><span class="params">(UserRealm realm)</span> {</span><br><span class="line">  <span class="type">DefaultWebSecurityManager</span> <span class="variable">defaultWebSecurityManager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultWebSecurityManager</span>();</span><br><span class="line">  defaultWebSecurityManager.setRealm(realm);</span><br><span class="line">  <span class="keyword">return</span> defaultWebSecurityManager;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="测试">测试</h2>
+<p>访问页面：<a target="_blank" rel="noopener" href="http://localhost:8080/api/login?username=koorye&amp;password=123456">http://localhost:8080/api/login?username=koorye&amp;password=123456</a></p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/45c4e3bbc6ad59de3c7db47848e9f671.png" alt="image-20200724031759947">
+<figcaption aria-hidden="true">image-20200724031759947</figcaption>
+</figure>
+<p>用户名或密码错误：</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/3c0ba081e2b08d2c0a91572a592e9508.png" alt="image-20200724031822726">
+<figcaption aria-hidden="true">image-20200724031822726</figcaption>
+</figure>
+<p>嗯？怎么报错了？我们修改一下 Controller：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RequestMapping("/api/login")</span></span><br><span class="line"><span class="keyword">public</span> String <span class="title function_">login</span><span class="params">(String username, String password)</span> {</span><br><span class="line">  <span class="type">Subject</span> <span class="variable">subject</span> <span class="operator">=</span> SecurityUtils.getSubject();</span><br><span class="line">  <span class="type">UsernamePasswordToken</span> <span class="variable">token</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UsernamePasswordToken</span>(username, password);</span><br><span class="line">  <span class="keyword">try</span> {</span><br><span class="line">    subject.login(token);</span><br><span class="line">  } <span class="keyword">catch</span> (UnknownAccountException e) {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Unknown username."</span>;</span><br><span class="line">  } <span class="keyword">catch</span> (AuthenticationException e) {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Unknown password."</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (subject.isAuthenticated()) {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Login Success!"</span>;</span><br><span class="line">  } <span class="keyword">else</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Login Failed!"</span>;</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>用户名正确，密码错误：</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/202df4d37b064ea423e4651e142d4d1b.png" alt="image-20200724032202574">
+<figcaption aria-hidden="true">image-20200724032202574</figcaption>
+</figure>
+<p>用户名不存在：</p>
+<p><img src="https://i-blog.csdnimg.cn/blog_migrate/28b19d7301d7581e8f8469a4002d9333.png" alt="image-20200724032558646"> 测试全部成功！</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag"># 后端</a>
+              <a href="/blog/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/blog/tags/Shiro/" rel="tag"># Shiro</a>
+              <a href="/blog/tags/SpringBoot/" rel="tag"># SpringBoot</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%9B%9B%E3%80%91Spring%20Boot%20%E6%95%B4%E5%90%88%20Shiro/" rel="prev" title="【Shiro 自学笔记四】Spring Boot 整合 Shiro">
+      <i class="fa fa-chevron-left"></i> 【Shiro 自学笔记四】Spring Boot 整合 Shiro
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AD%E3%80%91Shiro%20%E7%9A%84%E9%BB%98%E8%AE%A4%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6%E5%92%8C%20Redis%20%E5%AE%9E%E7%8E%B0%E7%BC%93%E5%AD%98/" rel="next" title="【Shiro 自学笔记六】Shiro 的默认缓存机制和 Redis 实现缓存">
+      【Shiro 自学笔记六】Shiro 的默认缓存机制和 Redis 实现缓存 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-number">1.</span> <span class="nav-text">配置数据库</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E5%86%99%E5%B7%A5%E5%85%B7%E7%B1%BB"><span class="nav-number">2.</span> <span class="nav-text">编写工具类</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%B4%E5%90%88-spring-data-jpa"><span class="nav-number">3.</span> <span class="nav-text">整合 Spring Data JPA</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99%E5%AE%9E%E4%BD%93%E7%B1%BB"><span class="nav-number">3.1.</span> <span class="nav-text">编写实体类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99-dao-%E5%B1%82"><span class="nav-number">3.2.</span> <span class="nav-text">编写 Dao 层</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E5%86%99-service-%E5%B1%82"><span class="nav-number">4.</span> <span class="nav-text">编写 Service 层</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E5%86%99%E6%8E%A7%E5%88%B6%E5%99%A8"><span class="nav-number">5.</span> <span class="nav-text">编写控制器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B3%A8%E5%86%8C%E6%B5%8B%E8%AF%95"><span class="nav-number">6.</span> <span class="nav-text">注册测试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E7%99%BB%E5%BD%95"><span class="nav-number">7.</span> <span class="nav-text">实现登录</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99-dao-%E5%B1%82-1"><span class="nav-number">7.1.</span> <span class="nav-text">编写 Dao 层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99-service-%E5%B1%82-1"><span class="nav-number">7.2.</span> <span class="nav-text">编写 Service 层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99%E6%8E%A7%E5%88%B6%E5%99%A8-1"><span class="nav-number">7.3.</span> <span class="nav-text">编写控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%A3%E5%88%97"><span class="nav-number">7.4.</span> <span class="nav-text">设置算法与散列</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A0%E7%9B%90"><span class="nav-number">7.5.</span> <span class="nav-text">加盐</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">7.6.</span> <span class="nav-text">测试</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

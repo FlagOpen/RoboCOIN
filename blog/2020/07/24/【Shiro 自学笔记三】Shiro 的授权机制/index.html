@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文介绍了 Shiro 的授权机制。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Shiro 自学笔记三】Shiro 的授权机制">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91Shiro%20%E7%9A%84%E6%8E%88%E6%9D%83%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文介绍了 Shiro 的授权机制。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-07-23T19:31:16.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.316Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="后端">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Shiro">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91Shiro%20%E7%9A%84%E6%8E%88%E6%9D%83%E6%9C%BA%E5%88%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Shiro 自学笔记三】Shiro 的授权机制 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91Shiro%20%E7%9A%84%E6%8E%88%E6%9D%83%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Shiro 自学笔记三】Shiro 的授权机制
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-24 03:31:16" itemprop="dateCreated datePublished" datetime="2020-07-24T03:31:16+08:00">2020-07-24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+            <div class="post-description">本文介绍了 Shiro 的授权机制。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这一期来了解一下 Shiro 的授权。</p>
+<h1 id="授权的概念">授权的概念</h1>
+<h2 id="主体">主体</h2>
+<p>主体，即访问应用的用户，在 Shiro 中使用 Subject
+代表用户。用户只有授权后才允许访问相应的资源。</p>
+<h2 id="资源">资源</h2>
+<p>在应用中用户可以访问的任何东西都称为资源。用户只有授权后才能访问。</p>
+<h2 id="权限">权限</h2>
+<p>安全策略中的原子授权单位，通过权限我们可以表示在应用中用户有没有操作某个资源的权利。即权限表示在应用中用户能不能访问某个资源。
+Shiro
+支持粗颗粒度权限（如用户模块的所有权限）和细颗粒度权限（操作某个用户的权限，即实例级别的）。</p>
+<h2 id="角色">角色</h2>
+<p>角色代表了操作集合，可以理解为权限的集合，一般情况下我们会赋予用户角色而不是权限，即这样用户可以拥有一组权限。不同的角色拥有一组不同的权限。</p>
+<p>举一个例子，如果我们有两种角色，admin 和 guest。</p>
+<p>接着，我们需要给不同的角色不同的权限，例如 admin
+可以访问所有页面，guest 只能访问首页。</p>
+<p>最后，在用户登录时，我们就可以通过给用户赋予不同的角色，来规定其可以访问的页面。</p>
+<h1 id="授权的类型">授权的类型</h1>
+<p>Shiro 的授权类型有两种：基于角色的访问控制、基于资源的访问控制。</p>
+<h2 id="基于角色的访问控制">基于角色的访问控制</h2>
+<p>通过判断用户是否拥有某种角色，来判断是否拥有权限，如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (subject.hasRole(<span class="string">"admin"</span>))</span><br><span class="line">  System.out.println(<span class="string">"用户是 admin"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (subject.hasAllRoles(Arrays.asList(<span class="string">"admin"</span>, <span class="string">"guest"</span>)))</span><br><span class="line">  System.out.println(<span class="string">"用户是 admin 也是 guest"</span>);</span><br><span class="line">      </span><br><span class="line"><span class="type">boolean</span>[] booleans = subject.hasRoles(Arrays.asList(<span class="string">"admin"</span>, <span class="string">"guest"</span>));</span><br><span class="line"><span class="keyword">for</span> (<span class="type">boolean</span> aBoolean : booleans) {</span><br><span class="line">  System.out.println(aBoolean);</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="基于资源的访问控制">基于资源的访问控制</h2>
+<p>Shiro
+中使用权限字符串实现基于资源的访问控制，权限字符串的结构是：</p>
+<ul>
+<li>资源标识符 : 操作 : 资源实例标识符</li>
+</ul>
+<p>其中，可以使用 * 通配所有内容。</p>
+<p>事实上，上面的结构是一种通用的做法，只要用 <code>:</code>
+分割的字符串都可以作为权限字符串。</p>
+<p>例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (subject.isPermitted(<span class="string">"user:find:*"</span>))</span><br><span class="line">  System.out.println(<span class="string">"用户拥有查找所有用户的权限"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (subject.isPermitted(<span class="string">"user:*:10001"</span>))</span><br><span class="line">  System.out.println(<span class="string">"用户拥有对10001用户的所有权限"</span>);</span><br></pre></td></tr></table></figure>
+<h1 id="判断是否授权">判断是否授权</h1>
+<p>Shiro 中有三种判断授权的方式：编程式、注解式、标签式。</p>
+<h2 id="编程式">编程式</h2>
+<p>即上面的例子，使用 <code>subject.hasrole()</code> 和
+<code>subject.isPermitted()</code> 判断。</p>
+<h2 id="注解式">注解式</h2>
+<p><code>@RequiresAuthenthentication</code>: 表示当前 Subject 已经通过
+login 进行身份验证 <code>@RequiresUser</code>:
+表示当前Subject已经身份验证或者通过记住我登录的
+<code>@RequiresGuest</code>:
+表示当前Subject没有身份验证或者通过记住我登录过，即是游客身份
+<code>@RequiresRoles(value = {"admin","user"},logical = Logical.AND)</code>:
+表示当前 Subject 需要角色 admin 和 user
+<code>@RequiresPermissions(value = {"user:delete","user:b"},logical = Logical.OR)</code>:
+表示当前Subject需要权限 user:delete 或者 user:b</p>
+<p>使用 <code>@RequiresRoles</code> 注解，如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RequiresRoles(value = "admin")</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">hello</span><span class="params">()</span> {</span><br><span class="line">  System.out.println(<span class="string">"hello"</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="meta">@RequiresRoles(value = {"admin", "guest"})</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">hello2</span><span class="params">()</span> {</span><br><span class="line">  System.out.println(<span class="string">"hello"</span>);</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p><em>注：该方法似乎只能在 Web 环境生效，笔者不明其原因</em></p>
+<h2 id="标签式">标签式</h2>
+<p>在 JSP 等页面中使用，如：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">shiro:hasRole</span> <span class="attr">name</span>=<span class="string">"admin"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">h2</span>&gt;</span> Hello Admin! <span class="tag">&lt;/<span class="name">h2</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">shiro:hasRole</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h1 id="实现授权和判断">实现授权和判断</h1>
+<p>注意在上一期中，AuthorizingRealm 要求我们重写两个方法：</p>
+<ul>
+<li>doGetAuthenticationInfo 用户登录验证</li>
+<li>doGetAuthorizationInfo 用户授权</li>
+</ul>
+<p>接下来我们就来重写用户授权方法。</p>
+<p>首先 doGetAuthorizationInfo 有一个 principalCollection
+参数，这个参数有一个 getPrimaryPrincipal
+方法，用于获取用户的主身份信息，在本例中其实就是用户名。</p>
+<p>然后，与登录的 SimpleAuthenticationInfo 相对应，授权同样有一个
+SimpleAuthorizationInfo 类。</p>
+<p>这个类可以通过 addRole 方法添加角色权限，也可以通过
+addStringPermission 添加权限字符串。</p>
+<p>在这个例子中，我们为名为 koorye 的用户添加了 admin 角色权限和 user
+资源权限：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.helloshiro;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationToken;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.SimpleAuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authz.AuthorizationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authz.SimpleAuthorizationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.realm.AuthorizingRealm;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.subject.PrincipalCollection;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.util.ByteSource;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserRealm</span> <span class="keyword">extends</span> <span class="title class_">AuthorizingRealm</span> {</span><br><span class="line">  <span class="keyword">protected</span> AuthorizationInfo <span class="title function_">doGetAuthorizationInfo</span><span class="params">(PrincipalCollection principalCollection)</span> {</span><br><span class="line">    <span class="type">String</span> <span class="variable">principal</span> <span class="operator">=</span> (String) principalCollection.getPrimaryPrincipal();</span><br><span class="line">    System.out.println(<span class="string">"用户名："</span> + principal);</span><br><span class="line">    <span class="type">SimpleAuthorizationInfo</span> <span class="variable">simpleAuthorizationInfo</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthorizationInfo</span>();</span><br><span class="line">    <span class="keyword">if</span> (<span class="string">"koorye"</span>.equals(principal)) {</span><br><span class="line">      simpleAuthorizationInfo.addRole(<span class="string">"admin"</span>);</span><br><span class="line">      simpleAuthorizationInfo.addStringPermission(<span class="string">"user"</span>);  <span class="comment">// 等同于 user:*:*</span></span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> simpleAuthorizationInfo;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">protected</span> AuthenticationInfo <span class="title function_">doGetAuthenticationInfo</span><span class="params">(AuthenticationToken authenticationToken)</span> <span class="keyword">throws</span> AuthenticationException {</span><br><span class="line">    <span class="keyword">if</span> (<span class="string">"koorye"</span>.equals(authenticationToken.getPrincipal())) {  <span class="comment">// 用户存在</span></span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(authenticationToken.getPrincipal(),</span><br><span class="line">          <span class="string">"e9261b98c415bee7eaf191f89bee80c9"</span>,</span><br><span class="line">          ByteSource.Util.bytes(<span class="string">"Koorye_Love_MD5"</span>),</span><br><span class="line">          <span class="built_in">this</span>.getName());</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;  <span class="comment">// 用户不存在</span></span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.test;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.SecurityUtils;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.UnknownAccountException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.UsernamePasswordToken;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.credential.HashedCredentialsMatcher;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authz.annotation.RequiresRoles;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.crypto.hash.Md5Hash;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.mgt.DefaultSecurityManager;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.subject.Subject;</span><br><span class="line"><span class="keyword">import</span> org.junit.Test;</span><br><span class="line"><span class="keyword">import</span> org.koorye.helloshiro.UserRealm;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TestShiro</span> {</span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">showMd5</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">Md5Hash</span> <span class="variable">md5Hash</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Md5Hash</span>(<span class="string">"123456"</span>, <span class="string">"Koorye_Love_MD5"</span>, <span class="number">1024</span>);</span><br><span class="line">    System.out.println(md5Hash.toHex());</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">testLogin</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">DefaultSecurityManager</span> <span class="variable">manager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultSecurityManager</span>();</span><br><span class="line"></span><br><span class="line">    <span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">    matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line">    matcher.setHashIterations(<span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">    <span class="type">UserRealm</span> <span class="variable">userRealm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRealm</span>();</span><br><span class="line">    userRealm.setCredentialsMatcher(matcher);</span><br><span class="line"></span><br><span class="line">    manager.setRealm(userRealm);</span><br><span class="line">    SecurityUtils.setSecurityManager(manager);</span><br><span class="line">    <span class="type">Subject</span> <span class="variable">subject</span> <span class="operator">=</span> SecurityUtils.getSubject();</span><br><span class="line"></span><br><span class="line">    <span class="type">UsernamePasswordToken</span> <span class="variable">token</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UsernamePasswordToken</span>(<span class="string">"koorye"</span>, <span class="string">"123456"</span>);</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">      subject.login(token);</span><br><span class="line">      System.out.println(<span class="string">"登录成功"</span>);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (subject.isAuthenticated()) {</span><br><span class="line">        <span class="keyword">if</span> (subject.hasRole(<span class="string">"admin"</span>))</span><br><span class="line">          System.out.println(<span class="string">"用户是 admin"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (subject.isPermitted(<span class="string">"user:find:*"</span>))</span><br><span class="line">          System.out.println(<span class="string">"用户拥有查找所有用户的权限"</span>);</span><br><span class="line">      }</span><br><span class="line">    } <span class="keyword">catch</span> (UnknownAccountException e) {</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">      System.out.println(<span class="string">"用户名不存在"</span>);</span><br><span class="line">    } <span class="keyword">catch</span> (AuthenticationException e) {</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">      System.out.println(<span class="string">"密码错误"</span>);</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">登录成功</span><br><span class="line">用户名：koorye</span><br><span class="line">用户是 admin</span><br><span class="line">用户名：koorye</span><br><span class="line">用户拥有查找所有用户的权限</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br></pre></td></tr></table></figure>
+<p>注意 <code>用户名：koorye</code>
+是认证过程中调用的，这也意味着每次认证，都会调用一次授权方法。</p>
+<p>我们将授权改为 guest 再次尝试：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="string">"koorye"</span>.equals(principal)) {</span><br><span class="line">  simpleAuthorizationInfo.addRole(<span class="string">"guest"</span>);</span><br><span class="line">  simpleAuthorizationInfo.addStringPermission(<span class="string">"user"</span>);  <span class="comment">// 等同于 user:*:*</span></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">登录成功</span><br><span class="line">用户名：koorye</span><br><span class="line">用户名：koorye</span><br><span class="line">用户拥有查找所有用户的权限</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意到 <code>用户是 admin</code> 语句不再返回。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag"># 后端</a>
+              <a href="/blog/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/blog/tags/Shiro/" rel="tag"># Shiro</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91%E8%87%AA%E5%AE%9A%E4%B9%89%20Realm%20%E5%AE%9E%E7%8E%B0%20MD5%20%E5%8A%A0%E5%AF%86%E3%80%81%E5%8A%A0%E7%9B%90%E4%B8%8E%E5%86%8D%E6%95%A3%E5%88%97/" rel="prev" title="【Shiro 自学笔记二】自定义 Realm 实现 MD5 加密、加盐与再散列">
+      <i class="fa fa-chevron-left"></i> 【Shiro 自学笔记二】自定义 Realm 实现 MD5 加密、加盐与再散列
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%9B%9B%E3%80%91Spring%20Boot%20%E6%95%B4%E5%90%88%20Shiro/" rel="next" title="【Shiro 自学笔记四】Spring Boot 整合 Shiro">
+      【Shiro 自学笔记四】Spring Boot 整合 Shiro <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8E%88%E6%9D%83%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">授权的概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E4%BD%93"><span class="nav-number">1.1.</span> <span class="nav-text">主体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B5%84%E6%BA%90"><span class="nav-number">1.2.</span> <span class="nav-text">资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9D%83%E9%99%90"><span class="nav-number">1.3.</span> <span class="nav-text">权限</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%92%E8%89%B2"><span class="nav-number">1.4.</span> <span class="nav-text">角色</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8E%88%E6%9D%83%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">授权的类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E8%A7%92%E8%89%B2%E7%9A%84%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6"><span class="nav-number">2.1.</span> <span class="nav-text">基于角色的访问控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E8%B5%84%E6%BA%90%E7%9A%84%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6"><span class="nav-number">2.2.</span> <span class="nav-text">基于资源的访问控制</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E6%98%AF%E5%90%A6%E6%8E%88%E6%9D%83"><span class="nav-number">3.</span> <span class="nav-text">判断是否授权</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E5%BC%8F"><span class="nav-number">3.1.</span> <span class="nav-text">编程式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E8%A7%A3%E5%BC%8F"><span class="nav-number">3.2.</span> <span class="nav-text">注解式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E7%AD%BE%E5%BC%8F"><span class="nav-number">3.3.</span> <span class="nav-text">标签式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%8E%88%E6%9D%83%E5%92%8C%E5%88%A4%E6%96%AD"><span class="nav-number">4.</span> <span class="nav-text">实现授权和判断</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

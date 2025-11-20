@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="ES 作为一个搜索引擎，拥有高效且功能齐全搜索算法，这一期我们来了解一下其细节。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Elasticsearch 自学笔记二】IK 中文分词器和搜索语法">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/08/06/%E3%80%90Elasticsearch%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91IK%20%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8%E5%92%8C%E6%90%9C%E7%B4%A2%E8%AF%AD%E6%B3%95/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="ES 作为一个搜索引擎，拥有高效且功能齐全搜索算法，这一期我们来了解一下其细节。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-05T17:47:15.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.299Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="Elasticsearch">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/08/06/%E3%80%90Elasticsearch%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91IK%20%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8%E5%92%8C%E6%90%9C%E7%B4%A2%E8%AF%AD%E6%B3%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Elasticsearch 自学笔记二】IK 中文分词器和搜索语法 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/08/06/%E3%80%90Elasticsearch%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91IK%20%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8%E5%92%8C%E6%90%9C%E7%B4%A2%E8%AF%AD%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Elasticsearch 自学笔记二】IK 中文分词器和搜索语法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-06 01:47:15" itemprop="dateCreated datePublished" datetime="2020-08-06T01:47:15+08:00">2020-08-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>16k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+            <div class="post-description">ES 作为一个搜索引擎，拥有高效且功能齐全搜索算法，这一期我们来了解一下其细节。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>ES
+作为一个搜索引擎，拥有高效且功能齐全搜索算法，这一期我们来了解一下其细节。</p>
+<h1 id="ik-中文分词器">IK 中文分词器</h1>
+<p>ES
+并不支持中文词语的切割，当使用中文时，我们输入的词汇会被切割成一个个单子，而不能组成我们想要的词语。</p>
+<p>幸运的是，ES 人性化的支持各种插件的安装，通过安装 IK
+分词器，我们就可以解决这个问题。</p>
+<p>在 Docker 中，我们需要先进入容器，不用 Docker 可以跳过这一步：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker exec -it elasticsearch bash</span><br></pre></td></tr></table></figure>
+<p>找到 bin 目录，里面有用于插件安装的程序：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd /bin</span><br></pre></td></tr></table></figure>
+<p>接着下载安装插件，注意版本号一致：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/7.8.1/elasticsearch-analysis-ik-7.8.1.zip</span><br></pre></td></tr></table></figure>
+<p>重启容器，安装成功：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">exit  # 退出容器</span><br><span class="line">docker restart elasticsearch</span><br></pre></td></tr></table></figure>
+<h2 id="测试">测试</h2>
+<p>我们依旧使用 Kibana 进行测试。</p>
+<p>不使用分词器：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">GET _analyze</span><br><span class="line">{</span><br><span class="line">  "text": "学习？学个屁"</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回体：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "tokens" : [</span><br><span class="line">    {</span><br><span class="line">      "token" : "学",</span><br><span class="line">      "start_offset" : 0,</span><br><span class="line">      "end_offset" : 1,</span><br><span class="line">      "type" : "&lt;IDEOGRAPHIC&gt;",</span><br><span class="line">      "position" : 0</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "习",</span><br><span class="line">      "start_offset" : 1,</span><br><span class="line">      "end_offset" : 2,</span><br><span class="line">      "type" : "&lt;IDEOGRAPHIC&gt;",</span><br><span class="line">      "position" : 1</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "学",</span><br><span class="line">      "start_offset" : 3,</span><br><span class="line">      "end_offset" : 4,</span><br><span class="line">      "type" : "&lt;IDEOGRAPHIC&gt;",</span><br><span class="line">      "position" : 2</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "个",</span><br><span class="line">      "start_offset" : 4,</span><br><span class="line">      "end_offset" : 5,</span><br><span class="line">      "type" : "&lt;IDEOGRAPHIC&gt;",</span><br><span class="line">      "position" : 3</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "屁",</span><br><span class="line">      "start_offset" : 5,</span><br><span class="line">      "end_offset" : 6,</span><br><span class="line">      "type" : "&lt;IDEOGRAPHIC&gt;",</span><br><span class="line">      "position" : 4</span><br><span class="line">    }</span><br><span class="line">  ]</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>可以看到字被一个个分开了。</p>
+<p>使用分词器：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">GET _analyze</span><br><span class="line">{</span><br><span class="line">  "analyzer": "ik_smart",</span><br><span class="line">  "text": "学习？学个屁"</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回体：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "tokens" : [</span><br><span class="line">    {</span><br><span class="line">      "token" : "学习",</span><br><span class="line">      "start_offset" : 0,</span><br><span class="line">      "end_offset" : 2,</span><br><span class="line">      "type" : "CN_WORD",</span><br><span class="line">      "position" : 0</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "学",</span><br><span class="line">      "start_offset" : 3,</span><br><span class="line">      "end_offset" : 4,</span><br><span class="line">      "type" : "CN_CHAR",</span><br><span class="line">      "position" : 1</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "个",</span><br><span class="line">      "start_offset" : 4,</span><br><span class="line">      "end_offset" : 5,</span><br><span class="line">      "type" : "CN_CHAR",</span><br><span class="line">      "position" : 2</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "屁",</span><br><span class="line">      "start_offset" : 5,</span><br><span class="line">      "end_offset" : 6,</span><br><span class="line">      "type" : "CN_CHAR",</span><br><span class="line">      "position" : 3</span><br><span class="line">    }</span><br><span class="line">  ]</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>学习被当成一个词汇，而不是单字。</p>
+<h2 id="自定义词典">自定义词典</h2>
+<p>学习被当成一个词汇，然而学个屁仍然是单字。如果我们要把学个屁加入词汇怎么办呢？这时候我们就需要自定义词典。</p>
+<p>进入容器，如果你已经把 config
+目录挂载到卷外就不需要进入了(我忘了)：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker exec -it elasticsearch bash</span><br></pre></td></tr></table></figure>
+<p>ES 的 docker 容器基于 centos 系统，我们先安装 vim：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install vim</span><br></pre></td></tr></table></figure>
+<p>进入词典目录：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/share/elasticsearch/config/analysis-ik</span><br></pre></td></tr></table></figure>
+<p>用 vim 生成一个文件
+<code>my_word.dic</code>，加入我们需要的词汇。</p>
+<p>看一下文本内容：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@3fb842497984 analysis-ik]# cat my_word.dic </span><br><span class="line">学个屁</span><br></pre></td></tr></table></figure>
+<p>加入配置，打开 IKAnalyzer.cfg.xml，将自定义词典加到 ext_dict 中：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">"1.0"</span> encoding=<span class="string">"UTF-8"</span>?&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">properties</span> <span class="keyword">SYSTEM</span> <span class="string">"http://java.sun.com/dtd/properties.dtd"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">comment</span>&gt;</span>IK Analyzer 扩展配置<span class="tag">&lt;/<span class="name">comment</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置自己的扩展字典 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">entry</span> <span class="attr">key</span>=<span class="string">"ext_dict"</span>&gt;</span>my_word.dic<span class="tag">&lt;/<span class="name">entry</span>&gt;</span></span><br><span class="line">         <span class="comment">&lt;!--用户可以在这里配置自己的扩展停止词字典--&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">entry</span> <span class="attr">key</span>=<span class="string">"ext_stopwords"</span>&gt;</span><span class="tag">&lt;/<span class="name">entry</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置远程扩展字典 --&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- &lt;entry key="remote_ext_dict"&gt;words_location&lt;/entry&gt; --&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置远程扩展停止词字典--&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- &lt;entry key="remote_ext_stopwords"&gt;words_location&lt;/entry&gt; --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>退出，重启容器：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">exit</span><br><span class="line">docker restart elasticsearch</span><br></pre></td></tr></table></figure>
+<p>再来试一下效果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "tokens" : [</span><br><span class="line">    {</span><br><span class="line">      "token" : "学习",</span><br><span class="line">      "start_offset" : 0,</span><br><span class="line">      "end_offset" : 2,</span><br><span class="line">      "type" : "CN_WORD",</span><br><span class="line">      "position" : 0</span><br><span class="line">    },</span><br><span class="line">    {</span><br><span class="line">      "token" : "学个屁",</span><br><span class="line">      "start_offset" : 3,</span><br><span class="line">      "end_offset" : 6,</span><br><span class="line">      "type" : "CN_WORD",</span><br><span class="line">      "position" : 1</span><br><span class="line">    }</span><br><span class="line">  ]</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>测试成功。</p>
+<h1 id="es-搜索语法">ES 搜索语法</h1>
+<h2 id="keyword-和-text-的区别">keyword 和 text 的区别</h2>
+<p>keyword：关键词，存入数据时不会被分词</p>
+<p>text：文本，存入数据时会被分词</p>
+<p>再测试之前，还要再介绍一下 ES 的两种查询：</p>
+<p>match: 模糊查询，会对搜索关键词分词</p>
+<p>term: 精确查询，不会对搜索关键词分词</p>
+<h3 id="测试-1">测试</h3>
+<p>创建索引。</p>
+<p>name 为 keyword，desc 为 text：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">PUT user</span><br><span class="line">{</span><br><span class="line">  "mappings": {</span><br><span class="line">    "properties": {</span><br><span class="line">      "name": {</span><br><span class="line">        "type": "keyword"</span><br><span class="line">      },</span><br><span class="line">      "age": {</span><br><span class="line">        "type": "integer"</span><br><span class="line">      },</span><br><span class="line">      "desc": {</span><br><span class="line">        "type": "text"</span><br><span class="line">      }</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>插入三个字段：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">PUT user/_doc/1</span><br><span class="line">{</span><br><span class="line">  "name": "user koorye1",</span><br><span class="line">  "age": 19,</span><br><span class="line">  "desc": "i love python"</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">PUT user/_doc/2</span><br><span class="line">{</span><br><span class="line">  "name": "user koorye2",</span><br><span class="line">  "age": 20,</span><br><span class="line">  "desc": "i love java"</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">PUT user/_doc/3</span><br><span class="line">{</span><br><span class="line">  "name": "user koorye3",</span><br><span class="line">  "age": 21,</span><br><span class="line">  "desc": "i love c"</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>接下来我们用两种匹配测试一下：</p>
+<ol type="1">
+<li>对 keyword 使用模糊查询</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "match": {</span><br><span class="line">      "name": "user"</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回结果为空。为什么？因为 name 是 keyword
+类型，被看作一个整体，我们不能使用 keyword 的部分内容进行匹配。</p>
+<ol start="2" type="1">
+<li>对 keyword 使用精确查询</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "term": {</span><br><span class="line">      "name": "user koorye1"</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>查询关键词是精确的，name
+也是关键词类型，都不会分词，故只有完全匹配才能测试成功。这次我们查到一条结果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "took" : 1,</span><br><span class="line">  "timed_out" : false,</span><br><span class="line">  "_shards" : {</span><br><span class="line">    "total" : 1,</span><br><span class="line">    "successful" : 1,</span><br><span class="line">    "skipped" : 0,</span><br><span class="line">    "failed" : 0</span><br><span class="line">  },</span><br><span class="line">  "hits" : {</span><br><span class="line">    "total" : {</span><br><span class="line">      "value" : 1,</span><br><span class="line">      "relation" : "eq"</span><br><span class="line">    },</span><br><span class="line">    "max_score" : 0.9808291,</span><br><span class="line">    "hits" : [</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "1",</span><br><span class="line">        "_score" : 0.9808291,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye1",</span><br><span class="line">          "age" : 19,</span><br><span class="line">          "desc" : "i love python"</span><br><span class="line">        }</span><br><span class="line">      }</span><br><span class="line">    ]</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<ol start="3" type="1">
+<li>对 text 进行模糊匹配</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "match": {</span><br><span class="line">      "desc": "i love"</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>由于存储的是 text 类型，故已经被分词，相当于库中存储了 i / love /
+python / java / c 几个单词。我们使用模糊查询，故查询关键词被分词，是 i /
+love。模糊查询只需有一个关键词对应即可，所以可以成功匹配，返回 3
+条结果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "took" : 3,</span><br><span class="line">  "timed_out" : false,</span><br><span class="line">  "_shards" : {</span><br><span class="line">    "total" : 1,</span><br><span class="line">    "successful" : 1,</span><br><span class="line">    "skipped" : 0,</span><br><span class="line">    "failed" : 0</span><br><span class="line">  },</span><br><span class="line">  "hits" : {</span><br><span class="line">    "total" : {</span><br><span class="line">      "value" : 3,</span><br><span class="line">      "relation" : "eq"</span><br><span class="line">    },</span><br><span class="line">    "max_score" : 0.26706278,</span><br><span class="line">    "hits" : [</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "1",</span><br><span class="line">        "_score" : 0.26706278,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye1",</span><br><span class="line">          "age" : 19,</span><br><span class="line">          "desc" : "i love python"</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "2",</span><br><span class="line">        "_score" : 0.26706278,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye2",</span><br><span class="line">          "age" : 20,</span><br><span class="line">          "desc" : "i love java"</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "3",</span><br><span class="line">        "_score" : 0.26706278,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye3",</span><br><span class="line">          "age" : 21,</span><br><span class="line">          "desc" : "i love c"</span><br><span class="line">        }</span><br><span class="line">      }</span><br><span class="line">    ]</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<ol start="4" type="1">
+<li>对 text 进行精确匹配</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "term": {</span><br><span class="line">      "desc": "i love python"</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>字段完全相同，返回结果却为空？也许很出乎意料。原因是，由于 desc 属于
+text 类型，库的字段已经被一个个拆开了，库中只有单独的 i / love / python
+几个单词，却没有完整的 i love python
+这个句子。因此，即使完全相同，我们这次也查不到结果。</p>
+<p>相反，单个字段匹配反而可以用 term 得到结果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "term": {</span><br><span class="line">      "desc": "python"</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回体：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "took" : 1,</span><br><span class="line">  "timed_out" : false,</span><br><span class="line">  "_shards" : {</span><br><span class="line">    "total" : 1,</span><br><span class="line">    "successful" : 1,</span><br><span class="line">    "skipped" : 0,</span><br><span class="line">    "failed" : 0</span><br><span class="line">  },</span><br><span class="line">  "hits" : {</span><br><span class="line">    "total" : {</span><br><span class="line">      "value" : 1,</span><br><span class="line">      "relation" : "eq"</span><br><span class="line">    },</span><br><span class="line">    "max_score" : 0.9808291,</span><br><span class="line">    "hits" : [</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "1",</span><br><span class="line">        "_score" : 0.9808291,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye1",</span><br><span class="line">          "age" : 19,</span><br><span class="line">          "desc" : "i love python"</span><br><span class="line">        }</span><br><span class="line">      }</span><br><span class="line">    ]</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="过滤搜索结果">过滤搜索结果</h2>
+<p>使用 _source 即可：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "match": {</span><br><span class="line">      "desc": "i love"</span><br><span class="line">    }</span><br><span class="line">  },</span><br><span class="line">  "_source": ["name", "age"]</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回体：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "took" : 3,</span><br><span class="line">  "timed_out" : false,</span><br><span class="line">  "_shards" : {</span><br><span class="line">    "total" : 1,</span><br><span class="line">    "successful" : 1,</span><br><span class="line">    "skipped" : 0,</span><br><span class="line">    "failed" : 0</span><br><span class="line">  },</span><br><span class="line">  "hits" : {</span><br><span class="line">    "total" : {</span><br><span class="line">      "value" : 3,</span><br><span class="line">      "relation" : "eq"</span><br><span class="line">    },</span><br><span class="line">    "max_score" : 1.497693,</span><br><span class="line">    "hits" : [</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "1",</span><br><span class="line">        "_score" : 1.497693,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye1",</span><br><span class="line">          "age" : 19</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "2",</span><br><span class="line">        "_score" : 1.497693,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye2",</span><br><span class="line">          "age" : 20</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "3",</span><br><span class="line">        "_score" : 1.497693,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye3",</span><br><span class="line">          "age" : 21</span><br><span class="line">        }</span><br><span class="line">      }</span><br><span class="line">    ]</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>返回体中没有 desc.</p>
+<h2 id="结果分页与排序">结果分页与排序</h2>
+<p>通过 sort 指定排序规则，from 指定开始页，size 指定每页的数据量</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "match": {</span><br><span class="line">      "desc": "i love"</span><br><span class="line">    }</span><br><span class="line">  },</span><br><span class="line">  "sort": [</span><br><span class="line">    {</span><br><span class="line">      "age": {</span><br><span class="line">        "order": "desc"</span><br><span class="line">      }</span><br><span class="line">    }</span><br><span class="line">  ],</span><br><span class="line">  "from": 0,</span><br><span class="line">  "size": 2</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回体：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "took" : 22,</span><br><span class="line">  "timed_out" : false,</span><br><span class="line">  "_shards" : {</span><br><span class="line">    "total" : 1,</span><br><span class="line">    "successful" : 1,</span><br><span class="line">    "skipped" : 0,</span><br><span class="line">    "failed" : 0</span><br><span class="line">  },</span><br><span class="line">  "hits" : {</span><br><span class="line">    "total" : {</span><br><span class="line">      "value" : 3,</span><br><span class="line">      "relation" : "eq"</span><br><span class="line">    },</span><br><span class="line">    "max_score" : null,</span><br><span class="line">    "hits" : [</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "3",</span><br><span class="line">        "_score" : null,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye3",</span><br><span class="line">          "age" : 21,</span><br><span class="line">          "desc" : "i love c"</span><br><span class="line">        },</span><br><span class="line">        "sort" : [</span><br><span class="line">          21</span><br><span class="line">        ]</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "2",</span><br><span class="line">        "_score" : null,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye2",</span><br><span class="line">          "age" : 20,</span><br><span class="line">          "desc" : "i love java"</span><br><span class="line">        },</span><br><span class="line">        "sort" : [</span><br><span class="line">          20</span><br><span class="line">        ]</span><br><span class="line">      }</span><br><span class="line">    ]</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="逻辑查询">逻辑查询</h2>
+<p>ES 提供了几种逻辑类型来进行与或非判断：</p>
+<ul>
+<li>must 与，即都要匹配</li>
+<li>should 或，即有一种匹配</li>
+<li>must_not 非，即相反才匹配</li>
+</ul>
+<p>与格式：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "bool": {</span><br><span class="line">      "must": [{</span><br><span class="line">          "match": {</span><br><span class="line">            "desc": "love"</span><br><span class="line">          }</span><br><span class="line">        },{</span><br><span class="line">          "match": {</span><br><span class="line">            "age": "19"</span><br><span class="line">          }</span><br><span class="line">        }]</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>或格式：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "bool": {</span><br><span class="line">      "should": [{</span><br><span class="line">          "match": {</span><br><span class="line">            "desc": "love"</span><br><span class="line">          }</span><br><span class="line">        },{</span><br><span class="line">          "match": {</span><br><span class="line">            "age": "19"</span><br><span class="line">          }</span><br><span class="line">        }]</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>非格式：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "bool": {</span><br><span class="line">      "must_not": [{</span><br><span class="line">         "match": {</span><br><span class="line">           "age": "19"</span><br><span class="line">         } </span><br><span class="line">        }]</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="区间查询">区间查询</h2>
+<p>ES 提供了区间查询：</p>
+<ul>
+<li>gt 大于</li>
+<li>lt 小于</li>
+<li>gte 大于等于</li>
+<li>lte 小于等于</li>
+</ul>
+<p>例：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "bool": {</span><br><span class="line">      "filter": [{</span><br><span class="line">          "range": {</span><br><span class="line">            "age": {</span><br><span class="line">              "gte": 20,</span><br><span class="line">              "lte": 30</span><br><span class="line">            }</span><br><span class="line">          }</span><br><span class="line">        }]</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="结果高亮">结果高亮</h2>
+<p>通过 highlight 指定需要高亮的字段：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "match": {</span><br><span class="line">      "desc": "love"</span><br><span class="line">    }</span><br><span class="line">  },</span><br><span class="line">  "highlight": {</span><br><span class="line">    "fields": { </span><br><span class="line">      "desc": {}</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回体：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "took" : 115,</span><br><span class="line">  "timed_out" : false,</span><br><span class="line">  "_shards" : {</span><br><span class="line">    "total" : 1,</span><br><span class="line">    "successful" : 1,</span><br><span class="line">    "skipped" : 0,</span><br><span class="line">    "failed" : 0</span><br><span class="line">  },</span><br><span class="line">  "hits" : {</span><br><span class="line">    "total" : {</span><br><span class="line">      "value" : 3,</span><br><span class="line">      "relation" : "eq"</span><br><span class="line">    },</span><br><span class="line">    "max_score" : 0.13353139,</span><br><span class="line">    "hits" : [</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "1",</span><br><span class="line">        "_score" : 0.13353139,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye1",</span><br><span class="line">          "age" : 19,</span><br><span class="line">          "desc" : "i love python"</span><br><span class="line">        },</span><br><span class="line">        "highlight" : {</span><br><span class="line">          "desc" : [</span><br><span class="line">            "i &lt;em&gt;love&lt;/em&gt; python"</span><br><span class="line">          ]</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "2",</span><br><span class="line">        "_score" : 0.13353139,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye2",</span><br><span class="line">          "age" : 20,</span><br><span class="line">          "desc" : "i love java"</span><br><span class="line">        },</span><br><span class="line">        "highlight" : {</span><br><span class="line">          "desc" : [</span><br><span class="line">            "i &lt;em&gt;love&lt;/em&gt; java"</span><br><span class="line">          ]</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "3",</span><br><span class="line">        "_score" : 0.13353139,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye3",</span><br><span class="line">          "age" : 21,</span><br><span class="line">          "desc" : "i love c"</span><br><span class="line">        },</span><br><span class="line">        "highlight" : {</span><br><span class="line">          "desc" : [</span><br><span class="line">            "i &lt;em&gt;love&lt;/em&gt; c"</span><br><span class="line">          ]</span><br><span class="line">        }</span><br><span class="line">      }</span><br><span class="line">    ]</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>我们还可以自定义高亮的前后缀：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">GET user/_search</span><br><span class="line">{</span><br><span class="line">  "query": {</span><br><span class="line">    "match": {</span><br><span class="line">      "desc": "love"</span><br><span class="line">    }</span><br><span class="line">  },</span><br><span class="line">  "highlight": {</span><br><span class="line">    "fields": { </span><br><span class="line">      "desc": {}</span><br><span class="line">    },</span><br><span class="line">    "pre_tags": "&lt;span class='high'&gt;",</span><br><span class="line">    "post_tags": "&lt;/span&gt;"</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>返回体：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">  "took" : 6,</span><br><span class="line">  "timed_out" : false,</span><br><span class="line">  "_shards" : {</span><br><span class="line">    "total" : 1,</span><br><span class="line">    "successful" : 1,</span><br><span class="line">    "skipped" : 0,</span><br><span class="line">    "failed" : 0</span><br><span class="line">  },</span><br><span class="line">  "hits" : {</span><br><span class="line">    "total" : {</span><br><span class="line">      "value" : 3,</span><br><span class="line">      "relation" : "eq"</span><br><span class="line">    },</span><br><span class="line">    "max_score" : 0.13353139,</span><br><span class="line">    "hits" : [</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "1",</span><br><span class="line">        "_score" : 0.13353139,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye1",</span><br><span class="line">          "age" : 19,</span><br><span class="line">          "desc" : "i love python"</span><br><span class="line">        },</span><br><span class="line">        "highlight" : {</span><br><span class="line">          "desc" : [</span><br><span class="line">            "i &lt;span class='high'&gt;love&lt;/span&gt; python"</span><br><span class="line">          ]</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "2",</span><br><span class="line">        "_score" : 0.13353139,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye2",</span><br><span class="line">          "age" : 20,</span><br><span class="line">          "desc" : "i love java"</span><br><span class="line">        },</span><br><span class="line">        "highlight" : {</span><br><span class="line">          "desc" : [</span><br><span class="line">            "i &lt;span class='high'&gt;love&lt;/span&gt; java"</span><br><span class="line">          ]</span><br><span class="line">        }</span><br><span class="line">      },</span><br><span class="line">      {</span><br><span class="line">        "_index" : "user",</span><br><span class="line">        "_type" : "_doc",</span><br><span class="line">        "_id" : "3",</span><br><span class="line">        "_score" : 0.13353139,</span><br><span class="line">        "_source" : {</span><br><span class="line">          "name" : "user koorye3",</span><br><span class="line">          "age" : 21,</span><br><span class="line">          "desc" : "i love c"</span><br><span class="line">        },</span><br><span class="line">        "highlight" : {</span><br><span class="line">          "desc" : [</span><br><span class="line">            "i &lt;span class='high'&gt;love&lt;/span&gt; c"</span><br><span class="line">          ]</span><br><span class="line">        }</span><br><span class="line">      }</span><br><span class="line">    ]</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+              <a href="/blog/tags/Elasticsearch/" rel="tag"># Elasticsearch</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/08/06/%E3%80%90Elasticsearch%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%80%E3%80%91%E4%BB%80%E4%B9%88%E6%98%AF%20ES%EF%BC%9F%20ES%20%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8/" rel="prev" title="【Elasticsearch 自学笔记一】什么是 ES？ ES 的基本安装和使用">
+      <i class="fa fa-chevron-left"></i> 【Elasticsearch 自学笔记一】什么是 ES？ ES 的基本安装和使用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/08/06/%E3%80%90Elasticsearch%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91Spring%20Boot%20%E6%95%B4%E5%90%88%20ES/" rel="next" title="【Elasticsearch 自学笔记三】Spring Boot 整合 ES">
+      【Elasticsearch 自学笔记三】Spring Boot 整合 ES <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ik-%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E5%99%A8"><span class="nav-number">1.</span> <span class="nav-text">IK 中文分词器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">1.1.</span> <span class="nav-text">测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E8%AF%8D%E5%85%B8"><span class="nav-number">1.2.</span> <span class="nav-text">自定义词典</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#es-%E6%90%9C%E7%B4%A2%E8%AF%AD%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">ES 搜索语法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#keyword-%E5%92%8C-text-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.1.</span> <span class="nav-text">keyword 和 text 的区别</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95-1"><span class="nav-number">2.1.1.</span> <span class="nav-text">测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E6%BB%A4%E6%90%9C%E7%B4%A2%E7%BB%93%E6%9E%9C"><span class="nav-number">2.2.</span> <span class="nav-text">过滤搜索结果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C%E5%88%86%E9%A1%B5%E4%B8%8E%E6%8E%92%E5%BA%8F"><span class="nav-number">2.3.</span> <span class="nav-text">结果分页与排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%BB%E8%BE%91%E6%9F%A5%E8%AF%A2"><span class="nav-number">2.4.</span> <span class="nav-text">逻辑查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8C%BA%E9%97%B4%E6%9F%A5%E8%AF%A2"><span class="nav-number">2.5.</span> <span class="nav-text">区间查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C%E9%AB%98%E4%BA%AE"><span class="nav-number">2.6.</span> <span class="nav-text">结果高亮</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

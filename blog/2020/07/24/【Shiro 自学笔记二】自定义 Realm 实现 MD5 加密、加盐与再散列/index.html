@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="MD5 是一种常用的加密算法，本文将介绍如何使用 Shiro 实现 MD5 加密、加盐和再散列。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Shiro 自学笔记二】自定义 Realm 实现 MD5 加密、加盐与再散列">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91%E8%87%AA%E5%AE%9A%E4%B9%89%20Realm%20%E5%AE%9E%E7%8E%B0%20MD5%20%E5%8A%A0%E5%AF%86%E3%80%81%E5%8A%A0%E7%9B%90%E4%B8%8E%E5%86%8D%E6%95%A3%E5%88%97/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="MD5 是一种常用的加密算法，本文将介绍如何使用 Shiro 实现 MD5 加密、加盐和再散列。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-07-23T19:30:41.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.317Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="后端">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Shiro">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91%E8%87%AA%E5%AE%9A%E4%B9%89%20Realm%20%E5%AE%9E%E7%8E%B0%20MD5%20%E5%8A%A0%E5%AF%86%E3%80%81%E5%8A%A0%E7%9B%90%E4%B8%8E%E5%86%8D%E6%95%A3%E5%88%97/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Shiro 自学笔记二】自定义 Realm 实现 MD5 加密、加盐与再散列 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%8C%E3%80%91%E8%87%AA%E5%AE%9A%E4%B9%89%20Realm%20%E5%AE%9E%E7%8E%B0%20MD5%20%E5%8A%A0%E5%AF%86%E3%80%81%E5%8A%A0%E7%9B%90%E4%B8%8E%E5%86%8D%E6%95%A3%E5%88%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Shiro 自学笔记二】自定义 Realm 实现 MD5 加密、加盐与再散列
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-24 03:30:41" itemprop="dateCreated datePublished" datetime="2020-07-24T03:30:41+08:00">2020-07-24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>8.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+            <div class="post-description">MD5 是一种常用的加密算法，本文将介绍如何使用 Shiro 实现 MD5 加密、加盐和再散列。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>上一期我们完成了基本的登录操作，然而，直接通过明文密码登录显然是非常不安全的。因此，我们必须对密码进行加密以加强信息的安全性。</p>
+<h1 id="什么是md5">什么是MD5</h1>
+<blockquote>
+<p>MD5信息摘要算法（英语：MD5 Message-Digest
+Algorithm），一种被广泛使用的密码散列函数，可以产生出一个128位（16字节）的散列值（hash
+value），用于确保信息传输完整一致。MD5由美国密码学家罗纳德·李维斯特（Ronald
+Linn Rivest）设计，于1992年公开，用以取代MD4算法。这套算法的程序在 RFC
+1321
+标准中被加以规范。1996年后该算法被证实存在弱点，可以被加以破解，对于需要高度安全性的数据，专家一般建议改用其他算法，如SHA-2。2004年，证实MD5算法无法防止碰撞（collision），因此不适用于安全性认证，如SSL公开密钥认证或是数字签名等用途。</p>
+<p>—— 摘自百度百科</p>
+</blockquote>
+<p>MD5 具有以下特点：</p>
+<ul>
+<li>不可逆 我们无法通过生成的 MD5 逆推得到原来的数据串</li>
+<li>一致性 固定的数据串经过固定的算法得到的 MD5 也是固定的</li>
+</ul>
+<p>根据以上特点，我们就可以使用 MD5 实现密码的加密和安全登录。</p>
+<h2 id="加盐">加盐</h2>
+<blockquote>
+<p>“加盐”即为计算机密码加密中常用的"add
+salt"，一般用于在原密码后面追加一些无关字符后在进行不可逆加密（例如MD5）以便增强安全性</p>
+</blockquote>
+<p>现在有很多 MD5
+在线解密的网站，它们其实是使用穷举算法，根据原字符串生成的 MD5
+逐个比对，从而通过MD5 得到原先的数据串。</p>
+<p>因此我们有必要在加密前，先对数据串做一些修改。例如，在数据串的结尾增加一串新内容，这便是加盐。</p>
+<p>原串："123456"</p>
+<p>盐："Koorye_Love_MD5"</p>
+<p>加盐后的串："123456Koorye_Love_MD5"</p>
+<p>我们对加盐后的串再加密，得到的结果便更难被破解。</p>
+<h2 id="散列">散列</h2>
+<blockquote>
+<p>Hash，一般翻译做散列、杂凑，或音译为哈希，是把任意长度的输入（又叫做预映射pre-image）通过散列算法变换成固定长度的输出，该输出就是散列值。这种转换是一种压缩映射，也就是，散列值的空间通常远小于输入的空间，不同的输入可能会散列成相同的输出，所以不可能从散列值来确定唯一的输入值。简单的说就是一种将任意长度的消息压缩到某一固定长度的消息摘要的函数。</p>
+</blockquote>
+<p>散列实际上是通过 Hash 函数，将原串的值通过 Hash
+函数做一次映射，从而得到一个新串。由于散列很难找到逆向规律，这种算法同样可以增加密文的复杂性。</p>
+<p>举例：</p>
+<p>现定义一种哈希函数，将字符 'a' 映射到 'b'，'b' 映射到 'd'，'c' 映射到
+'f' (第几个字母就向后推几位，如果超出 'z' 就向前推 26 位)...</p>
+<p>那么，对原串 'acfbg' 散列，得到的结果是 'bfldn'.</p>
+<p>对 'bfldn' 再进行一次散列，得到的结果是 'dlxhb'.</p>
+<p>这种算法很难找到逆向规律，例如 'b' 可能由 'a' 得到，也可能由 'n'
+得到。</p>
+<p>我们在 MD5 加密后进行散列时，通常会进行 1024 次或 2048
+次，这使得原串很难被破解。</p>
+<h1 id="shiro-实现-md5-加密">Shiro 实现 MD5 加密</h1>
+<h2 id="基本-md5-加密">基本 MD5 加密</h2>
+<p>Shiro 为我们提供了 MD5 的加密算法，我们只需使用 Md5Hash
+类即可实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> {</span><br><span class="line">  <span class="type">Md5Hash</span> <span class="variable">md5Hash</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Md5Hash</span>(<span class="string">"123456"</span>);</span><br><span class="line">  System.out.println(md5Hash.toHex());</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">e10adc3949ba59abbe56e057f20f883e</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br></pre></td></tr></table></figure>
+<h2 id="加盐与散列">加盐与散列</h2>
+<p>加盐和散列也非常简单，只需在构造函数中添加即可。</p>
+<p>Md5Hash 的构造函数：</p>
+<ul>
+<li>第一个参数 source 字符串型 表示源</li>
+<li>第二个参数 salt 字符串型 表示盐，默认加到源尾部</li>
+<li>第三个参数 hashIterations 整型 表示散列次数</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> {</span><br><span class="line">  <span class="type">Md5Hash</span> <span class="variable">md5Hash</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Md5Hash</span>(<span class="string">"123456"</span>, <span class="string">"Koorye_Love_MD5"</span>, <span class="number">1024</span>);</span><br><span class="line">  System.out.println(md5Hash.toHex());</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">e9261b98c415bee7eaf191f89bee80c9</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br></pre></td></tr></table></figure>
+<p>注意加盐和散列后得到结果与不加盐不散列的结果是不同的。</p>
+<h1 id="自定义-realm-实现登录验证">自定义 Realm 实现登录验证</h1>
+<p>我们自定义的 Realm 类一般都要继承一个名为 AuthorizingRealm
+的类，这个类需要我们重写两个方法：</p>
+<ul>
+<li><code>doGetAuthorizationInfo</code> 认证</li>
+<li><code>doGetAuthenticationInfo</code> 登录验证</li>
+</ul>
+<p>我们暂时先不管认证方法。</p>
+<p>Shiro
+的登录验证分为两步，用户名验证和密码验证。用户名验证需要我们自行判断，而密码验证
+Shiro 为我们封装好了一个 SimpleAuthenticationInfo
+类帮助我们自动完成。</p>
+<p>我们先从明文登录开始。</p>
+<p>首先通过 <code>authenticationToken.getPrincipal()</code> 拿到 token
+的用户名，如果用户名不存在，返回 null。</p>
+<p>如果用户名存在，返回 SimpleAuthenticationInfo
+以验证密码，这个类需要三个参数：</p>
+<ul>
+<li>第一个参数 Principal Object类型 用户名</li>
+<li>第二个参数 Credentials 字符串类型 证书，此处使用密码</li>
+<li>第三个参数 RealmName 字符串类型 Realm 的名字，使用
+<code>this.getName()</code> 即可</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.helloshiro;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationToken;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.SimpleAuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authz.AuthorizationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.realm.AuthorizingRealm;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.subject.PrincipalCollection;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserRealm</span> <span class="keyword">extends</span> <span class="title class_">AuthorizingRealm</span> {</span><br><span class="line">  <span class="keyword">protected</span> AuthorizationInfo <span class="title function_">doGetAuthorizationInfo</span><span class="params">(PrincipalCollection principalCollection)</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">protected</span> AuthenticationInfo <span class="title function_">doGetAuthenticationInfo</span><span class="params">(AuthenticationToken authenticationToken)</span> <span class="keyword">throws</span> AuthenticationException {</span><br><span class="line">    <span class="keyword">if</span> (<span class="string">"koorye"</span>.equals(authenticationToken.getPrincipal())) {  <span class="comment">// 用户存在</span></span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(authenticationToken.getPrincipal(),</span><br><span class="line">          <span class="string">"123456"</span>,  <span class="comment">// 自动判断密码匹配</span></span><br><span class="line">          <span class="built_in">this</span>.getName());</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;  <span class="comment">// 用户不存在</span></span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>编写一个测试类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">testLogin</span><span class="params">()</span> {</span><br><span class="line">  <span class="type">DefaultSecurityManager</span> <span class="variable">manager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultSecurityManager</span>();</span><br><span class="line">  manager.setRealm(<span class="keyword">new</span> <span class="title class_">UserRealm</span>());</span><br><span class="line">  SecurityUtils.setSecurityManager(manager);</span><br><span class="line">  <span class="type">Subject</span> <span class="variable">subject</span> <span class="operator">=</span> SecurityUtils.getSubject();</span><br><span class="line"></span><br><span class="line">  <span class="type">UsernamePasswordToken</span> <span class="variable">token</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UsernamePasswordToken</span>(<span class="string">"koorye"</span>, <span class="string">"123456"</span>);</span><br><span class="line">  <span class="keyword">try</span> {</span><br><span class="line">    subject.login(token);</span><br><span class="line">    System.out.println(<span class="string">"登录成功"</span>);</span><br><span class="line">  } <span class="keyword">catch</span> (UnknownAccountException e) {</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">    System.out.println(<span class="string">"用户名不存在"</span>);</span><br><span class="line">  } <span class="keyword">catch</span> (AuthenticationException e) {</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">    System.out.println(<span class="string">"密码错误"</span>);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">登录成功</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br></pre></td></tr></table></figure>
+<h1 id="自定义-realm-实现-md5-加密">自定义 Realm 实现 MD5 加密</h1>
+<p>首先我们来定义一个 MD5
+加密算法，因为，我们必须在验证时用一样的算法，才可以验证成功。</p>
+<p>定义的算法：加盐 "Koorye_Love_MD5"，1024 次散列。</p>
+<p>编写一个测试类查看结果：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">showMd5</span><span class="params">()</span> {</span><br><span class="line">  <span class="type">Md5Hash</span> <span class="variable">md5Hash</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Md5Hash</span>(<span class="string">"123456"</span>, <span class="string">"Koorye_Love_MD5"</span>, <span class="number">1024</span>);</span><br><span class="line">  System.out.println(md5Hash.toHex());</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">e9261b98c415bee7eaf191f89bee80c9</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br></pre></td></tr></table></figure>
+<p>如果要使用数据库，我们在数据库中存储的就是密码经过 MD5
+加密后的串。</p>
+<p>不过我们这里没有用到数据库，于是我们将加密后的串作为证书：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(authenticationToken.getPrincipal(),</span><br><span class="line">    <span class="string">"e9261b98c415bee7eaf191f89bee80c9"</span>,</span><br><span class="line">    <span class="built_in">this</span>.getName());</span><br></pre></td></tr></table></figure>
+<p>接下来，我们需要在 Realm 中说明加密算法的过程。</p>
+<h2 id="声明加密算法">声明加密算法</h2>
+<p>在声明 Realm 时说明加密算法是 MD5：</p>
+<p>先声明一个 HashedCredentialsMatcher，然后用
+<code>matcher.setHashAlgorithmName("md5")</code> 说明方法是 MD5.</p>
+<p>再声明一个
+Realm，使用<code>userRealm.setCredentialsMatcher(matcher)</code>
+设置加密方法。</p>
+<p>最后将 Realm 添加到 SecurityManager 中。</p>
+<p>修改后的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">testLogin</span><span class="params">()</span> {</span><br><span class="line">  <span class="type">DefaultSecurityManager</span> <span class="variable">manager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultSecurityManager</span>();</span><br><span class="line"></span><br><span class="line">  <span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">  matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">UserRealm</span> <span class="variable">userRealm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRealm</span>();</span><br><span class="line">  userRealm.setCredentialsMatcher(matcher);</span><br><span class="line"></span><br><span class="line">  manager.setRealm(userRealm);</span><br><span class="line">  SecurityUtils.setSecurityManager(manager);</span><br><span class="line">  <span class="type">Subject</span> <span class="variable">subject</span> <span class="operator">=</span> SecurityUtils.getSubject();</span><br><span class="line"></span><br><span class="line">  <span class="type">UsernamePasswordToken</span> <span class="variable">token</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UsernamePasswordToken</span>(<span class="string">"koorye"</span>, <span class="string">"123456"</span>);</span><br><span class="line">  <span class="keyword">try</span> {</span><br><span class="line">    subject.login(token);</span><br><span class="line">    System.out.println(<span class="string">"登录成功"</span>);</span><br><span class="line">  } <span class="keyword">catch</span> (UnknownAccountException e) {</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">    System.out.println(<span class="string">"用户名不存在"</span>);</span><br><span class="line">  } <span class="keyword">catch</span> (AuthenticationException e) {</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">    System.out.println(<span class="string">"密码错误"</span>);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="声明加盐和散列">声明加盐和散列</h2>
+<p>我们需要使用 SimpleAuthenticationInfo
+的另一种构造方法，这个方法的第三个参数使用 ByteSource.Util.bytes()
+传入盐：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(authenticationToken.getPrincipal(),</span><br><span class="line">    <span class="string">"e9261b98c415bee7eaf191f89bee80c9"</span>,</span><br><span class="line">    ByteSource.Util.bytes(<span class="string">"Koorye_Love_MD5"</span>),</span><br><span class="line">    <span class="built_in">this</span>.getName());</span><br></pre></td></tr></table></figure>
+<p>至于散列的声明，则要与加密算法的声明同时进行：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">    matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line">    matcher.setHashIterations(<span class="number">1024</span>);</span><br></pre></td></tr></table></figure>
+<p>修改后的 Realm：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.helloshiro;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationToken;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.SimpleAuthenticationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authz.AuthorizationInfo;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.realm.AuthorizingRealm;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.subject.PrincipalCollection;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.util.ByteSource;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserRealm</span> <span class="keyword">extends</span> <span class="title class_">AuthorizingRealm</span> {</span><br><span class="line">  <span class="keyword">protected</span> AuthorizationInfo <span class="title function_">doGetAuthorizationInfo</span><span class="params">(PrincipalCollection principalCollection)</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">protected</span> AuthenticationInfo <span class="title function_">doGetAuthenticationInfo</span><span class="params">(AuthenticationToken authenticationToken)</span> <span class="keyword">throws</span> AuthenticationException {</span><br><span class="line">    <span class="keyword">if</span> (<span class="string">"koorye"</span>.equals(authenticationToken.getPrincipal())) {  <span class="comment">// 用户存在</span></span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(authenticationToken.getPrincipal(),</span><br><span class="line">          <span class="string">"e9261b98c415bee7eaf191f89bee80c9"</span>,</span><br><span class="line">          ByteSource.Util.bytes(<span class="string">"Koorye_Love_MD5"</span>),</span><br><span class="line">          <span class="built_in">this</span>.getName());</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;  <span class="comment">// 用户不存在</span></span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>修改后的 Test：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.test;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.SecurityUtils;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.AuthenticationException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.UnknownAccountException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.UsernamePasswordToken;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.authc.credential.HashedCredentialsMatcher;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.crypto.hash.Md5Hash;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.mgt.DefaultSecurityManager;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.subject.Subject;</span><br><span class="line"><span class="keyword">import</span> org.junit.Test;</span><br><span class="line"><span class="keyword">import</span> org.koorye.helloshiro.UserRealm;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TestShiro</span> {</span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">showMd5</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">Md5Hash</span> <span class="variable">md5Hash</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Md5Hash</span>(<span class="string">"123456"</span>, <span class="string">"Koorye_Love_MD5"</span>, <span class="number">1024</span>);</span><br><span class="line">    System.out.println(md5Hash.toHex());</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">testLogin</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">DefaultSecurityManager</span> <span class="variable">manager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultSecurityManager</span>();</span><br><span class="line"></span><br><span class="line">    <span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">    matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line">    matcher.setHashIterations(<span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">    <span class="type">UserRealm</span> <span class="variable">userRealm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRealm</span>();</span><br><span class="line">    userRealm.setCredentialsMatcher(matcher);</span><br><span class="line"></span><br><span class="line">    manager.setRealm(userRealm);</span><br><span class="line">    SecurityUtils.setSecurityManager(manager);</span><br><span class="line">    <span class="type">Subject</span> <span class="variable">subject</span> <span class="operator">=</span> SecurityUtils.getSubject();</span><br><span class="line"></span><br><span class="line">    <span class="type">UsernamePasswordToken</span> <span class="variable">token</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UsernamePasswordToken</span>(<span class="string">"koorye"</span>, <span class="string">"123456"</span>);</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">      subject.login(token);</span><br><span class="line">      System.out.println(<span class="string">"登录成功"</span>);</span><br><span class="line">    } <span class="keyword">catch</span> (UnknownAccountException e) {</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">      System.out.println(<span class="string">"用户名不存在"</span>);</span><br><span class="line">    } <span class="keyword">catch</span> (AuthenticationException e) {</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">      System.out.println(<span class="string">"密码错误"</span>);</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">登录成功</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br></pre></td></tr></table></figure>
+<p>测试成功！</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag"># 后端</a>
+              <a href="/blog/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/blog/tags/Shiro/" rel="tag"># Shiro</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%80%E3%80%91Shiro%20%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%B5%81%E7%A8%8B%E4%B8%8E%20Hello%20World/" rel="prev" title="【Shiro 自学笔记一】Shiro 的基本流程与 Hello World">
+      <i class="fa fa-chevron-left"></i> 【Shiro 自学笔记一】Shiro 的基本流程与 Hello World
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%89%E3%80%91Shiro%20%E7%9A%84%E6%8E%88%E6%9D%83%E6%9C%BA%E5%88%B6/" rel="next" title="【Shiro 自学笔记三】Shiro 的授权机制">
+      【Shiro 自学笔记三】Shiro 的授权机制 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFmd5"><span class="nav-number">1.</span> <span class="nav-text">什么是MD5</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A0%E7%9B%90"><span class="nav-number">1.1.</span> <span class="nav-text">加盐</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%A3%E5%88%97"><span class="nav-number">1.2.</span> <span class="nav-text">散列</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#shiro-%E5%AE%9E%E7%8E%B0-md5-%E5%8A%A0%E5%AF%86"><span class="nav-number">2.</span> <span class="nav-text">Shiro 实现 MD5 加密</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC-md5-%E5%8A%A0%E5%AF%86"><span class="nav-number">2.1.</span> <span class="nav-text">基本 MD5 加密</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A0%E7%9B%90%E4%B8%8E%E6%95%A3%E5%88%97"><span class="nav-number">2.2.</span> <span class="nav-text">加盐与散列</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-realm-%E5%AE%9E%E7%8E%B0%E7%99%BB%E5%BD%95%E9%AA%8C%E8%AF%81"><span class="nav-number">3.</span> <span class="nav-text">自定义 Realm 实现登录验证</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-realm-%E5%AE%9E%E7%8E%B0-md5-%E5%8A%A0%E5%AF%86"><span class="nav-number">4.</span> <span class="nav-text">自定义 Realm 实现 MD5 加密</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A3%B0%E6%98%8E%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="nav-number">4.1.</span> <span class="nav-text">声明加密算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A3%B0%E6%98%8E%E5%8A%A0%E7%9B%90%E5%92%8C%E6%95%A3%E5%88%97"><span class="nav-number">4.2.</span> <span class="nav-text">声明加盐和散列</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文介绍了 Shiro 的默认缓存机制和 Redis 实现缓存。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Shiro 自学笔记六】Shiro 的默认缓存机制和 Redis 实现缓存">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AD%E3%80%91Shiro%20%E7%9A%84%E9%BB%98%E8%AE%A4%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6%E5%92%8C%20Redis%20%E5%AE%9E%E7%8E%B0%E7%BC%93%E5%AD%98/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文介绍了 Shiro 的默认缓存机制和 Redis 实现缓存。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/937fbf9cf2df3734609da8ab2a921a20.png">
+<meta property="article:published_time" content="2020-07-24T14:29:06.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.320Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="后端">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Shiro">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/937fbf9cf2df3734609da8ab2a921a20.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AD%E3%80%91Shiro%20%E7%9A%84%E9%BB%98%E8%AE%A4%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6%E5%92%8C%20Redis%20%E5%AE%9E%E7%8E%B0%E7%BC%93%E5%AD%98/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Shiro 自学笔记六】Shiro 的默认缓存机制和 Redis 实现缓存 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AD%E3%80%91Shiro%20%E7%9A%84%E9%BB%98%E8%AE%A4%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6%E5%92%8C%20Redis%20%E5%AE%9E%E7%8E%B0%E7%BC%93%E5%AD%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Shiro 自学笔记六】Shiro 的默认缓存机制和 Redis 实现缓存
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-24 22:29:06" itemprop="dateCreated datePublished" datetime="2020-07-24T22:29:06+08:00">2020-07-24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>11k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+            <div class="post-description">本文介绍了 Shiro 的默认缓存机制和 Redis 实现缓存。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>上一期我们实现了登录验证，然而，每次登录 Shiro
+都需要去查询一次数据库，而查询数据库是极其耗费资源的，因此，我们需要引入缓存来减小资源开支。</p>
+<h1 id="shiro-的登录验证机制">Shiro 的登录验证机制</h1>
+<p>我们给 Service 层加入日志打印，再行测试：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserServiceImpl</span> <span class="keyword">implements</span> <span class="title class_">UserService</span> {</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> UserDao userDao;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">save</span><span class="params">(User user)</span> {</span><br><span class="line">    System.out.println(<span class="string">"[ INFO ] User "</span> + user.getUsername() + <span class="string">" saved."</span>);</span><br><span class="line">    userDao.save(user);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> User <span class="title function_">getUserByUsername</span><span class="params">(String username)</span> {</span><br><span class="line">    System.out.println(<span class="string">"[ INFO ] User "</span> + username + <span class="string">" was found."</span>);</span><br><span class="line">    <span class="keyword">return</span> userDao.findByUsername(username);</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[ INFO ] User koorye was found.</span><br><span class="line">[ INFO ] User koorye was found.</span><br><span class="line">[ INFO ] User koorye was found.</span><br></pre></td></tr></table></figure>
+<p>结果发现，每刷新一次登录页面，Shiro
+都会查询一次数据库，我们有必要使用缓存来减小开支。</p>
+<h1 id="shiro-的默认缓存机制">Shiro 的默认缓存机制</h1>
+<p>Shiro 默认使用 EhCache 完成缓存。</p>
+<h2 id="导入依赖">导入依赖</h2>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.shiro<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>shiro-ehcache<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.5.3<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="配置-realm">配置 Realm</h2>
+<p>在配置类中修改 Realm 的配置，增加缓存管理器：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean(name = "realm")</span></span><br><span class="line"><span class="keyword">public</span> UserRealm <span class="title function_">userRealm</span><span class="params">()</span> {</span><br><span class="line">  <span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">  matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line">  matcher.setHashIterations(<span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">UserRealm</span> <span class="variable">userRealm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRealm</span>();</span><br><span class="line">  userRealm.setCredentialsMatcher(matcher);</span><br><span class="line"></span><br><span class="line">  userRealm.setCacheManager(<span class="keyword">new</span> <span class="title class_">EhCacheManager</span>());  <span class="comment">// 配置缓存管理器</span></span><br><span class="line">  userRealm.setCachingEnabled(<span class="literal">true</span>);  <span class="comment">// 启用全局缓存</span></span><br><span class="line">  userRealm.setAuthenticationCachingEnabled(<span class="literal">true</span>);  <span class="comment">// 启用登录验证缓存</span></span><br><span class="line">  userRealm.setAuthorizationCachingEnabled(<span class="literal">true</span>);  <span class="comment">// 启用授权认证缓存</span></span><br><span class="line">  userRealm.setAuthenticationCacheName(<span class="string">"authentication_cache"</span>);  <span class="comment">// 为登录验证缓存命名</span></span><br><span class="line">  userRealm.setAuthorizationCacheName(<span class="string">"authorization_cache"</span>);  <span class="comment">// 为授权认证缓存命名</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> userRealm;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>到这里 Shiro 的缓存就配置完成，非常简单。</p>
+<p>我们来测试一下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[ INFO ] User koorye was found.</span><br></pre></td></tr></table></figure>
+<p>无论登录页面刷新多少次，除了第一次需要访问数据库之外，只要用户没有登出，其余登录操作只需访问缓存，而不用访问数据库。</p>
+<h1 id="redis-实现缓存">Redis 实现缓存</h1>
+<p>EhCache 可以非常容易的实现 Shiro
+缓存，然而它存在一些缺陷，比如不能持久化、数据不容易查看等。</p>
+<p>因此，将 EhCache 换成 Redis 是一种很好的方案。</p>
+<h2 id="导入依赖-1">导入依赖</h2>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Spring Data Redis --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-data-redis-reactive<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="修改配置">修改配置</h2>
+<p>如果你的 Redis 设有密码，需要配置密码：</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring.redis.port</span>=<span class="string">6379</span></span><br><span class="line"><span class="attr">spring.redis.password</span>=<span class="string">root</span></span><br><span class="line"><span class="attr">spring.redis.database</span>=<span class="string">0</span></span><br></pre></td></tr></table></figure>
+<h2 id="配置-redis-序列化">配置 Redis 序列化</h2>
+<p>新建一个 RedisConfig 配置类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.config;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.boot.autoconfigure.AutoConfigureAfter;</span><br><span class="line"><span class="keyword">import</span> org.springframework.context.annotation.Bean;</span><br><span class="line"><span class="keyword">import</span> org.springframework.context.annotation.Configuration;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.redis.connection.RedisConnectionFactory;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.redis.core.RedisTemplate;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.redis.serializer.StringRedisSerializer;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@AutoConfigureAfter(ShiroLifecycleBeanPostProcessorConfig.class)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedisConfig</span> {</span><br><span class="line">  <span class="meta">@Bean(name = "redis")</span></span><br><span class="line">  <span class="keyword">public</span> RedisTemplate&lt;String, Object&gt; <span class="title function_">redisTemplate</span><span class="params">(RedisConnectionFactory redisConnectionFactory)</span> {</span><br><span class="line">    RedisTemplate&lt;String, Object&gt; redisTemplate = <span class="keyword">new</span> <span class="title class_">RedisTemplate</span>&lt;&gt;();</span><br><span class="line">    redisTemplate.setConnectionFactory(redisConnectionFactory);</span><br><span class="line"></span><br><span class="line">    redisTemplate.setKeySerializer(<span class="keyword">new</span> <span class="title class_">StringRedisSerializer</span>());</span><br><span class="line">    redisTemplate.setHashKeySerializer(<span class="keyword">new</span> <span class="title class_">StringRedisSerializer</span>());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> redisTemplate;</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>Key 使用字符串序列化，Value 不配置，代表默认序列化。</p>
+<p>要实现默认序列化，我们需要继承序列化 Serializable 接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NoArgsConstructor</span></span><br><span class="line"><span class="meta">@Getter</span></span><br><span class="line"><span class="meta">@Setter</span></span><br><span class="line"><span class="meta">@Accessors(chain = true)</span></span><br><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="meta">@Table(name = "t_user")</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User</span> <span class="keyword">implements</span> <span class="title class_">Serializable</span> {</span><br><span class="line">  <span class="meta">@Id</span></span><br><span class="line">  <span class="meta">@GeneratedValue(strategy = GenerationType.IDENTITY)</span></span><br><span class="line">  <span class="meta">@Column(name = "id")</span></span><br><span class="line">  <span class="keyword">private</span> <span class="type">int</span> id;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Column(name = "username")</span></span><br><span class="line">  <span class="keyword">private</span> String username;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Column(name = "password")</span></span><br><span class="line">  <span class="keyword">private</span> String password;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> String <span class="title function_">toString</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"ID: "</span> + id + <span class="string">", username: "</span> + username + <span class="string">", password: "</span> + password;</span><br><span class="line">  }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>同时，Shiro 的盐并不具有序列化功能，我们需要重新写一个盐。</p>
+<p>复制 SimpleByteSource 的所有代码，修改类名，并继承序列化接口。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.component;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.File;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.Serializable;</span><br><span class="line"><span class="keyword">import</span> java.util.Arrays;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.codec.Base64;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.codec.CodecSupport;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.codec.Hex;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.util.ByteSource;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SerializableByteSource</span> <span class="keyword">implements</span> <span class="title class_">ByteSource</span>, Serializable {</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">byte</span>[] bytes;</span><br><span class="line">  <span class="keyword">private</span> String cachedHex;</span><br><span class="line">  <span class="keyword">private</span> String cachedBase64;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">SerializableByteSource</span><span class="params">(<span class="type">byte</span>[] bytes)</span> {</span><br><span class="line">    <span class="built_in">this</span>.bytes = bytes;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">SerializableByteSource</span><span class="params">(<span class="type">char</span>[] chars)</span> {</span><br><span class="line">    <span class="built_in">this</span>.bytes = CodecSupport.toBytes(chars);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">SerializableByteSource</span><span class="params">(String string)</span> {</span><br><span class="line">    <span class="built_in">this</span>.bytes = CodecSupport.toBytes(string);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">SerializableByteSource</span><span class="params">(ByteSource source)</span> {</span><br><span class="line">    <span class="built_in">this</span>.bytes = source.getBytes();</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">SerializableByteSource</span><span class="params">(File file)</span> {</span><br><span class="line">    <span class="built_in">this</span>.bytes = (<span class="keyword">new</span> <span class="title class_">SerializableByteSource</span>.BytesHelper()).getBytes(file);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">SerializableByteSource</span><span class="params">(InputStream stream)</span> {</span><br><span class="line">    <span class="built_in">this</span>.bytes = (<span class="keyword">new</span> <span class="title class_">SerializableByteSource</span>.BytesHelper()).getBytes(stream);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">isCompatible</span><span class="params">(Object o)</span> {</span><br><span class="line">    <span class="keyword">return</span> o <span class="keyword">instanceof</span> <span class="type">byte</span>[] || o <span class="keyword">instanceof</span> <span class="type">char</span>[] || o <span class="keyword">instanceof</span> String || o <span class="keyword">instanceof</span> ByteSource || o <span class="keyword">instanceof</span> File || o <span class="keyword">instanceof</span> InputStream;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">byte</span>[] getBytes() {</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.bytes;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isEmpty</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.bytes == <span class="literal">null</span> || <span class="built_in">this</span>.bytes.length == <span class="number">0</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> String <span class="title function_">toHex</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.cachedHex == <span class="literal">null</span>) {</span><br><span class="line">      <span class="built_in">this</span>.cachedHex = Hex.encodeToString(<span class="built_in">this</span>.getBytes());</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.cachedHex;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> String <span class="title function_">toBase64</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.cachedBase64 == <span class="literal">null</span>) {</span><br><span class="line">      <span class="built_in">this</span>.cachedBase64 = Base64.encodeToString(<span class="built_in">this</span>.getBytes());</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.cachedBase64;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> String <span class="title function_">toString</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.toBase64();</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">hashCode</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.bytes != <span class="literal">null</span> &amp;&amp; <span class="built_in">this</span>.bytes.length != <span class="number">0</span> ? Arrays.hashCode(<span class="built_in">this</span>.bytes) : <span class="number">0</span>;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">equals</span><span class="params">(Object o)</span> {</span><br><span class="line">    <span class="keyword">if</span> (o == <span class="built_in">this</span>) {</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    } <span class="keyword">else</span> <span class="keyword">if</span> (o <span class="keyword">instanceof</span> ByteSource) {</span><br><span class="line">      <span class="type">ByteSource</span> <span class="variable">bs</span> <span class="operator">=</span> (ByteSource)o;</span><br><span class="line">      <span class="keyword">return</span> Arrays.equals(<span class="built_in">this</span>.getBytes(), bs.getBytes());</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">BytesHelper</span> <span class="keyword">extends</span> <span class="title class_">CodecSupport</span> {</span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">BytesHelper</span><span class="params">()</span> {</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">byte</span>[] getBytes(File file) {</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">this</span>.toBytes(file);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">byte</span>[] getBytes(InputStream stream) {</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">this</span>.toBytes(stream);</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>于是我们的 Realm 加盐可以更换成：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SimpleAuthenticationInfo</span>(</span><br><span class="line">  authenticationToken.getPrincipal(),</span><br><span class="line">  user.getPassword(),</span><br><span class="line">  <span class="keyword">new</span> <span class="title class_">SerializableByteSource</span>(<span class="string">"koorye_love_md5"</span>),</span><br><span class="line">  <span class="built_in">this</span>.getName());</span><br></pre></td></tr></table></figure>
+<h2 id="编写-service-层">编写 Service 层</h2>
+<p>首先来实现一些 Redis 的功能。</p>
+<p>接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Collection;</span><br><span class="line"><span class="keyword">import</span> java.util.Set;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">RedisService</span> {</span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">putHash</span><span class="params">(String hashName, String key, Object value)</span>;</span><br><span class="line"></span><br><span class="line">  Object <span class="title function_">getHashValueByKey</span><span class="params">(String hashName, String key)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">removeHashKey</span><span class="params">(String hashName, String key)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">removeHash</span><span class="params">(String hashName)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> <span class="title function_">sizeHash</span><span class="params">(String hashName)</span>;</span><br><span class="line"></span><br><span class="line">  Set&lt;Object&gt; <span class="title function_">keysHash</span><span class="params">(String hashName)</span>;</span><br><span class="line"></span><br><span class="line">  Collection&lt;Object&gt; <span class="title function_">valuesHash</span><span class="params">(String hashName)</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<p>实现类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.context.annotation.Lazy;</span><br><span class="line"><span class="keyword">import</span> org.springframework.data.redis.core.RedisTemplate;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.annotation.Resource;</span><br><span class="line"><span class="keyword">import</span> java.util.Collection;</span><br><span class="line"><span class="keyword">import</span> java.util.Set;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="meta">@Lazy</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedisServiceImpl</span> <span class="keyword">implements</span> <span class="title class_">RedisService</span> {</span><br><span class="line">  <span class="meta">@Resource(name = "redis")</span></span><br><span class="line">  <span class="keyword">private</span> RedisTemplate&lt;String, Object&gt; redisTemplate;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">putHash</span><span class="params">(String hashName, String key, Object value)</span> {</span><br><span class="line">    redisTemplate.opsForHash().put(hashName, key, value);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> Object <span class="title function_">getHashValueByKey</span><span class="params">(String hashName, String key)</span> {</span><br><span class="line">    <span class="keyword">return</span> redisTemplate.opsForHash().get(hashName, key);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">removeHashKey</span><span class="params">(String hashName, String key)</span> {</span><br><span class="line">    redisTemplate.opsForHash().delete(hashName, key);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">removeHash</span><span class="params">(String hashName)</span> {</span><br><span class="line">    redisTemplate.delete(hashName);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">sizeHash</span><span class="params">(String hashName)</span> {</span><br><span class="line">    <span class="keyword">return</span> redisTemplate.opsForHash().size(hashName).intValue();</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> Set&lt;Object&gt; <span class="title function_">keysHash</span><span class="params">(String hashName)</span> {</span><br><span class="line">    <span class="keyword">return</span> redisTemplate.opsForHash().keys(hashName);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> Collection&lt;Object&gt; <span class="title function_">valuesHash</span><span class="params">(String hashName)</span> {</span><br><span class="line">    <span class="keyword">return</span> redisTemplate.opsForHash().values(hashName);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="配置-redis-缓存">配置 Redis 缓存</h2>
+<p>我们自定义的缓存需要实现 Shiro 提供的 <code>Cache&lt;K, V&gt;</code>
+接口。</p>
+<p>我们来实现一个无参构造和有参构造，并通过 RedisTemplate 实现缓存的
+CRUD 操作，存储时采用哈希表。</p>
+<ul>
+<li>表名：缓存的名字</li>
+<li>键：缓存的用户名</li>
+<li>值：缓存的信息</li>
+</ul>
+<p>为什么需要一个参数为 String
+的有参构造呢？这里的配置我们稍后可以看到：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.component;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> lombok.Getter;</span><br><span class="line"><span class="keyword">import</span> lombok.Setter;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.cache.Cache;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.cache.CacheException;</span><br><span class="line"><span class="keyword">import</span> org.koorye.service.RedisServiceImpl;</span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Repository;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Collection;</span><br><span class="line"><span class="keyword">import</span> java.util.Set;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Repository</span></span><br><span class="line"><span class="meta">@SuppressWarnings(value = "unchecked")</span></span><br><span class="line"><span class="meta">@Getter</span></span><br><span class="line"><span class="meta">@Setter</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedisCache</span>&lt;K, V&gt; <span class="keyword">implements</span> <span class="title class_">Cache</span>&lt;K, V&gt; {</span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> RedisServiceImpl redisService;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> String cacheName;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> V <span class="title function_">get</span><span class="params">(K k)</span> <span class="keyword">throws</span> CacheException {</span><br><span class="line">    <span class="keyword">return</span> (V) redisService.getHashValueByKey(cacheName, k.toString());</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> V <span class="title function_">put</span><span class="params">(K k, V v)</span> <span class="keyword">throws</span> CacheException {</span><br><span class="line">    redisService.putHash(cacheName, k.toString(), v);</span><br><span class="line">    <span class="keyword">return</span> v;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> V <span class="title function_">remove</span><span class="params">(K k)</span> <span class="keyword">throws</span> CacheException {</span><br><span class="line">    <span class="type">V</span> <span class="variable">value</span> <span class="operator">=</span> (V) redisService.getHashValueByKey(cacheName, k.toString());</span><br><span class="line">    redisService.removeHashKey(cacheName, k.toString());</span><br><span class="line">    <span class="keyword">return</span> value;</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">clear</span><span class="params">()</span> <span class="keyword">throws</span> CacheException {</span><br><span class="line">    redisService.removeHash(cacheName);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">size</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> redisService.sizeHash(cacheName);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> Set&lt;K&gt; <span class="title function_">keys</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> (Set&lt;K&gt;) redisService.keysHash(cacheName);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> Collection&lt;V&gt; <span class="title function_">values</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">return</span> (Collection&lt;V&gt;) redisService.valuesHash(cacheName);</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="配置-redis-缓存管理器">配置 Redis 缓存管理器</h2>
+<p>接下来自定义 Redis 缓存管理器，实现 CacheManager
+接口，注意到，这个接口的实现重写了一个 getCache
+方法，而这个方法的参数其实就是缓存的名字。因此我们在构造缓存时将字符串传入：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.koorye.component;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.cache.Cache;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.cache.CacheException;</span><br><span class="line"><span class="keyword">import</span> org.apache.shiro.cache.CacheManager;</span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedisCacheManager</span> <span class="keyword">implements</span> <span class="title class_">CacheManager</span> {</span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> RedisCache&lt;Object, Object&gt; redisCache;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> &lt;K, V&gt; Cache&lt;K, V&gt; <span class="title function_">getCache</span><span class="params">(String s)</span> <span class="keyword">throws</span> CacheException {</span><br><span class="line">    redisCache.setCacheName(s);</span><br><span class="line">    <span class="keyword">return</span> (Cache&lt;K, V&gt;) redisCache;</span><br><span class="line">  }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="修改-shiro-配置类">修改 Shiro 配置类</h2>
+<p>由于使用了 Autowired 自动注入，我们不能再 new
+的方式得到对象，需要交予 Spring 容器管理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Autowired</span></span><br><span class="line"><span class="keyword">private</span> RedisCacheManager redisCacheManager;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Bean(name = "realm")</span></span><br><span class="line"><span class="keyword">public</span> UserRealm <span class="title function_">userRealm</span><span class="params">()</span> {</span><br><span class="line">  <span class="type">HashedCredentialsMatcher</span> <span class="variable">matcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashedCredentialsMatcher</span>();</span><br><span class="line">  matcher.setHashAlgorithmName(<span class="string">"md5"</span>);</span><br><span class="line">  matcher.setHashIterations(<span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">UserRealm</span> <span class="variable">userRealm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRealm</span>();</span><br><span class="line">  userRealm.setCredentialsMatcher(matcher);</span><br><span class="line"></span><br><span class="line">  userRealm.setCacheManager(redisCacheManager);</span><br><span class="line">  userRealm.setCachingEnabled(<span class="literal">true</span>);</span><br><span class="line">  userRealm.setAuthenticationCachingEnabled(<span class="literal">true</span>);</span><br><span class="line">  userRealm.setAuthorizationCachingEnabled(<span class="literal">true</span>);</span><br><span class="line">  userRealm.setAuthenticationCacheName(<span class="string">"authentication_cache"</span>);</span><br><span class="line">  userRealm.setAuthorizationCacheName(<span class="string">"authorization_cache"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> userRealm;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="测试">测试</h2>
+<p>尝试访问 <a target="_blank" rel="noopener" href="http://localhost:8080/api/login?username=koorye&amp;password=123456">http://localhost:8080/api/login?username=koorye&amp;password=123456</a>：</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/937fbf9cf2df3734609da8ab2a921a20.png" alt="在这里插入图片描述">
+<figcaption aria-hidden="true">在这里插入图片描述</figcaption>
+</figure>
+<p>多次访问之后：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[ INFO ] User koorye was found.</span><br></pre></td></tr></table></figure>
+<p>只查表一次，说明记录被缓存。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag"># 后端</a>
+              <a href="/blog/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/blog/tags/Shiro/" rel="tag"># Shiro</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%94%E3%80%91Spring%20Boot%20%E6%95%B4%E5%90%88%20Shiro%20+%20Spring%20Data%20JPA%20%E5%8A%A0%E5%AF%86%E4%B8%8E%E9%AA%8C%E8%AF%81/" rel="prev" title="【Shiro 自学笔记五】Spring Boot 整合 Shiro + Spring Data JPA 加密与验证">
+      <i class="fa fa-chevron-left"></i> 【Shiro 自学笔记五】Spring Boot 整合 Shiro + Spring Data JPA 加密与验证
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/25/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%83%E3%80%91%20%E4%BB%80%E4%B9%88%E6%98%AF%20JWT%EF%BC%9FShiro%20%E6%95%B4%E5%90%88JWT/" rel="next" title="【Shiro 自学笔记七】 什么是 JWT？Shiro 整合JWT">
+      【Shiro 自学笔记七】 什么是 JWT？Shiro 整合JWT <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#shiro-%E7%9A%84%E7%99%BB%E5%BD%95%E9%AA%8C%E8%AF%81%E6%9C%BA%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">Shiro 的登录验证机制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#shiro-%E7%9A%84%E9%BB%98%E8%AE%A4%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6"><span class="nav-number">2.</span> <span class="nav-text">Shiro 的默认缓存机制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E5%85%A5%E4%BE%9D%E8%B5%96"><span class="nav-number">2.1.</span> <span class="nav-text">导入依赖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-realm"><span class="nav-number">2.2.</span> <span class="nav-text">配置 Realm</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis-%E5%AE%9E%E7%8E%B0%E7%BC%93%E5%AD%98"><span class="nav-number">3.</span> <span class="nav-text">Redis 实现缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E5%85%A5%E4%BE%9D%E8%B5%96-1"><span class="nav-number">3.1.</span> <span class="nav-text">导入依赖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.</span> <span class="nav-text">修改配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-redis-%E5%BA%8F%E5%88%97%E5%8C%96"><span class="nav-number">3.3.</span> <span class="nav-text">配置 Redis 序列化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E5%86%99-service-%E5%B1%82"><span class="nav-number">3.4.</span> <span class="nav-text">编写 Service 层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-redis-%E7%BC%93%E5%AD%98"><span class="nav-number">3.5.</span> <span class="nav-text">配置 Redis 缓存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-redis-%E7%BC%93%E5%AD%98%E7%AE%A1%E7%90%86%E5%99%A8"><span class="nav-number">3.6.</span> <span class="nav-text">配置 Redis 缓存管理器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9-shiro-%E9%85%8D%E7%BD%AE%E7%B1%BB"><span class="nav-number">3.7.</span> <span class="nav-text">修改 Shiro 配置类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">3.8.</span> <span class="nav-text">测试</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文调查了小样本学习中提取知识的方法，包括模型结构、微调策略、度量策略等方面的设计，并希望总结出一些规律，在prompt tuning的设计上能够有所启发。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="小样本学习中的元知识学习方法">
+<meta property="og:url" content="https://koorye.github.io/blog/2023/08/21/2023-08-21%20How%20to%20Learn%20Meta%20Knowledge%20in%20Few-shot%20Learning/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文调查了小样本学习中提取知识的方法，包括模型结构、微调策略、度量策略等方面的设计，并希望总结出一些规律，在prompt tuning的设计上能够有所启发。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241023259.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024003.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024933.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024289.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826153520.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826221726.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024214.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024451.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241025502.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241025132.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241025704.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026616.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026538.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826164412.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826220721.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026528.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026151.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241027172.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241027110.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028773.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028723.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028048.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028406.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028853.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028217.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028776.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241029826.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826163301.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826163642.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826164510.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826202434.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826215546.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826215932.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826220259.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241029129.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826185149.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826221222.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826184942.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826153740.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826175844.png">
+<meta property="article:published_time" content="2023-08-21T11:47:00.000Z">
+<meta property="article:modified_time" content="2025-03-06T08:25:11.692Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="小样本学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241023259.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2023/08/21/2023-08-21%20How%20to%20Learn%20Meta%20Knowledge%20in%20Few-shot%20Learning/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>小样本学习中的元知识学习方法 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2023/08/21/2023-08-21%20How%20to%20Learn%20Meta%20Knowledge%20in%20Few-shot%20Learning/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          小样本学习中的元知识学习方法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-08-21 19:47:00" itemprop="dateCreated datePublished" datetime="2023-08-21T19:47:00+08:00">2023-08-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">深度学习</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+            <div class="post-description">本文调查了小样本学习中提取知识的方法，包括模型结构、微调策略、度量策略等方面的设计，并希望总结出一些规律，在prompt tuning的设计上能够有所启发。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="概述">概述</h1>
+<p>Few-shot
+learning旨在利用极少量数据使模型适应一个任务。由于样本量及其稀少，提取有效知识变得困难，模型非常容易过拟合到背景和噪声信息上。本文调查了few-shot
+learning中提取知识的方法，包括模型结构、微调策略、度量策略等方面的设计，并希望总结出一些规律，在prompt
+tuning的设计上能够有所启发。</p>
+<h1 id="方法">方法</h1>
+<h2 id="siamese-learnet-neurips-2016">Siamese Learnet (NeurIPS
+2016)</h2>
+<p>采用特定的网络学习部分参数，为了减少参数量，对卷积核进行分解。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241023259.png" alt="Pasted image 20230417103801">
+<figcaption aria-hidden="true">Pasted image 20230417103801</figcaption>
+</figure>
+<h2 id="regression-nets-eccv-2016">Regression Nets (ECCV 2016)</h2>
+<p>引入额外数据对。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024003.png" alt="Pasted image 20230417113342">
+<figcaption aria-hidden="true">Pasted image 20230417113342</figcaption>
+</figure>
+<h2 id="z.xu-et-al.-cvpr-2017">Z.Xu et al. (CVPR 2017)</h2>
+<p>通过外部数据和memory辅助分类。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024933.png" alt="Pasted image 20230418145137">
+<figcaption aria-hidden="true">Pasted image 20230418145137</figcaption>
+</figure>
+<h2 id="maml-icml-2017">MAML (ICML 2017)</h2>
+<p>采用元学习的方式优化参数，通过在大量子任务（包含训练集和测试集）上训练，模型在测试集上微调，之后就可以在未知任务上泛化。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024289.png" alt="Pasted image 20230415164452">
+<figcaption aria-hidden="true">Pasted image 20230415164452</figcaption>
+</figure>
+<h2 id="multi-attention-net-cvpr-2017">Multi-attention Net (CVPR
+2017)</h2>
+<p>通过文本特征提取图像特征的重要部分（通过attention）。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826153520.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="shrinking-and-hallucinating-eccv-2017">Shrinking and
+Hallucinating (ECCV 2017)</h2>
+<p>通过人工构造的四元组(z1, z2, x1,
+x2)训练一个生成器，学习z1和z2之间的变化，并将变化应用于x1来生成x2，之后在few-shot设置时抽取三元组来合成样本。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826221726.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="mt-net-icml-2018">MT-net (ICML 2018)</h2>
+<p>添加了一个变换矩阵T和掩码矩阵M，T在前向传播时对特征进行变换，M由0或1组成，在反向传播时对梯度进行屏蔽。M和T在外循环时更新，为了使M可学习，采用gumbel-softmax进行处理。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024214.png" alt="Pasted image 20230415170637">
+<figcaption aria-hidden="true">Pasted image 20230415170637</figcaption>
+</figure>
+<h2 id="mm-net-cvpr-2018">MM-Net (CVPR 2018)</h2>
+<p>使用一个可学习的memory模块提取样本中的共有信息。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241024451.png" alt="Pasted image 20230415110151">
+<figcaption aria-hidden="true">Pasted image 20230415110151</figcaption>
+</figure>
+<h2 id="tadam-neurips-2018">TADAM (NeurIPS 2018)</h2>
+<p>通过一个专门的网络学习task特定信息。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241025502.png" alt="Pasted image 20230414180430">
+<figcaption aria-hidden="true">Pasted image 20230414180430</figcaption>
+</figure>
+<h2 id="cross-modulation-nets-neurips-2018">Cross-Modulation Nets
+(NeurIPS 2018)</h2>
+<p>利用显式结构学习查询集和支持集之间的关系。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241025132.png" alt="Pasted image 20230415105722">
+<figcaption aria-hidden="true">Pasted image 20230415105722</figcaption>
+</figure>
+<h2 id="gnn-iclr-2018">GNN (ICLR 2018)</h2>
+<p>利用显式结构学习查询集和支持集之间的关系。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241025704.png" alt="Pasted image 20230415152853">
+<figcaption aria-hidden="true">Pasted image 20230415152853</figcaption>
+</figure>
+<h2 id="dynamic-nets-cvpr-2018">Dynamic Nets (CVPR 2018)</h2>
+<p>利用特定网络从基类分类参数中学习新类分类参数。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026616.png" alt="Pasted image 20230417143354">
+<figcaption aria-hidden="true">Pasted image 20230417143354</figcaption>
+</figure>
+<h2 id="csns-icml-2018">CSNs (ICML 2018)</h2>
+<p>存储图像特征和元信息（如每一层的损失梯度）到一个memory模块中，预测时通过图像特征查询memory得到每一层的偏移值，加在网络参数上进行微调。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026538.png" alt="Pasted image 20230417220026">
+<figcaption aria-hidden="true">Pasted image 20230417220026</figcaption>
+</figure>
+<h2 id="metagan-neurips-2018">MetaGAN (NeurIPS 2018)</h2>
+<p>生成伪样本并让分类器进行区分。</p>
+<h2 id="relationnet-cvpr-2018">RelationNet (CVPR 2018)</h2>
+<p>直接学习图像特征之间的关系并打分。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826164412.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="delta-encoder-neurips-2018">Delta-encoder (NeurIPS 2018)</h2>
+<p>通过一个encoder-decoder网络显式学习一对样本之间的关系，用于对另一个样本进行变换。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826220721.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="dn4-cvpr-2019">DN4 (CVPR 2019)</h2>
+<p>衡量局部特征的关系代替全局特征的关系。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026528.png" alt="Pasted image 20230415151357">
+<figcaption aria-hidden="true">Pasted image 20230415151357</figcaption>
+</figure>
+<h2 id="egnn-cvpr-2019">EGNN (CVPR 2019)</h2>
+<p>利用显式结构学习查询集和支持集之间的关系。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241026151.png" alt="Pasted image 20230415154621">
+<figcaption aria-hidden="true">Pasted image 20230415154621</figcaption>
+</figure>
+<h2 id="ctm-cvpr-2019">CTM (CVPR 2019)</h2>
+<p>将不同类别的特征输入一个特定网络以学习跨类别的共享特征，之后通过softmax计算逐通道的掩码并应用到原特征上。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241027172.png" alt="Pasted image 20230415162342">
+<figcaption aria-hidden="true">Pasted image 20230415162342</figcaption>
+</figure>
+<h2 id="am3-neurips-2019">AM3 (NeurIPS 2019)</h2>
+<p>融合跨模态（视觉、语言）特征以帮助分类。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241027110.png" alt="Pasted image 20230415103003">
+<figcaption aria-hidden="true">Pasted image 20230415103003</figcaption>
+</figure>
+<h2 id="covamnet-aaai-2019">CovaMNet (AAAI 2019)</h2>
+<p>衡量局部特征的关系代替全局特征的关系。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028773.png" alt="Pasted image 20230415143840">
+<figcaption aria-hidden="true">Pasted image 20230415143840</figcaption>
+</figure>
+<h2 id="leo-iclr-2019">LEO (ICLR 2019)</h2>
+<p>将特征投影到低维空间以提取主要或共有信息。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028723.png" alt="Pasted image 20230415172919">
+<figcaption aria-hidden="true">Pasted image 20230415172919</figcaption>
+</figure>
+<h2 id="s.-gidaris-et-al.-iccv-2019">S. Gidaris et al. (ICCV 2019)</h2>
+<p>引入额外的辅助任务。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028048.png" alt="Pasted image 20230418111756">
+<figcaption aria-hidden="true">Pasted image 20230418111756</figcaption>
+</figure>
+<h2 id="lst-neurips-2019">LST (NeurIPS 2019)</h2>
+<p>为外部数据集添加伪标签参与训练。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028406.png" alt="Pasted image 20230418112211">
+<figcaption aria-hidden="true">Pasted image 20230418112211</figcaption>
+</figure>
+<h2 id="tpn-iclr-2019">TPN (ICLR 2019)</h2>
+<p>通过图网络学习支持特征和查询特征之间的关系代替简单相似性度量。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028853.png" alt="Pasted image 20230418144045">
+<figcaption aria-hidden="true">Pasted image 20230418144045</figcaption>
+</figure>
+<h2 id="dense-classification-cvpr-2019">Dense Classification (CVPR
+2019)</h2>
+<p>使用独立的网络对每个局部位置的特征进行分类后加权融合到一起。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028217.png" alt="Pasted image 20230418151827">
+<figcaption aria-hidden="true">Pasted image 20230418151827</figcaption>
+</figure>
+<h2 id="saliency-guided-hallucination-cvpr-2019">Saliency-guided
+Hallucination (CVPR 2019)</h2>
+<p>通过额外的显著性特征辅助分类。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241028776.png" alt="Pasted image 20230418152812">
+<figcaption aria-hidden="true">Pasted image 20230418152812</figcaption>
+</figure>
+<h2 id="cada-vae-cvpr-2019">CADA-VAE (CVPR 2019)</h2>
+<p>利用多模态（图像和文本）信息预训练一个编码器用于分类。</p>
+<p><img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241029826.png" alt="Pasted image 20230418204832"> ## TapNet (ICML 2019)
+通过无参方法（SVD）构造一个映射矩阵M，使得支持平均向量与可学习原型的误差最小化，将支持向量与原型通过M映射到同一度量空间中。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826163301.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="tafe-net-cvpr-2019">TAFE-Net (CVPR 2019)</h2>
+<p>通过特定网络学习任务特征，并用其生成图像特征到任务相关特征的映射参数。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826163642.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="caml-icml-2019">CAML (ICML 2019)</h2>
+<p>利用类标签结构（实际上就是每个类的平均向量？）纠正特征，将其投影到同一空间中计算度量。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826164510.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="global-class-representations-iccv-2019">Global Class
+Representations (ICCV 2019)</h2>
+<p>基类样本通过均值得到类表征；新类样本通过翻转、裁剪、幻觉、插值等操作进行增强，之后在增强后的特征空间中随机采样一个点并加权得到类表征。另外，全局表征通过各类特征均值初始化，注册模块负责计算各类表征与每个全局表征的相似度，选出最相似的全局表征代替类表征用于分类。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826202434.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="spot-and-learn-cvpr-2019">Spot and Learn (CVPR 2019)</h2>
+<p>通过强化学习的RNN提取图像的patch序列，从中提取特征用于分类。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826215546.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="ideme-net-cvpr-2019">IDeMe-Net (CVPR 2019)</h2>
+<p>将两张图像分别切割为3x3的patch，为每个patch学习权重后进行线性插值得到合成后的图像，和原图一起用于分类器的学习。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826215932.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="laso-cvpr-2019">LaSO (CVPR 2019)</h2>
+<p>通过特定网络显式学习一对图像的交集、并集和差集特征，具体来说，一对图像提取特征后拼接，通过交集、并集、差集网络学习相应特征，之后交集特征负责预测两张图像共有的标签、并集特征负责预测两张图像所有的标签、差集特征负责预测两张图像各自有的标签。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826220259.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="s2m2-wacv-2020">S2M2 (WACV 2020)</h2>
+<p>引入自监督任务并通过mixup进行增强。</p>
+<h2 id="feat-cvpr-2020">FEAT (CVPR 2020)</h2>
+<p>学习一个set-to-set网络提取任务相关特征。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/202308241029129.png" alt="Pasted image 20230418101142">
+<figcaption aria-hidden="true">Pasted image 20230418101142</figcaption>
+</figure>
+<h2 id="cspn-eccv-2020">CSPN (ECCV 2020)</h2>
+<p>计算所有查询特征和支持特征均值的偏差，加在查询特征上以消除跨类偏差；之后利用支持特征的均值得到原型，计算原型与各查询特征的相似度作为权重进行加权得到增强后的原型；最后计算去偏后的查询特征与增强后的原型的相似度。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826185149.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="ssl-eccv-2020">SSL (ECCV 2020)</h2>
+<p>自监督学习作为辅助任务。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826221222.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="nca-neurips-2021">NCA (NeurIPS 2021)</h2>
+<p>学习每对样本之间的关系而不仅是query与support之间的关系。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826184942.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="pot-iclr-2022">POT (ICLR 2022)</h2>
+<p>通过可学习的全局原型向量和摘要网络学习原型分布，并通过无监督（最优化传输）学习真实数据分布到原型分布之间的距离。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826153740.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h2 id="deepbdc-cvpr-2022">DeepBDC (CVPR 2022)</h2>
+<p>将BDC距离作为度量，具体来说，特征在通道或宽高维度上池化，之后计算距离矩阵并减去行、列、总体均值得到BDC矩阵，之后计算矩阵的相似度。</p>
+<figure>
+<img src="https://raw.githubusercontent.com/Koorye/my-images/master/img/20230826175844.png" alt="image.png">
+<figcaption aria-hidden="true">image.png</figcaption>
+</figure>
+<h1 id="总结">总结</h1>
+<p>基于上述方法，本文总结了一些few-shot中提取meta知识的方式，大致可以分为。</p>
+<h2 id="基于额外信息">基于额外信息</h2>
+<p>最直接的一种做法是引入额外信息，这种信息可以是外部数据、增强数据，甚至是额外任务。
+- <strong>基于外部数据</strong>
+一些方法通过直接引入外部数据来辅助学习知识，如构造一个memory供查询，或利用跨模态数据纠正表征空间。基于外部数据本身蕴含的特征和结构信息，可以帮助模型学习知识。
+- <strong>基于数据增强</strong>
+一些方法通过数据增强来扩充样本，在few-shot设置中，简单的数据增强往往不能起作用。一些方法采用生成器、幻觉器、线性插值等增强方式，通过数据增强构造更合理的特征空间，帮助模型学习知识。
+- <strong>基于辅助任务</strong>
+一些方法引入辅助任务（如自监督任务），辅助任务迫使模型学习不同任务所需的特征，从而使模型更为稳健。
+- <strong>基于局部信息</strong>
+一些方法通过衡量局部特征来代替衡量全局特征，这样做的好处是可以学习特征的空间信息，从而更好学习样本之间的关系知识。</p>
+<h2 id="基于特定结构">基于特定结构</h2>
+<p>一些方法通过构造特定结构的网络来学习meta知识，其网络结构中就蕴含了一定的正则化和归纳偏置信息。
+- <strong>基于权重学习</strong>
+一些方法通过特定网络直接预测骨干网络或分类器部分结构的权重来代替基于梯度下降的学习方式。之所以这种方法能够学习meta知识，个人猜测：学习参数比学习特征的方式更为meta，meta-learner参数有限迫使其学习任务相关的概括知识。
+- <strong>基于任务特征学习</strong>
+一些方法通过特定网络学习任务相关特征，这些方法学习跨类别共享特征，或是直接在任务层面施加约束（例如直接学习整个任务上的样本分布），任务相关信息相对于各类信息就是一种meta知识。
+- <strong>基于关系学习</strong>
+一些方法通过特定网络（如图网络、transformer等）学习跨类或类内的关系，这种学习过程中隐含了一些跨样本共享知识的学习，而学习任务特征的方法相比，该方法是一种隐式方法。
+- <strong>基于原型或记忆学习</strong>
+一些方法通过额外的结构来归纳信息，例如自学习的原型或记忆模块，在训练过程中，这种模块往往会吸收一些跨类别或样本的共有知识。该方法仍然是隐式的，这种结构迫使其学习到跨类别或样本的概括性知识。</p>
+<h2 id="基于元学习">基于元学习</h2>
+<p>一些方法通过元学习的方法来学习meta知识，元学习以任务为单位进行学习，将数据集分割为若干任务后，模型在任务的训练集上进行内循环，之后在测试集上进行外循环从而更新参数。这种学习方式天生使模型学习任务知识。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag"># 深度学习</a>
+              <a href="/blog/tags/%E5%B0%8F%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0/" rel="tag"># 小样本学习</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2022/09/22/2022-9-22%20Towards%20Open%20World%20Object%20Detection%20%E7%AE%80%E8%BF%B0/" rel="prev" title="Towards Open World Object Detection 简述">
+      <i class="fa fa-chevron-left"></i> Towards Open World Object Detection 简述
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2023/09/11/2023-09-11%20How%20to%20Use%20Region%20Features%20in%20Few-shot%20Learning/" rel="next" title="小样本学习中的局部特征学习方法">
+      小样本学习中的局部特征学习方法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#siamese-learnet-neurips-2016"><span class="nav-number">2.1.</span> <span class="nav-text">Siamese Learnet (NeurIPS
+2016)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#regression-nets-eccv-2016"><span class="nav-number">2.2.</span> <span class="nav-text">Regression Nets (ECCV 2016)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#z.xu-et-al.-cvpr-2017"><span class="nav-number">2.3.</span> <span class="nav-text">Z.Xu et al. (CVPR 2017)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#maml-icml-2017"><span class="nav-number">2.4.</span> <span class="nav-text">MAML (ICML 2017)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#multi-attention-net-cvpr-2017"><span class="nav-number">2.5.</span> <span class="nav-text">Multi-attention Net (CVPR
+2017)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shrinking-and-hallucinating-eccv-2017"><span class="nav-number">2.6.</span> <span class="nav-text">Shrinking and
+Hallucinating (ECCV 2017)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mt-net-icml-2018"><span class="nav-number">2.7.</span> <span class="nav-text">MT-net (ICML 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mm-net-cvpr-2018"><span class="nav-number">2.8.</span> <span class="nav-text">MM-Net (CVPR 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tadam-neurips-2018"><span class="nav-number">2.9.</span> <span class="nav-text">TADAM (NeurIPS 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cross-modulation-nets-neurips-2018"><span class="nav-number">2.10.</span> <span class="nav-text">Cross-Modulation Nets
+(NeurIPS 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gnn-iclr-2018"><span class="nav-number">2.11.</span> <span class="nav-text">GNN (ICLR 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dynamic-nets-cvpr-2018"><span class="nav-number">2.12.</span> <span class="nav-text">Dynamic Nets (CVPR 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#csns-icml-2018"><span class="nav-number">2.13.</span> <span class="nav-text">CSNs (ICML 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#metagan-neurips-2018"><span class="nav-number">2.14.</span> <span class="nav-text">MetaGAN (NeurIPS 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#relationnet-cvpr-2018"><span class="nav-number">2.15.</span> <span class="nav-text">RelationNet (CVPR 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#delta-encoder-neurips-2018"><span class="nav-number">2.16.</span> <span class="nav-text">Delta-encoder (NeurIPS 2018)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dn4-cvpr-2019"><span class="nav-number">2.17.</span> <span class="nav-text">DN4 (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#egnn-cvpr-2019"><span class="nav-number">2.18.</span> <span class="nav-text">EGNN (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ctm-cvpr-2019"><span class="nav-number">2.19.</span> <span class="nav-text">CTM (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#am3-neurips-2019"><span class="nav-number">2.20.</span> <span class="nav-text">AM3 (NeurIPS 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#covamnet-aaai-2019"><span class="nav-number">2.21.</span> <span class="nav-text">CovaMNet (AAAI 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#leo-iclr-2019"><span class="nav-number">2.22.</span> <span class="nav-text">LEO (ICLR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#s.-gidaris-et-al.-iccv-2019"><span class="nav-number">2.23.</span> <span class="nav-text">S. Gidaris et al. (ICCV 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lst-neurips-2019"><span class="nav-number">2.24.</span> <span class="nav-text">LST (NeurIPS 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tpn-iclr-2019"><span class="nav-number">2.25.</span> <span class="nav-text">TPN (ICLR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dense-classification-cvpr-2019"><span class="nav-number">2.26.</span> <span class="nav-text">Dense Classification (CVPR
+2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#saliency-guided-hallucination-cvpr-2019"><span class="nav-number">2.27.</span> <span class="nav-text">Saliency-guided
+Hallucination (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cada-vae-cvpr-2019"><span class="nav-number">2.28.</span> <span class="nav-text">CADA-VAE (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tafe-net-cvpr-2019"><span class="nav-number">2.29.</span> <span class="nav-text">TAFE-Net (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#caml-icml-2019"><span class="nav-number">2.30.</span> <span class="nav-text">CAML (ICML 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#global-class-representations-iccv-2019"><span class="nav-number">2.31.</span> <span class="nav-text">Global Class
+Representations (ICCV 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#spot-and-learn-cvpr-2019"><span class="nav-number">2.32.</span> <span class="nav-text">Spot and Learn (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ideme-net-cvpr-2019"><span class="nav-number">2.33.</span> <span class="nav-text">IDeMe-Net (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#laso-cvpr-2019"><span class="nav-number">2.34.</span> <span class="nav-text">LaSO (CVPR 2019)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#s2m2-wacv-2020"><span class="nav-number">2.35.</span> <span class="nav-text">S2M2 (WACV 2020)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#feat-cvpr-2020"><span class="nav-number">2.36.</span> <span class="nav-text">FEAT (CVPR 2020)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cspn-eccv-2020"><span class="nav-number">2.37.</span> <span class="nav-text">CSPN (ECCV 2020)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ssl-eccv-2020"><span class="nav-number">2.38.</span> <span class="nav-text">SSL (ECCV 2020)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nca-neurips-2021"><span class="nav-number">2.39.</span> <span class="nav-text">NCA (NeurIPS 2021)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pot-iclr-2022"><span class="nav-number">2.40.</span> <span class="nav-text">POT (ICLR 2022)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#deepbdc-cvpr-2022"><span class="nav-number">2.41.</span> <span class="nav-text">DeepBDC (CVPR 2022)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E9%A2%9D%E5%A4%96%E4%BF%A1%E6%81%AF"><span class="nav-number">3.1.</span> <span class="nav-text">基于额外信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E7%89%B9%E5%AE%9A%E7%BB%93%E6%9E%84"><span class="nav-number">3.2.</span> <span class="nav-text">基于特定结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%85%83%E5%AD%A6%E4%B9%A0"><span class="nav-number">3.3.</span> <span class="nav-text">基于元学习</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

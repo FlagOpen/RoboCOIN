@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同济多模态空间智能团队</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 蓝色导航栏样式 */
+        header {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            background: white;
+            color: #2a5da0;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 12px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .logo-text h2 {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav li {
+            margin: 0 8px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            padding: 8px 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        /* 内容部分 */
+        .content {
+            padding: 40px 0;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .page-title h2 {
+            font-size: 32px;
+            color: #1a4580;
+            display: inline-block;
+            padding: 0 15px;
+            position: relative;
+            background-color: #f8f9fa;
+            z-index: 1;
+        }
+        
+        .page-title::after {
+            content: '';
+            position: absolute;
+            top: 55%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            z-index: 0;
+        }
+        
+        .info-row {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #1a4580;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-label i {
+            margin-right: 8px;
+            width: 20px;
+        }
+        
+        .email-link {
+            color: #2a5da0;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .email-link:hover {
+            color: #1a4580;
+            text-decoration: underline;
+        }
+        
+        .talent-badge {
+            background: #e6f0ff;
+            color: #1a4580;
+            font-size: 13px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .intro-text {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .tab {
+            background: white;
+            padding: 10px 25px;
+            margin: 0 5px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: #1a4580;
+            border: 1px solid #d0d9f0;
+        }
+        
+        .tab.active, .tab:hover {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            border-color: transparent;
+        }
+        
+        @media (max-width: 992px) {
+            .teachers-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .teachers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logo {
+                margin: 0 auto 20px;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                margin: 5px;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+            }
+            
+            .footer-info {
+                text-align: center;
+                margin-top: 20px;
+            }
+        }
+
+        /* 荣誉展示区 */
+        .honors-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+        
+        .honor-card {
+            display: flex;
+            background: #fff;
+        }
+        
+        .certificate {
+            width: 220px;
+            background: #f8f9ff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            position: relative;
+            border-right: 1px solid #eee;
+        }
+        
+        .certificate-icon {
+            font-size: 64px;
+            color: #6a5acd;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .certificate-org {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .honor-details {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .award-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2a2a2a;
+        }
+        
+        .award-name {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #1a4580;
+            font-weight: 600;
+        }
+        
+        .authors {
+            font-size: 14.5px;
+            color: #555;
+            line-height: 1.7;
+        }
+        
+        .paper-title {
+            font-size: 15px;
+            color: #666;
+            font-style: italic;
+            line-height: 1.6;
+            border-left: 3px solid #6a5acd;
+            padding-left: 12px;
+        }
+        
+        .award-date {
+            text-align: right;
+            color: #888;
+            font-size: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #f5f5f5;
+        }
+
+        .honor-card {
+            background: #ffffff;
+            width: 90%;
+            text-align: center;
+        }
+
+        .honor-details {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-container {
+            width: 300px;
+            height: 200px;
+            margin: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0f4ff, #e4e8fa);
+        }
+        
+        .honor-icon {
+            font-size: 46px;
+            color: #6a5acd;
+        }
+        
+        .award-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a4580;
+            line-height: 1.4;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .award-org {
+            font-size: 18px;
+            color: #444;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .authors {
+            font-size: 17px;
+            color: #555;
+            line-height: 1.8;
+        }
+        
+        .highlight-author {
+            font-weight: 700;
+            color: #1a4580;
+        }
+
+        .honors-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        footer {
+            background: linear-gradient(to right, #1a4580, #19376d);
+            color: rgba(255,255,255,0.9);
+            padding: 20px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.7;
+        }       
+    </style>
+</head>
+<body>
+    <!-- 蓝色导航栏 -->
+    <header>
+        <div class="container nav-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <!-- <i class="fas fa-brain"></i> -->
+                     <img src="static/logo/tongji.png" alt="Tongji Logo" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="logo-text">
+                    <h1>同济多模态空间智能团队</h1>
+                    <h2>TONGJI MULTIMODAL SPATIAL INTELLIGENCE</h2>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">网站首页</a></li>
+                    <li><a href="member.html">团队成员</a></li>
+                    <li><a href="honor.html">团队荣誉</a></li>
+                    <li><a href="paper.html">学术论文</a></li>
+                    <li><a href="project.html">科研项目</a></li>
+                    <li><a href="about.html">关于我们</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 荣誉卡片竖排布局 -->
+    <div class="honors-container">
+
+        <div class="honor-card">
+            <div class="icon-container">
+                <i class="fas fa-trophy honor-icon"></i>
+            </div>
+            <div class="honor-details">
+                <div class="award-title">面向XXXXXXXXXXXXXXXXXX研究</div>
+                <div class="authors">负责人：XXX</div>
+                <div class="authors">来源：XXXXXXXXXX</div>
+                <div class="authors">类别：XXX万元</div>
+                <div class="authors">时间：2024 - 2025</div>
+            </div>
+        </div>
+        
+        <div class="honor-card">
+            <div class="icon-container">
+                <i class="fas fa-trophy honor-icon"></i>
+            </div>
+            <div class="honor-details">
+                <div class="award-title">面向XXXXXXXXXXXXXXXXXX研究</div>
+                <div class="authors">负责人：XXX</div>
+                <div class="authors">来源：XXXXXXXXXX</div>
+                <div class="authors">类别：XXX万元</div>
+                <div class="authors">时间：2024 - 2025</div>
+            </div>
+        </div>
+
+        <div class="honor-card">
+            <div class="icon-container">
+                <i class="fas fa-trophy honor-icon"></i>
+            </div>
+            <div class="honor-details">
+                <div class="award-title">面向XXXXXXXXXXXXXXXXXX研究</div>
+                <div class="authors">负责人：XXX</div>
+                <div class="authors">来源：XXXXXXXXXX</div>
+                <div class="authors">类别：XXX万元</div>
+                <div class="authors">时间：2024 - 2025</div>
+            </div>
+        </div>
+    
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-bottom">
+            <p>Copyright © 2025 同济多模态空间智能团队. 保留所有权利</p>
+        </div>
+    </footer>
+
+</body>

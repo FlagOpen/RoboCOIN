@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同济多模态空间智能团队</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 蓝色导航栏样式 */
+        header {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            background: white;
+            color: #2a5da0;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 12px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .logo-text h2 {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin-bottom: 0px;
+        }
+        
+        nav li {
+            margin: 0 8px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            padding: 8px 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+
+        
+        nav a:hover, nav a.active {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        /* Banner部分 */
+        .banner {
+            position: relative;
+            margin: 25px 0 30px;
+            height: 420px;
+            overflow: hidden;
+            background: linear-gradient(to right, #19376d, #24509e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-direction: column;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+        }
+        
+        .photo-placeholder {
+            font-size: 68px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .banner-text {
+            text-align: center;
+            max-width: 680px;
+            padding: 0 25px;
+        }
+        
+        .banner-text h3 {
+            font-size: 38px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .banner-text p {
+            font-size: 19px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        /* 主要内容区 */
+        .main-content {
+            background: #fff;
+            padding: 35px;
+            margin-bottom: 45px;
+            /* box-shadow: 0 3px 12px rgba(0,0,0,0.08); */
+        }
+        
+        .main-content h3 {
+            color: #1a4580;
+            font-size: 28px;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            /* border-bottom: 2px solid #d5e3f8; */
+            font-weight: 650;
+        }
+        
+        .overview-content p {
+            margin-bottom: 22px;
+            text-align: justify;
+            font-size: 17px;
+            line-height: 1.8;
+            color: #444;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 22px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: #f0f6ff;
+            padding: 22px;
+            text-align: center;
+            border: 1px solid #e1ebff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(26, 69, 128, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 30px;
+            font-weight: 750;
+            color: #1a4580;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card div:last-child {
+            font-size: 15px;
+            color: #555;
+        }
+        
+        .journals {
+            background: #f9fbff;
+            padding: 25px;
+            margin: 35px 0;
+            border: 1px solid #e1ebff;
+        }
+        
+        .journals h4 {
+            color: #1a4580;
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .journal-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .journal-item {
+            background: #e1ebff;
+            padding: 8px 15px;
+            font-size: 14.5px;
+            color: #1a4580;
+        }
+        
+        /* 科研成果部分 */
+        .achievements {
+            background: #f0f6ff;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid #d5e3f8;
+        }
+        
+        .achievements h4 {
+            color: #1a4580;
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .badge {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            padding: 8px 18px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .badge i {
+            margin-right: 10px;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(to right, #1a4580, #19376d);
+            color: rgba(255,255,255,0.9);
+            padding: 20px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 980px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .logo-text h1 {
+                font-size: 18px;
+            }
+            
+            .logo-text h2 {
+                font-size: 12px;
+            }
+            
+            nav ul {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .banner {
+                height: 320px;
+            }
+            
+            .banner-text h3 {
+                font-size: 30px;
+            }
+            
+            .stat-card {
+                padding: 18px 12px;
+            }
+            
+            .main-content {
+                padding: 25px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .banner {
+                height: 280px;
+            }
+            
+            .banner-text h3 {
+                font-size: 26px;
+            }
+            
+            .banner-text p {
+                font-size: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .badge {
+                padding: 6px 14px;
+                font-size: 14px;
+            }
+        }
+
+        .honors-container {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .honor-card {
+            background: #ffffff;
+            width: 90%;
+            text-align: center;
+        }
+
+        .icon-container {
+            width: 300px;
+            height: 200px;
+            margin: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0f4ff, #e4e8fa);
+        }
+
+        .award-title {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.4;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .about-content {
+            margin: 0px 5%;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        h3 {
+            margin-top: 40px;
+        }
+
+        nav {
+            /* 垂直居中 */
+            display: flex;
+            align-items: center;
+        }
+
+        .slider-container {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+            background-color: #000;
+        }
+        
+        .slider {
+            display: flex;
+            width: 200%; /* 2张图片 */
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .slide {
+            flex: 0 0 50%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        /* 使用指定图片路径 */
+        .slide-1 {
+            background-image: url('static/photo/banner.jpg');
+        }
+        
+        .slide-2 {
+            background-image: url('static/photo/banner2.jpg');
+        }
+        
+        .slide-navigation {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            transform: translateY(-50%);
+        }
+        
+        .slide-nav-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .slide-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+        
+        .indicator {
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .indicator.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        
+        .image-info {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            backdrop-filter: blur(2px);
+        }
+        
+        @media (max-width: 768px) {
+            .slider-container {
+                height: 300px;
+            }
+            
+            .slide-nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .events-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 15px 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .events-list {
+            padding: 0;
+        }
+        
+        .event-item {
+            display: flex;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+        
+        .event-item:hover {
+            background-color: #f9f7ff;
+            transform: translateX(5px);
+        }
+        
+        .event-date {
+            min-width: 60px;
+            text-align: center;
+            margin-right: 15px;
+        }
+        
+        .event-day {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .event-month {
+            font-size: 14px;
+            color: #777;
+        }
+        
+        .event-content {
+            flex: 1;
+        }
+        
+        .event-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .event-desc {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 科研实力部分 */
+        .research-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin: 40px 0;
+        }
+        
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .badge i {
+            margin-right: 8px;
+        }
+
+        .icon {
+            width: 300px;
+            height: 200px;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 蓝色导航栏 -->
+    <header>
+        <div class="container nav-container">
+            <div class="logo-section">
+                <div class="logo">
+                     <img src="static/logo/tongji.png" alt="Tongji Logo" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="logo-text">
+                    <h1>同济多模态空间智能团队</h1>
+                    <h2>TONGJI MULTIMODAL SPATIAL INTELLIGENCE</h2>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">网站首页</a></li>
+                    <li><a href="member.html">团队成员</a></li>
+                    <li><a href="honor.html">团队荣誉</a></li>
+                    <li><a href="paper.html">学术论文</a></li>
+                    <!-- <li><a href="project.html">科研项目</a></li> -->
+                    <li><a href="about.html">关于我们</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="slider-container">
+            <div class="slider">
+                <div class="slide slide-1"></div>
+                <div class="slide slide-2"></div>
+            </div>
+            
+            <div class="slide-navigation">
+                <button class="slide-nav-btn prev-btn">
+                    &lt;
+                </button>
+                <button class="slide-nav-btn next-btn">
+                    &gt;
+                </button>
+            </div>
+            
+            <div class="indicators">
+                <button class="indicator active" data-index="0"></button>
+                <button class="indicator" data-index="1"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区 - 无侧边栏 -->
+    <div class="container">
+        <div class="main-content">
+
+            <h3>团队概况</h3>
+            <div class="overview-content">
+                <p>同济多模态空间智能团队致力于计算机科学与技术、人工智能等学科在多媒体智能信息处理方面的学科建设，团队建设，人才培养，科学研究与技术应用。建设的目标是从事国际最前沿、最顶尖的学术研究与系统实现，同时培养杰出人才，承担国家重大科研项目和转化科研成果。团队目前有ACM Fellow 1人，IEEE Fellow 1人，OSA Fellow 1人，欧洲科学院院士1人，国家级人才3人，教授或研究员6人。团队核心成员均来自澳大利亚、新加坡或日本等国家的海外著名大学（世界前200名大学）的博士。自中心成立以来，已形成一支以海外归国博士为学术骨干和高素质研究生为后备力量的有活力的学术梯队。团队主要从事多媒体智能搜索和理解、计算机视觉、信息检索、数据库、具身智能等领域的国际一流研究。团队在TPAMI、ACM MM、CVPR、ICCV、AAAI、VLDB、ICDE、ACM TOIS、IEEE TIP、IEEE TKDE、IEEE TMM等CCF A类/中科院JCR二区以上的顶级会议和期刊上发表论文​​数百余篇，获得​​10多项国际会议和期刊最佳论文奖项​，如ICPR最佳论文奖、SIGIR最佳论文提名奖、ADC最佳学生论文奖、ACM CIKM最佳论文提名和VLDB杰出演示奖等。这些研究成果在多媒体、计算机视觉、大数据、人工智能等研究方向产生了较大的国际影响力，多篇论文入选ESI高被引/热点论文。团队承担过​​2项国家科技部科技创新2030—“新一代人工智能”重大项目​、​​多项国家自然基金重点项目，以及​​10多项国家自然科学基金面上和青年项目。</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">1</div>
+                    <div>欧洲科学院院士</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">6</div>
+                    <div>教授/研究员</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div>国家级人才</div>
+                </div>
+            </div>
+
+            <h3>团队荣誉</h3>
+
+            <div class="honors-container">
+                <div class="honor-card">
+                    <div class="icon-container">
+                        <img src="http://cfm.uestc.edu.cn/media/images/1727591039709_18. 2024 IEEE TFS期刊杰出论文奖.jpg" alt="Icon" class="icon">
+                    </div>
+                    <div class="honor-details">
+                        <div class="award-title">Outstanding Paper Award, IEEE Transactions on Fuzzy Systems 2024</div>
+                        <div class="authors">Huimin Lu, Ming Zhang, Xing Xu, Yujie Li, Heng Tao Shen</div>
+                    </div>
+                </div>
+
+                <div class="honor-card">
+                    <div class="icon-container">
+                        <img src="http://cfm.uestc.edu.cn/media/images/1612403842729_高老师IEEE TMM2020最佳论文.png" alt="Icon" class="icon">
+                    </div>
+                    <div class="honor-details">
+                        <div class="award-title">PRIZE PAPER AWARD, IEEE TRANSACTIONS ON MULTIMEDIA 2020</div>
+                        <div class="authors">Lianli Gao, Zhao Guo, Hanwang Zhang, Xing Xu, Heng Tao Shen</div>
+                    </div>
+                </div>
+
+                <div class="honor-card">
+                    <div class="icon-container">
+                        <img src="http://cfm.uestc.edu.cn/media/images/1513150127696_荣誉1.jpg" alt="Icon" class="icon">
+                    </div>
+                    <div class="honor-details">
+                        <div class="award-title">Best Paper Award, ACM Multimedia 2017</div>
+                        <div class="authors">Bokun Wang, Yang Yang, Xing Xu, Alan Hanjalic and Heng Tao Shen</div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="honors-container">
+                <div class="honor-card">
+                    <div class="icon-container">
+                        <img src="http://cfm.uestc.edu.cn/media/images/1513150219519_荣誉2.jpg" alt="Icon" class="icon">
+                    </div>
+                    <div class="honor-details">
+                        <div class="award-title">World's First 10K Best Paper Award, IEEE ICME 2017</div>
+                        <div class="authors">Yahui Xu, Yang Yang, Fumin Shen, Yuxuan Zhou, Xing Xu and Heng Tao Shen</div>
+                    </div>
+                </div>
+
+                <div class="honor-card">
+                    <div class="icon-container">
+                        <img src="http://cfm.uestc.edu.cn/media/images/1513150254154_荣誉3.jpg" alt="Icon" class="icon">
+                    </div>
+                    <div class="honor-details">
+                        <div class="award-title">Best Paper Award, Australasian Database Conference 2017</div>
+                        <div class="authors">Mingxing Zhang, Yang Yang, Hanwang Zhang, Yanli Ji, Ning Xie and Heng Tao Shen</div>  
+                    </div>
+                </div>
+
+                <div class="honor-card">
+                    <div class="icon-container">
+                        <img src="http://cfm.uestc.edu.cn/media/images/1513150286977_荣誉4.jpg" alt="Icon" class="icon">
+                    </div>
+                    <div class="honor-details">
+                        <div class="award-title">Best Paper Award Honorable Mention, ACM SIGIR 2017</div>
+                        <div class="authors">Fumin Shen, Yadong Mu, Yang Yang, Wei Liu, Jingkuan Song and Heng Tao Shen</div>      
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    
+        <p class="about-content">邮箱：xxxxxxxxxxx@xxx.cn</p>
+        <p class="about-content">电话：xxx-xxxxxxxx</p>
+        <p class="about-content">地址：上海市嘉定区曹安公路4800号</p>
+    
+    </div>
+
+    <div style="height: 50px;"></div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-bottom">
+            <p>Copyright © 2025 同济多模态空间智能团队. 保留所有权利</p>
+        </div>
+    </footer>
+
+    <script>
+        // 移动端菜单切换
+        document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
+            const nav = document.querySelector('nav ul');
+            nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+        });
+        
+        // 导航项点击效果
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // 数据卡片悬停效果
+        const cards = document.querySelectorAll('.stat-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.zIndex = '10';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.zIndex = '1';
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.querySelector('.slider');
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.querySelector('.prev-btn');
+            const nextBtn = document.querySelector('.next-btn');
+            const indicators = document.querySelectorAll('.indicator');
+            const imageInfo = document.querySelector('.image-info');
+            
+            let currentIndex = 0;
+            let interval;
+            const slideCount = slides.length;
+            const slideInterval = 4000; // 4秒切换一次
+            
+            // 图片描述
+            const imageDescriptions = [
+                "图片路径: static/photo/banner.jpg",
+                "图片路径: static/photo/banner2.jpg"
+            ];
+            
+            // 初始化轮播
+            function initSlider() {
+                updateSliderPosition();
+                startAutoSlide();
+            }
+            
+            // 更新轮播位置
+            function updateSliderPosition() {
+                slider.style.transform = `translateX(-${currentIndex * 50}%)`;
+                
+                // 更新指示器
+                indicators.forEach((indicator, index) => {
+                    indicator.classList.toggle('active', index === currentIndex);
+                });
+                
+                // 更新图片信息
+                imageInfo.textContent = imageDescriptions[currentIndex];
+            }
+            
+            // 下一张幻灯片
+            function nextSlide() {
+                currentIndex = (currentIndex + 1) % slideCount;
+                updateSliderPosition();
+            }
+            
+            // 上一张幻灯片
+            function prevSlide() {
+                currentIndex = (currentIndex - 1 + slideCount) % slideCount;
+                updateSliderPosition();
+            }
+            
+            // 开始自动轮播
+            function startAutoSlide() {
+                interval = setInterval(nextSlide, slideInterval);
+            }
+            
+            // 停止自动轮播
+            function stopAutoSlide() {
+                clearInterval(interval);
+            }
+            
+            // 事件监听器
+            nextBtn.addEventListener('click', function() {
+                stopAutoSlide();
+                nextSlide();
+                startAutoSlide();
+            });
+            
+            prevBtn.addEventListener('click', function() {
+                stopAutoSlide();
+                prevSlide();
+                startAutoSlide();
+            });
+            
+            indicators.forEach(indicator => {
+                indicator.addEventListener('click', function() {
+                    stopAutoSlide();
+                    currentIndex = parseInt(this.getAttribute('data-index'));
+                    updateSliderPosition();
+                    startAutoSlide();
+                });
+            });
+            
+            // 初始化轮播
+            initSlider();
+            
+            // 悬浮时暂停轮播
+            slider.addEventListener('mouseenter', stopAutoSlide);
+            slider.addEventListener('mouseleave', startAutoSlide);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Tensorflow2中内置了Keras库，Keras是一个由Python编写的开源人工神经网络库，可以作为Tensorflow、Microsoft-CNTK和Theano的高阶应用程序接口，进行深度学习模型的设计、调试、评估、应用和可视化。用Tensorflow2中自带的Keras库，会使得搭建神经网络变得非常简单友好。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="30行代码就可以实现看图识字！python使用tensorflow.keras搭建简单神经网络">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/04/22/30%E8%A1%8C%E4%BB%A3%E7%A0%81%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%AE%9E%E7%8E%B0%E7%9C%8B%E5%9B%BE%E8%AF%86%E5%AD%97%EF%BC%81python%E4%BD%BF%E7%94%A8tensorflow.keras%E6%90%AD%E5%BB%BA%E7%AE%80%E5%8D%95%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="Tensorflow2中内置了Keras库，Keras是一个由Python编写的开源人工神经网络库，可以作为Tensorflow、Microsoft-CNTK和Theano的高阶应用程序接口，进行深度学习模型的设计、调试、评估、应用和可视化。用Tensorflow2中自带的Keras库，会使得搭建神经网络变得非常简单友好。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/67ec2ad57ea2b1835afd28e6d113652e.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/a574dfa7d4e37a771cd29538927bb825.gif">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/18d09e63578743a5887e5bd3b32c6928.gif">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/f895f031ce024e204f7fba4180f3ecb0.gif">
+<meta property="article:published_time" content="2020-04-22T04:13:02.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.291Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="Tensorflow">
+<meta property="article:tag" content="Keras">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/67ec2ad57ea2b1835afd28e6d113652e.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/04/22/30%E8%A1%8C%E4%BB%A3%E7%A0%81%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%AE%9E%E7%8E%B0%E7%9C%8B%E5%9B%BE%E8%AF%86%E5%AD%97%EF%BC%81python%E4%BD%BF%E7%94%A8tensorflow.keras%E6%90%AD%E5%BB%BA%E7%AE%80%E5%8D%95%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>30行代码就可以实现看图识字！python使用tensorflow.keras搭建简单神经网络 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/04/22/30%E8%A1%8C%E4%BB%A3%E7%A0%81%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%AE%9E%E7%8E%B0%E7%9C%8B%E5%9B%BE%E8%AF%86%E5%AD%97%EF%BC%81python%E4%BD%BF%E7%94%A8tensorflow.keras%E6%90%AD%E5%BB%BA%E7%AE%80%E5%8D%95%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          30行代码就可以实现看图识字！python使用tensorflow.keras搭建简单神经网络
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-04-22 12:13:02" itemprop="dateCreated datePublished" datetime="2020-04-22T12:13:02+08:00">2020-04-22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">深度学习</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+            <div class="post-description">Tensorflow2中内置了Keras库，Keras是一个由Python编写的开源人工神经网络库，可以作为Tensorflow、Microsoft-CNTK和Theano的高阶应用程序接口，进行深度学习模型的设计、调试、评估、应用和可视化。用Tensorflow2中自带的Keras库，会使得搭建神经网络变得非常简单友好。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>大概几个月前，神经网络、人工智能等概念在我心里仍高不可攀，直到自己亲身上手之后，才发现搭建神经网络并不像自己想象的那么难。很幸运，我开始学习神经网络的时候<code>Tensorflow2.0</code>已经发布了。</p>
+<p><code>Tensorflow2</code>中内置了<code>Keras</code>库，<code>Keras</code>是一个由<code>Python</code>编写的开源人工神经网络库，可以作为<code>Tensorflow</code>、<code>Microsoft-CNTK</code>和<code>Theano</code>的高阶应用程序接口，进行深度学习模型的设计、调试、评估、应用和可视化。用<code>Tensorflow2</code>中自带的<code>Keras</code>库，会使得搭建神经网络变得非常简单友好。</p>
+<p>学习神经网络需要的前置知识有： - <code>numpy</code>（必需）； -
+<code>pandas</code>； - <code>matplotlib</code></p>
+<h1 id="搭建过程">搭建过程</h1>
+<p>接下来，介绍用<code>tensorflow.keras</code>搭建基本神经网络模型的过程：
+## 1. 引入必需的库 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br></pre></td></tr></table></figure> ## 2. 引入数据集
+这里的<code>mnist</code>数据集是<code>tf.keras</code>自带的手写数据集，里面存有60000张28x28尺寸的黑白手写数字
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#引入minst</span></span><br><span class="line">(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()</span><br><span class="line"><span class="comment">#将读到的每个灰度值除以255进行归一化，因为keras模型的输入值要求在0~1之间</span></span><br><span class="line">x_train, x_test= x_train / <span class="number">255.0</span>, x_test / <span class="number">255.0</span></span><br></pre></td></tr></table></figure> ## 3. 搭建神经网络层 -
+<code>Flatten</code>层用于将二维数组展开，相当于把图片按照每一行铺平； -
+<code>Dense</code>层就是所谓的全连接神经网络层，第一个参数是神经元的数量，第二个参数是激活函数的类型；
+- <code>relu</code>函数是一种线性整流函数，在神经网络中有广泛的使用； -
+<code>softmax</code>是一种逻辑回归函数，常用于多分类问题，可以使输出值符合概率分布，神经元数量为10，代表会输出10个元素的列表，列表的每个元素相加为1，列表中的每个元素正好符合对应数字的概率（数字有0~9十种）
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">model = tf.keras.Sequential([</span><br><span class="line">        <span class="comment">#指定输入层为Flatten层</span></span><br><span class="line">        tf.keras.layers.Flatten(),</span><br><span class="line">        <span class="comment">#指定第二层为Dense层，使用relu作为激活函数</span></span><br><span class="line">        tf.keras.layers.Dense(<span class="number">128</span>, activation=<span class="string">'relu'</span>),</span><br><span class="line">        <span class="comment">#指定输出层为Dense层，使用softmax作为激活函数，使输出概率分布</span></span><br><span class="line">        tf.keras.layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>)])</span><br></pre></td></tr></table></figure></p>
+<p>这就是<code>softmax</code>函数，可以看到对于任意x，其对应的y值都在-1~1之间，从而实现数据的归一化。
+<img src="https://i-blog.csdnimg.cn/blog_migrate/67ec2ad57ea2b1835afd28e6d113652e.png" alt="softmax函数"> ## 4. 编译神经网络模型 -
+第一个参数指定优化器为<code>adam</code>，<code>adam</code>结合了自适应梯度算法和均方根传播，是一个非常强大的优化器
+-
+指定损失函数的计算方法为交叉熵，<code>from_logits=False</code>表示数据不是原始输出，即数据满足概率分布，因为我们采用<code>softmax</code>作为输出层，因此结果是概率分布的
+- 指定准确率计算方法为多分类准确率 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">              <span class="comment">#指定优化器为adam</span></span><br><span class="line">model.<span class="built_in">compile</span>(optimizer=<span class="string">'adam'</span>,</span><br><span class="line">              <span class="comment">#指定损失函数的计算方法为交叉熵            </span></span><br><span class="line">              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=<span class="literal">False</span>),</span><br><span class="line">              <span class="comment">#指定准确率计算方法为多分类准确率</span></span><br><span class="line">              metrics=[<span class="string">'sparse_categorical_accuracy'</span>])</span><br></pre></td></tr></table></figure> ## 5. 训练模型 -
+第一个参数表示输入的训练集，第二个参数表示训练集本身对应的结果，神经网络可以通过判断自己得出的结果与原来给定的结果是否相同，来不断优化自己的判断；
+-
+<code>batch_size</code>表示每次喂入的数据量，<code>mnist</code>数据集中有60000张图片，显然不能一次喂入；
+- <code>epochs</code>表示训练次数； -
+<code>validation_data</code>表示验证用的数据集，验证集并不参与训练，因此用验证集判断模型的准确率是客观有效的；
+- <code>validation_freq</code>表示验证频率，即多少次训练会做一次验证
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">model.fit(x_train, y_train, batch_size=<span class="number">32</span>, epochs=<span class="number">10</span>,</span><br><span class="line">          validation_data=(x_test, y_test), validation_freq=<span class="number">1</span>)</span><br></pre></td></tr></table></figure></p>
+<p>到这里，一个完整的简单神经网络就搭建完成了，我们可以欣赏一下输出结果，这里只截取了第1次和最后2次训练的部分内容，以节省篇幅。</p>
+<p>可以看到，每次喂入数据之后，都显示出了训练集的<code>loss</code>误差和<code>accuracy</code>准确率，而当每次训练完成时会进行一次验证，计算出验证集的误差和准确率。</p>
+<p>我们还发现一个现象，第一次训练时，每次喂入数据都使得<code>loss</code>误差快速下降，正确率上升，而到最后几次训练时，由于准确率已经很高，想要继续优化模型变得困难，准确率便上下波动，不再持续上升：
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">Epoch <span class="number">1</span>/<span class="number">10</span></span><br><span class="line">   <span class="number">1</span>/<span class="number">1875</span> [..............................] - ETA: 0s - loss: <span class="number">2.4223</span> - sparse_categorical_accuracy: <span class="number">0.0625</span></span><br><span class="line"> <span class="number">277</span>/<span class="number">1875</span> [===&gt;..........................] - ETA: 2s - loss: <span class="number">0.5614</span> - sparse_categorical_accuracy: <span class="number">0.8380</span></span><br><span class="line"> <span class="number">567</span>/<span class="number">1875</span> [========&gt;.....................] - ETA: 1s - loss: <span class="number">0.4153</span> - sparse_categorical_accuracy: <span class="number">0.8792</span></span><br><span class="line"> <span class="number">814</span>/<span class="number">1875</span> [============&gt;.................] - ETA: 1s - loss: <span class="number">0.3604</span> - sparse_categorical_accuracy: <span class="number">0.8956</span></span><br><span class="line"><span class="number">1107</span>/<span class="number">1875</span> [================&gt;.............] - ETA: 1s - loss: <span class="number">0.3189</span> - sparse_categorical_accuracy: <span class="number">0.9070</span></span><br><span class="line"><span class="number">1367</span>/<span class="number">1875</span> [====================&gt;.........] - ETA: 0s - loss: <span class="number">0.2925</span> - sparse_categorical_accuracy: <span class="number">0.9150</span></span><br><span class="line"><span class="number">1592</span>/<span class="number">1875</span> [========================&gt;.....] - ETA: 0s - loss: <span class="number">0.2761</span> - sparse_categorical_accuracy: <span class="number">0.9197</span></span><br><span class="line"><span class="number">1875</span>/<span class="number">1875</span> [==============================] - 3s 2ms/step - loss: <span class="number">0.2577</span> - sparse_categorical_accuracy: <span class="number">0.9250</span> - val_loss: <span class="number">0.1379</span> - val_sparse_categorical_accuracy: <span class="number">0.9584</span></span><br><span class="line">Epoch <span class="number">9</span>/<span class="number">10</span></span><br><span class="line">   <span class="number">1</span>/<span class="number">1875</span> [..............................] - ETA: 0s - loss: <span class="number">0.0043</span> - sparse_categorical_accuracy: <span class="number">1.0000</span></span><br><span class="line"> <span class="number">347</span>/<span class="number">1875</span> [====&gt;.........................] - ETA: 2s - loss: <span class="number">0.0174</span> - sparse_categorical_accuracy: <span class="number">0.9986</span></span><br><span class="line"> <span class="number">634</span>/<span class="number">1875</span> [=========&gt;....................] - ETA: 1s - loss: <span class="number">0.0173</span> - sparse_categorical_accuracy: <span class="number">0.9965</span></span><br><span class="line"> <span class="number">922</span>/<span class="number">1875</span> [=============&gt;................] - ETA: 1s - loss: <span class="number">0.0176</span> - sparse_categorical_accuracy: <span class="number">0.9945</span></span><br><span class="line"> <span class="number">959</span>/<span class="number">1875</span> [==============&gt;...............] - ETA: 1s - loss: <span class="number">0.0177</span> - sparse_categorical_accuracy: <span class="number">0.9944</span></span><br><span class="line"><span class="number">1286</span>/<span class="number">1875</span> [===================&gt;..........] - ETA: 0s - loss: <span class="number">0.0182</span> - sparse_categorical_accuracy: <span class="number">0.9943</span></span><br><span class="line"><span class="number">1501</span>/<span class="number">1875</span> [=======================&gt;......] - ETA: 0s - loss: <span class="number">0.0187</span> - sparse_categorical_accuracy: <span class="number">0.9943</span></span><br><span class="line"><span class="number">1875</span>/<span class="number">1875</span> [==============================] - 3s 2ms/step - loss: <span class="number">0.0193</span> - sparse_categorical_accuracy: <span class="number">0.9942</span> - val_loss: <span class="number">0.0879</span> - val_sparse_categorical_accuracy: <span class="number">0.9763</span></span><br><span class="line">Epoch <span class="number">10</span>/<span class="number">10</span></span><br><span class="line">   <span class="number">1</span>/<span class="number">1875</span> [..............................] - ETA: 0s - loss: <span class="number">0.0164</span> - sparse_categorical_accuracy: <span class="number">0.9995</span></span><br><span class="line"> <span class="number">322</span>/<span class="number">1875</span> [====&gt;.........................] - ETA: 2s - loss: <span class="number">0.0131</span> - sparse_categorical_accuracy: <span class="number">0.9986</span></span><br><span class="line"> <span class="number">610</span>/<span class="number">1875</span> [========&gt;.....................] - ETA: 1s - loss: <span class="number">0.0138</span> - sparse_categorical_accuracy: <span class="number">0.9976</span> </span><br><span class="line"> <span class="number">999</span>/<span class="number">1875</span> [==============&gt;...............] - ETA: 1s - loss: <span class="number">0.0146</span> - sparse_categorical_accuracy: <span class="number">0.9970</span> </span><br><span class="line"><span class="number">1248</span>/<span class="number">1875</span> [==================&gt;...........] - ETA: 0s - loss: <span class="number">0.0147</span> - sparse_categorical_accuracy: <span class="number">0.9965</span></span><br><span class="line"><span class="number">1285</span>/<span class="number">1875</span> [===================&gt;..........] - ETA: 0s - loss: <span class="number">0.0148</span> - sparse_categorical_accuracy: <span class="number">0.9959</span></span><br><span class="line"><span class="number">1536</span>/<span class="number">1875</span> [=======================&gt;......] - ETA: 0s - loss: <span class="number">0.0153</span> - sparse_categorical_accuracy: <span class="number">0.9954</span></span><br><span class="line"><span class="number">1875</span>/<span class="number">1875</span> [==============================] - 3s 2ms/step - loss: <span class="number">0.0157</span> - sparse_categorical_accuracy: <span class="number">0.9952</span> - val_loss: <span class="number">0.0804</span> - val_sparse_categorical_accuracy: <span class="number">0.9789</span></span><br></pre></td></tr></table></figure></p>
+<p>到这里，我们的模型就输入完成了，只需要提供一个输入图片的函数，便可以完成看图识别数字的任务：
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> PIL.Image <span class="comment">#使用PIL库处理图片</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">judge_image</span>(<span class="params">path</span>):</span><br><span class="line"><span class="string">"""输入图片的路径，判断图片中的数字是什么"""</span></span><br><span class="line">    <span class="comment">#打开图片</span></span><br><span class="line">    img = Image.<span class="built_in">open</span>(path) </span><br><span class="line">    <span class="comment">#改变尺寸为28x28，因为训练集的图片大小就是28x28</span></span><br><span class="line">    img = img.resize((<span class="number">28</span>, <span class="number">28</span>)) </span><br><span class="line">    <span class="comment">#img.convert用于处理图像，L表示转换成灰度图</span></span><br><span class="line">    <span class="comment">#将灰度图的像素信息排列成array存储</span></span><br><span class="line">    img_array = np.array(img.convert(<span class="string">'L'</span>))</span><br><span class="line">    <span class="comment">#遍历每一个像素，进行二值化处理，即把灰度图转换成纯黑白图，以便于模型判断</span></span><br><span class="line">    <span class="keyword">for</span> row <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">28</span>):</span><br><span class="line">        <span class="keyword">for</span> col <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">28</span>):</span><br><span class="line">            <span class="comment">#如果像素偏白，就转为纯黑色</span></span><br><span class="line">            <span class="keyword">if</span> img_array[row][col] &lt; <span class="number">75</span>:</span><br><span class="line">                img_array[row][col] = <span class="number">255</span></span><br><span class="line">            <span class="comment">#如果像素偏黑，就转为纯白色</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                img_array[row][col] = <span class="number">0</span></span><br><span class="line">    <span class="comment">#将输入值归一化，满足模型输入要求</span></span><br><span class="line">    img_array = img_array / <span class="number">255.0</span> </span><br><span class="line">    <span class="comment">#由于数据是以batch的形式喂入模型，我们需要给数据集添加一个维度</span></span><br><span class="line">    <span class="comment">#将img_array:(28,28)变为x_predict:(1,28,28)，1代表数据量为1张图</span></span><br><span class="line">    x_predict = img_array[tf.newaxis]</span><br><span class="line">    result = model.predict(x_predict) <span class="comment">#利用模型进行预测</span></span><br><span class="line">    <span class="comment">#返回索引为1的值，result中索引为1刚好是预测结果</span></span><br><span class="line">    predict = tf.argmax(result, axis=<span class="number">1</span>)</span><br><span class="line">    tf.<span class="built_in">print</span>(predict)</span><br></pre></td></tr></table></figure> 这样，完整的代码就完成了： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> tensorflow <span class="keyword">as</span> tf</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> PIL</span><br><span class="line"></span><br><span class="line">(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()</span><br><span class="line">x_train, x_test= x_train / <span class="number">255.0</span>, x_test / <span class="number">255.0</span></span><br><span class="line"></span><br><span class="line">model = tf.keras.Sequential([</span><br><span class="line">        tf.keras.layers.Flatten(),</span><br><span class="line">        tf.keras.layers.Dense(<span class="number">128</span>, activation=<span class="string">'relu'</span>),</span><br><span class="line">        tf.keras.layers.Dense(<span class="number">10</span>, activation=<span class="string">'softmax'</span>)])</span><br><span class="line"></span><br><span class="line">model.<span class="built_in">compile</span>(optimizer=<span class="string">'adam'</span>,</span><br><span class="line">              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=<span class="literal">False</span>),</span><br><span class="line">              metrics=[<span class="string">'sparse_categorical_accuracy'</span>])</span><br><span class="line"></span><br><span class="line">model.fit(x_train, y_train, batch_size=<span class="number">32</span>, epochs=<span class="number">10</span>,</span><br><span class="line">          validation_data=(x_test, y_test), validation_freq=<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">judge_image</span>(<span class="params">path</span>):</span><br><span class="line">    img = PIL.Image.<span class="built_in">open</span>(path)</span><br><span class="line">    img = img.resize((<span class="number">28</span>, <span class="number">28</span>))</span><br><span class="line">    img_array = np.array(img.convert(<span class="string">'L'</span>))</span><br><span class="line">    <span class="keyword">for</span> row <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">28</span>):</span><br><span class="line">        <span class="keyword">for</span> col <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">28</span>):</span><br><span class="line">            <span class="keyword">if</span> img_array[row][col] &lt; <span class="number">75</span>:</span><br><span class="line">                img_array[row][col] = <span class="number">255</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                img_array[row][col] = <span class="number">0</span></span><br><span class="line">    img_array = img_array / <span class="number">255</span></span><br><span class="line">    x_predict = img_array[tf.newaxis]</span><br><span class="line">    result = model.predict(x_predict)</span><br><span class="line">    predict = tf.argmax(result, axis=<span class="number">1</span>)</span><br><span class="line">    tf.<span class="built_in">print</span>(predict)</span><br><span class="line">    </span><br></pre></td></tr></table></figure></p>
+<h1 id="效果测试">效果测试</h1>
+<p>我们来试一下预测效果，我准备了几张手写数字的图片： <img src="https://i-blog.csdnimg.cn/blog_migrate/a574dfa7d4e37a771cd29538927bb825.gif" alt="数字2">img_2.gif <img src="https://i-blog.csdnimg.cn/blog_migrate/18d09e63578743a5887e5bd3b32c6928.gif" alt="数字5">img_5.gif <img src="https://i-blog.csdnimg.cn/blog_migrate/f895f031ce024e204f7fba4180f3ecb0.gif" alt="数字8">img_8.gif <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">2</span>,<span class="number">5</span>,<span class="number">8</span>:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">"The recognized figure of img_%d.gif: "</span> % i, end=<span class="string">''</span>)</span><br><span class="line">    judge_image(<span class="string">'images/img_%d.gif'</span> % i)</span><br><span class="line">    time.sleep(<span class="number">1</span>)</span><br></pre></td></tr></table></figure> 输出结果为： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">The recognized figure of img_2.gif: [<span class="number">2</span>]</span><br><span class="line">The recognized figure of img_5.gif: [<span class="number">5</span>]</span><br><span class="line">The recognized figure of img_8.gif: [<span class="number">8</span>]</span><br></pre></td></tr></table></figure>
+可以看到，每张图片所对应的数字都被识别出来啦！</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag"># 深度学习</a>
+              <a href="/blog/tags/Tensorflow/" rel="tag"># Tensorflow</a>
+              <a href="/blog/tags/Keras/" rel="tag"># Keras</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/04/21/%E3%80%90jdbc%E7%BC%96%E7%A8%8B%E3%80%91%E4%BD%BF%E7%94%A8c3p0%E8%BF%9E%E6%8E%A5%E6%B1%A0%E5%AF%B9MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E8%AE%BF%E9%97%AE/" rel="prev" title="【jdbc编程】使用c3p0连接池对MySQL数据库进行访问">
+      <i class="fa fa-chevron-left"></i> 【jdbc编程】使用c3p0连接池对MySQL数据库进行访问
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/04/28/%E3%80%90%E5%85%A5%E9%97%A8%E7%BA%A7%E6%95%99%E7%A8%8B%E3%80%91python%E4%BD%BF%E7%94%A8scrapy%E5%BA%93%E5%AE%9E%E7%8E%B0%E7%88%AC%E8%99%AB/" rel="next" title="【入门级教程】python使用scrapy库实现爬虫">
+      【入门级教程】python使用scrapy库实现爬虫 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E8%BF%87%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">搭建过程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%88%E6%9E%9C%E6%B5%8B%E8%AF%95"><span class="nav-number">2.</span> <span class="nav-text">效果测试</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

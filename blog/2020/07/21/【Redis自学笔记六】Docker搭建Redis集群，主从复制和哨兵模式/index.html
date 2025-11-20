@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Redis集群可以实现读写分离、主写从读，从而提高读写效率。同时，Redis集群可以在一台服务器宕机时有替代服务器。接下来我们就来搭建集群。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Redis自学笔记六】Docker搭建Redis集群，主从复制和哨兵模式">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/07/21/%E3%80%90Redis%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AD%E3%80%91Docker%E6%90%AD%E5%BB%BARedis%E9%9B%86%E7%BE%A4%EF%BC%8C%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%92%8C%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="Redis集群可以实现读写分离、主写从读，从而提高读写效率。同时，Redis集群可以在一台服务器宕机时有替代服务器。接下来我们就来搭建集群。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/86147cfa028025df301f4abddbaf6c1d.png">
+<meta property="article:published_time" content="2020-07-20T21:35:15.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.312Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/86147cfa028025df301f4abddbaf6c1d.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/07/21/%E3%80%90Redis%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AD%E3%80%91Docker%E6%90%AD%E5%BB%BARedis%E9%9B%86%E7%BE%A4%EF%BC%8C%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%92%8C%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【Redis自学笔记六】Docker搭建Redis集群，主从复制和哨兵模式 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/07/21/%E3%80%90Redis%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E5%85%AD%E3%80%91Docker%E6%90%AD%E5%BB%BARedis%E9%9B%86%E7%BE%A4%EF%BC%8C%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%92%8C%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【Redis自学笔记六】Docker搭建Redis集群，主从复制和哨兵模式
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-21 05:35:15" itemprop="dateCreated datePublished" datetime="2020-07-21T05:35:15+08:00">2020-07-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+            <div class="post-description">Redis集群可以实现读写分离、主写从读，从而提高读写效率。同时，Redis集群可以在一台服务器宕机时有替代服务器。接下来我们就来搭建集群。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在日常生产中，配置Redis集群是基本需求。Redis集群可以实现读写分离、主写从读，从而提高读写效率。同时，Redis集群可以在一台服务器宕机时有替代服务器。接下来我们就来搭建集群。</p>
+<span id="more"></span>
+<h1 id="主从复制">主从复制</h1>
+<p>主从复制模型中，有多个Redis节点。其中，有且仅有一个为主节点Master。从节点Slave可以有多个。由于生产中80%的操作都是读，于是我们可以让主机负责写，从机负责读，从而平均分配任务，大大提高效率。</p>
+<pre class="mermaid">graph LR
+
+Master --同步--&gt; Slave1
+Master --同步--&gt; Slave2
+Master --同步--&gt; Slave3</pre>
+<h2 id="配置目录">配置目录</h2>
+<p>首先创建三个目录，用于存放主机和从机。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir redis01 redis02 redis03</span><br></pre></td></tr></table></figure>
+<p>笔者此处选用Docker搭建集群，每个容器都有自己的独立端口，故即使使用同样的配置文件也不会造成端口冲突。</p>
+<p>如果不使用Docker，请复制3份配置文件，并修改端口号和PID文件名。</p>
+<p><em>注：基于Docker容器的Redis不需要配置守护进程启动</em></p>
+<h2 id="创建容器">创建容器</h2>
+<p>创建3个容器，映射不同的端口，卷挂载数据文件到三个目录中，使用相同的配置文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">sudo docker run -d \</span><br><span class="line">--name redis01 \</span><br><span class="line">-p 6379:6379 \</span><br><span class="line">-v /home/koorye/docker/redis/redis.conf:/etc/redis/redis.conf \</span><br><span class="line">-v /home/koorye/docker/redis/redis01/data:/data \</span><br><span class="line">redis \</span><br><span class="line">redis-server /etc/redis/redis.conf</span><br><span class="line"></span><br><span class="line">sudo docker run -d \</span><br><span class="line">--name redis02 \</span><br><span class="line">-p 6380:6379 \</span><br><span class="line">-v /home/koorye/docker/redis/redis.conf:/etc/redis/redis.conf \</span><br><span class="line">-v /home/koorye/docker/redis/redis02/data:/data \</span><br><span class="line">redis \</span><br><span class="line">redis-server /etc/redis/redis.conf</span><br><span class="line"></span><br><span class="line">sudo docker run -d \</span><br><span class="line">--name redis03 \</span><br><span class="line">-p 6381:6379 \</span><br><span class="line">-v /home/koorye/docker/redis/redis.conf:/etc/redis/redis.conf \</span><br><span class="line">-v /home/koorye/docker/redis/redis03/data:/data \</span><br><span class="line">redis \</span><br><span class="line">redis-server /etc/redis/redis.conf</span><br></pre></td></tr></table></figure>
+<h2 id="测试">测试</h2>
+<p>可以通过<code>info replication</code>查看Redis服务器的状态，此时每台服务器都是master主机。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; info replication</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Replication</span></span><br><span class="line">role:master</span><br><span class="line">connected_slaves:0</span><br><span class="line">master_replid:447743a562da878e9436036b6666b605166cd321</span><br><span class="line">master_replid2:0000000000000000000000000000000000000000</span><br><span class="line">master_repl_offset:0</span><br><span class="line">second_repl_offset:-1</span><br><span class="line">repl_backlog_active:0</span><br><span class="line">repl_backlog_size:1048576</span><br><span class="line">repl_backlog_first_byte_offset:0</span><br><span class="line">repl_backlog_histlen:0</span><br></pre></td></tr></table></figure>
+<h2 id="搭建网络">搭建网络</h2>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network create redis_net</span><br></pre></td></tr></table></figure>
+<p>连接网络</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker network connect redis_net redis01</span><br><span class="line">docker network connect redis_net redis02</span><br><span class="line">docker network connect redis_net redis03</span><br></pre></td></tr></table></figure>
+<h2 id="配置从机">配置从机</h2>
+<p>通过<code>docker inspect redis | grep IPAddress</code>查看IP：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">docker inspect redis01</span><br><span class="line">				"redis_net": {</span><br><span class="line">                    "IPAMConfig": {},</span><br><span class="line">                    "Links": null,</span><br><span class="line">                    "Aliases": [</span><br><span class="line">                        "627cf11e7ecc"</span><br><span class="line">                    ],</span><br><span class="line">                    "NetworkID": "05274be8507f81af88bdd2276f32e35f1b7a6f1800d881c7e99ec0f11d659f96",</span><br><span class="line">                    "EndpointID": "3d4734806c634b0fa06ee9cab4be9997331319c557543b3fc1558266c1ccec9d",</span><br><span class="line">                    "Gateway": "172.18.0.1",</span><br><span class="line">                    "IPAddress": "172.18.0.2",  # 找到redis_net中的IPAddress</span><br><span class="line">                    ...</span><br><span class="line">                }</span><br></pre></td></tr></table></figure>
+<p>最终得到：</p>
+<ul>
+<li>redis01 172.18.0.2:6379</li>
+<li>redis02 172.18.0.3:6379</li>
+<li>redis03 172.18.0.4:6379</li>
+</ul>
+<p>通过portainer查看更加清楚：</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/86147cfa028025df301f4abddbaf6c1d.png" alt="image-20200721042753521">
+<figcaption aria-hidden="true">image-20200721042753521</figcaption>
+</figure>
+<p>通过<code>slaveof ip port</code>指定主机：</p>
+<p>6380端口：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; slaveof 172.18.0.2 6379</span><br><span class="line">OK</span><br></pre></td></tr></table></figure>
+<p>6381端口：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; slaveof 172.18.0.2 6379</span><br><span class="line">OK</span><br></pre></td></tr></table></figure>
+<p>此时查看6379端口：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; info replication</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Replication</span></span><br><span class="line">role:master</span><br><span class="line">connected_slaves:2</span><br><span class="line">slave0:ip=172.18.0.3,port=6379,state=online,offset=910,lag=0  # 从机1</span><br><span class="line">slave1:ip=172.18.0.4,port=6379,state=online,offset=910,lag=0  # 从机2</span><br><span class="line">master_replid:2d2e35dd84c72e879581a175965cb6a0cb1e9046</span><br><span class="line">master_replid2:0000000000000000000000000000000000000000</span><br><span class="line">master_repl_offset:910</span><br><span class="line">second_repl_offset:-1</span><br><span class="line">repl_backlog_active:1</span><br><span class="line">repl_backlog_size:1048576</span><br><span class="line">repl_backlog_first_byte_offset:1</span><br><span class="line">repl_backlog_histlen:910</span><br></pre></td></tr></table></figure>
+<p>出现两台从机。</p>
+<p>查看6380和6381端口：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; info replication</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Replication</span></span><br><span class="line">role:slave</span><br><span class="line">master_host:172.18.0.2</span><br><span class="line">master_port:6379</span><br><span class="line">master_link_status:up  # 成功连接</span><br><span class="line">master_last_io_seconds_ago:0</span><br><span class="line">master_sync_in_progress:0</span><br><span class="line">slave_repl_offset:966</span><br><span class="line">slave_priority:100</span><br><span class="line">slave_read_only:1</span><br><span class="line">connected_slaves:0</span><br><span class="line">master_replid:2d2e35dd84c72e879581a175965cb6a0cb1e9046</span><br><span class="line">master_replid2:0000000000000000000000000000000000000000</span><br><span class="line">master_repl_offset:966</span><br><span class="line">second_repl_offset:-1</span><br><span class="line">repl_backlog_active:1</span><br><span class="line">repl_backlog_size:1048576</span><br><span class="line">repl_backlog_first_byte_offset:897</span><br><span class="line">repl_backlog_histlen:70</span><br></pre></td></tr></table></figure>
+<p>成为从机，且主机正常运行。</p>
+<p><em><code>slaveof no one</code> 成为主机</em></p>
+<h2 id="配置文件实现主从复制">配置文件实现主从复制</h2>
+<p>以上是通过命令行配置的方法，同样我们可以在配置文件中实现：</p>
+<p><code>replicaof &lt;masterip&gt; &lt;masterport&gt;</code></p>
+<p>本文不再演示。</p>
+<h2 id="主从复制的特性">主从复制的特性</h2>
+<p>主从复制的情况下，主机可读可写；从机不能写只能读，写则会报错：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; set k2 v2</span><br><span class="line">(error) READONLY You can't write against a read only replica.</span><br><span class="line">127.0.0.1:6379&gt; get k1</span><br><span class="line">"v1"</span><br></pre></td></tr></table></figure>
+<p>如果主机宕机，从机仍然是从机，会等待主机重连，主机重连之后仍然是主机。</p>
+<p>命令行配置下，如果从机宕机，会变成主机，需要再次指定才能变成从机。</p>
+<ul>
+<li>全量复制：从机连接到主机，主机的数据会全部同步到从机</li>
+<li>增量复制：主机继续将收集的数据同步到从机</li>
+</ul>
+<h1 id="哨兵模式">哨兵模式</h1>
+<p>哨兵模式是一种特殊的模式，首先Redis提供了哨兵的命令，哨兵是一个独立的进程，作为进程，它会独立运行。其原理是哨兵通过发送命令，等待Redis服务器响应，从而监控运行的多个Redis实例。</p>
+<p>要实现哨兵模式，我们首先要配置一个哨兵。</p>
+<p>选择之前挂载到三个容器的docker/redis目录，新建一个sentinel.conf文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sentinel monitor master 172.18.0.2 6379 1</span><br></pre></td></tr></table></figure>
+<p><code>sentinel monitor &lt;maseter-name&gt; &lt;ip&gt; &lt;redis-port&gt; &lt;quorum&gt;</code>
+- <code>&lt;maseter-name&gt;</code> 主机名 - <code>&lt;ip&gt;</code>
+主机的IP地址与端口号 - <code>&lt;quorum&gt;</code>
+当主机挂了以后，从机要获取多少票才能成为主机</p>
+<p>两台从机执行<code>redis-sentinel &lt;哨兵配置文件路径&gt;</code>，启动哨兵模式：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">root@52a9a03b0281:/data# redis-sentinel /etc/redis/sentinel.conf</span><br><span class="line">414:X 20 Jul 2020 21:04:47.552 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo</span><br><span class="line">414:X 20 Jul 2020 21:04:47.552 # Redis version=6.0.5, bits=64, commit=00000000, modified=0, pid=414, just started</span><br><span class="line">414:X 20 Jul 2020 21:04:47.552 # Configuration loaded</span><br><span class="line">                _._</span><br><span class="line">           _.-``__ ''-._</span><br><span class="line">      _.-``    `.  `_.  ''-._           Redis 6.0.5 (00000000/0) 64 bit</span><br><span class="line">  .-`` .-```.  ```\/    _.,_ ''-._</span><br><span class="line"> (    '      ,       .-`  | `,    )     Running in sentinel mode</span><br><span class="line"> |`-._`-...-` __...-.``-._|'` _.-'|     Port: 26379</span><br><span class="line"> |    `-._   `._    /     _.-'    |     PID: 414</span><br><span class="line">  `-._    `-._  `-./  _.-'    _.-'</span><br><span class="line"> |`-._`-._    `-.__.-'    _.-'_.-'|</span><br><span class="line"> |    `-._`-._        _.-'_.-'    |           http://redis.io</span><br><span class="line">  `-._    `-._`-.__.-'_.-'    _.-'</span><br><span class="line"> |`-._`-._    `-.__.-'    _.-'_.-'|</span><br><span class="line"> |    `-._`-._        _.-'_.-'    |</span><br><span class="line">  `-._    `-._`-.__.-'_.-'    _.-'</span><br><span class="line">      `-._    `-.__.-'    _.-'</span><br><span class="line">          `-._        _.-'</span><br><span class="line">              `-.__.-'</span><br><span class="line"></span><br><span class="line">414:X 20 Jul 2020 21:04:47.554 # WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.</span><br><span class="line">414:X 20 Jul 2020 21:04:47.587 # Sentinel ID is 7536169799ea0a8b8bddcf412cb91418f401a804</span><br><span class="line">414:X 20 Jul 2020 21:04:47.587 # +monitor master master 172.18.0.2 6379 quorum 1</span><br><span class="line">414:X 20 Jul 2020 21:04:47.589 * +slave slave 172.18.0.3:6379 172.18.0.3 6379 @ master 172.18.0.2 6379</span><br><span class="line">414:X 20 Jul 2020 21:04:47.593 * +slave slave 172.18.0.4:6379 172.18.0.4 6379 @ master 172.18.0.2 6379</span><br></pre></td></tr></table></figure>
+<p>此时，若主机宕机：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker stop redis01</span><br><span class="line">redis01</span><br></pre></td></tr></table></figure>
+<p>等待一段时间(默认等待30秒)，redis02被选为主机：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">414:X 20 Jul 2020 21:08:40.463 # +failover-end master master 172.18.0.2 6379</span><br><span class="line">414:X 20 Jul 2020 21:08:40.463 # +switch-master master 172.18.0.2 6379 172.18.0.3 6379</span><br><span class="line">414:X 20 Jul 2020 21:08:40.464 * +slave slave 172.18.0.4:6379 172.18.0.4 6379 @ master 172.18.0.3 6379</span><br><span class="line">414:X 20 Jul 2020 21:08:40.464 * +slave slave 172.18.0.2:6379 172.18.0.2 6379 @ master 172.18.0.3 6379</span><br><span class="line">414:X 20 Jul 2020 21:09:10.492 # +sdown slave 172.18.0.2:6379 172.18.0.2 6379 @ master 172.18.0.3 6379</span><br></pre></td></tr></table></figure>
+<p>进入redis02查看信息：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; info replication</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Replication</span></span><br><span class="line">role:master</span><br><span class="line">connected_slaves:1</span><br><span class="line">slave0:ip=172.18.0.4,port=6379,state=online,offset=33786,lag=0</span><br><span class="line">master_replid:062527c7c3b837ffd8aee8a945a3e54b1d778087</span><br><span class="line">master_replid2:82642d450c88a764d64b29fe733a8e5122f61d64</span><br><span class="line">master_repl_offset:33786</span><br><span class="line">second_repl_offset:26246</span><br><span class="line">repl_backlog_active:1</span><br><span class="line">repl_backlog_size:1048576</span><br><span class="line">repl_backlog_first_byte_offset:1</span><br><span class="line">repl_backlog_histlen:33786</span><br></pre></td></tr></table></figure>
+<p>此时redis01重连，已经变成从机：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; info replication</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Replication</span></span><br><span class="line">role:slave</span><br><span class="line">master_host:172.18.0.3</span><br><span class="line">master_port:6379</span><br><span class="line">master_link_status:up</span><br><span class="line">master_last_io_seconds_ago:1</span><br><span class="line">master_sync_in_progress:0</span><br><span class="line">slave_repl_offset:48593</span><br><span class="line">slave_priority:100</span><br><span class="line">slave_read_only:1</span><br><span class="line">connected_slaves:0</span><br><span class="line">master_replid:062527c7c3b837ffd8aee8a945a3e54b1d778087</span><br><span class="line">master_replid2:0000000000000000000000000000000000000000</span><br><span class="line">master_repl_offset:48593</span><br><span class="line">second_repl_offset:-1</span><br><span class="line">repl_backlog_active:1</span><br><span class="line">repl_backlog_size:1048576</span><br><span class="line">repl_backlog_first_byte_offset:47227</span><br><span class="line">repl_backlog_histlen:1367</span><br></pre></td></tr></table></figure>
+<p>priority:100 slave_read_only:1 connected_slaves:0
+master_replid:062527c7c3b837ffd8aee8a945a3e54b1d778087
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:48593 second_repl_offset:-1 repl_backlog_active:1
+repl_backlog_size:1048576 repl_backlog_first_byte_offset:47227
+repl_backlog_histlen:1367 ```</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/Docker/" rel="tag"># Docker</a>
+              <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+              <a href="/blog/tags/Redis/" rel="tag"># Redis</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/21/%E3%80%90Redis%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%BA%94%E3%80%91%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E3%80%81%E6%8C%81%E4%B9%85%E5%8C%96%E4%B8%8E%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/" rel="prev" title="【Redis自学笔记五】配置文件、持久化与发布订阅">
+      <i class="fa fa-chevron-left"></i> 【Redis自学笔记五】配置文件、持久化与发布订阅
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/07/24/%E3%80%90Shiro%20%E8%87%AA%E5%AD%A6%E7%AC%94%E8%AE%B0%E4%B8%80%E3%80%91Shiro%20%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%B5%81%E7%A8%8B%E4%B8%8E%20Hello%20World/" rel="next" title="【Shiro 自学笔记一】Shiro 的基本流程与 Hello World">
+      【Shiro 自学笔记一】Shiro 的基本流程与 Hello World <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">主从复制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%9B%AE%E5%BD%95"><span class="nav-number">1.1.</span> <span class="nav-text">配置目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%AE%B9%E5%99%A8"><span class="nav-number">1.2.</span> <span class="nav-text">创建容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">1.3.</span> <span class="nav-text">测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E7%BD%91%E7%BB%9C"><span class="nav-number">1.4.</span> <span class="nav-text">搭建网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E4%BB%8E%E6%9C%BA"><span class="nav-number">1.5.</span> <span class="nav-text">配置从机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E5%AE%9E%E7%8E%B0%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.6.</span> <span class="nav-text">配置文件实现主从复制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E7%9A%84%E7%89%B9%E6%80%A7"><span class="nav-number">1.7.</span> <span class="nav-text">主从复制的特性</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">哨兵模式</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

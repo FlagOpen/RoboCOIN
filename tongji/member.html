@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同济多模态空间智能团队</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 蓝色导航栏样式 */
+        header {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            background: white;
+            color: #2a5da0;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 12px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .logo-text h2 {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav li {
+            margin: 0 8px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            padding: 8px 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        /* 内容部分 */
+        .content {
+            padding: 40px 0;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .page-title h2 {
+            font-size: 32px;
+            color: #1a4580;
+            display: inline-block;
+            padding: 0 15px;
+            position: relative;
+            background-color: #f8f9fa;
+            z-index: 1;
+        }
+        
+        .page-title::after {
+            content: '';
+            position: absolute;
+            top: 55%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            z-index: 0;
+        }
+        
+        .info-row {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #1a4580;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-label i {
+            margin-right: 8px;
+            width: 20px;
+        }
+        
+        .email-link {
+            color: #2a5da0;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .email-link:hover {
+            color: #1a4580;
+            text-decoration: underline;
+        }
+        
+        .talent-badge {
+            background: #e6f0ff;
+            color: #1a4580;
+            font-size: 13px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .intro-text {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .tab {
+            background: white;
+            padding: 10px 25px;
+            margin: 0 5px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: #1a4580;
+            border: 1px solid #d0d9f0;
+        }
+        
+        .tab.active, .tab:hover {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            border-color: transparent;
+        }
+
+                /* 教师网格布局 */
+        .teachers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 35px;
+            margin-bottom: 60px;
+        }
+        
+        .teacher-card {
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 7px 18px rgba(0,0,0,0.08);
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .teacher-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+        }
+        
+        .teacher-photo {
+            height: 280px;
+            width: 60%;
+            margin: 20px auto;
+            background-color: #e0e6f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .teacher-photo i {
+            font-size: 60px;
+            color: rgba(26, 69, 128, 0.3);
+        }
+        
+        .teacher-info {
+            padding: 22px;
+            flex-grow: 1;
+        }
+        
+        .name-title {
+            margin-bottom: 15px;
+        }
+        
+        .teacher-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a4580;
+            margin-bottom: 5px;
+        }
+        
+        .talent-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .research-area {
+            font-size: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e0e6f0;
+        }
+        
+        .research-area strong {
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .teacher-email {
+            margin-bottom: 18px;
+        }
+        
+        .teacher-email a {
+            color: #2a5da0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            word-break: break-all;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .teacher-email a:hover {
+            color: #e74c3c;
+        }
+        
+        .teacher-email i {
+            margin-right: 8px;
+        }
+        
+        .teacher-intro {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(to right, #1a4580, #19376d);
+            color: rgba(255,255,255,0.9);
+            padding: 20px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <!-- 蓝色导航栏 -->
+    <header>
+        <div class="container nav-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <!-- <i class="fas fa-brain"></i> -->
+                     <img src="static/logo/tongji.png" alt="Tongji Logo" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="logo-text">
+                    <h1>同济多模态空间智能团队</h1>
+                    <h2>TONGJI MULTIMODAL SPATIAL INTELLIGENCE</h2>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">网站首页</a></li>
+                    <li><a href="member.html">团队成员</a></li>
+                    <li><a href="honor.html">团队荣誉</a></li>
+                    <li><a href="paper.html">学术论文</a></li>
+                    <!-- <li><a href="project.html">科研项目</a></li> -->
+                    <li><a href="about.html">关于我们</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="content">
+        <div class="container">
+            <div class="page-title">
+                <h2>骨干教师</h2>
+            </div>
+            
+        <div class="teachers-grid">
+
+            <div class="teacher-card">
+                <div class="teacher-photo">
+                     <img src="static/photo/shenhengtao.jpg" alt="申恒涛" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="teacher-info">
+                    <div class="name-title">
+                        <div class="teacher-name">申恒涛</div>
+                        <div class="talent-title">国家领军人才 | 教授</div>
+                    </div>
+                    
+                    <div class="research-area">
+                        <strong>研究方向：</strong>多媒体搜索，计算机视觉，人工智能，大数据管理
+                    </div>
+                    
+                    <div class="teacher-email">
+                        <a href="mailto:shenhengtao@hotmail.com">
+                            <i class="fas fa-envelope"></i>shenhengtao@hotmail.com
+                        </a>
+                    </div>
+                    
+                    <div class="teacher-intro">
+                        同济大学计算机科学与技术学院院长、欧洲科学院院士，ACM、IEEE、OSA会士，科睿唯安全球高被引科学家。发表500多篇高水平论文，获10项国际会议和期刊最佳论文奖。获2010年澳洲计算研究与教育学会Chris Wallace Award，2012年澳大利亚研究理事会Future Fellowship，中华全国总工会2016年第六届“中国侨界贡献奖”，2020年四川杰出人才奖，2021年四川省高等教育教学成果奖一等奖，2022年CCF-ACM人工智能奖，以及2022年科学探索奖。主持科技创新2030“新一代人工智能”重大项目等国家级科研项目15项。担任ACM Transactions on Data Science及IEEE Transactions系列期刊编委。
+                    </div>
+                </div>
+            </div>
+            
+            <div class="teacher-card">
+                <div class="teacher-photo">
+                        <img src="static/photo/songjingkuan.jpg" alt="宋井宽" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="teacher-info">
+                    <div class="name-title">
+                        <div class="teacher-name">宋井宽</div>
+                        <div class="talent-title">国家青年人才 | 教授</div>
+                    </div>
+                    
+                    <div class="research-area">
+                        <strong>研究方向：</strong>计算机视觉，多媒体智能理解，人工智能
+                    </div>
+                    
+                    <div class="teacher-email">
+                        <a href="mailto:jingkuan.song@gmail.com">
+                            <i class="fas fa-envelope"></i>jingkuan.song@gmail.com
+                        </a>
+                    </div>
+                    
+                    <div class="teacher-intro">
+                        同济大学计算机科学与技术学院教授、博士生导师，国家“青年特聘专家”，四川省“特聘专家”。获ICPR最佳论文奖、SIGIR最佳论文提名奖、ADC最佳学生论文奖、ACM China SIGMM学术新星奖、AMiner AI 2000“多媒体最具影响力学者”提名。担任国际SCI期刊ACM TOMM等编委，WWW Journal、TMM、Pattern Recognition、ACM TDS等期刊的客座编委，多个期刊的评审和多个国际顶级会议(MM'18-'21, IJCAI'18)的领域主席，主持/主研科技部科技创新2030—“新一代人工智能”重大项目、四川省“青年科技创新团队”项目、国家自然科学基金委面上项目、贵州省科技厅“大数据榜单”等项目。
+                    </div>
+                </div>
+            </div>
+
+            <div class="teacher-card">
+                <div class="teacher-photo">
+                        <img src="static/photo/zhulei.jpg" alt="朱磊" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="teacher-info">
+                    <div class="name-title">
+                        <div class="teacher-name">朱磊</div>
+                        <div class="talent-title">国家青年人才 | 研究员</div>
+                    </div>
+                    
+                    <div class="research-area">
+                        <strong>研究方向：</strong>高效能多模态大模型，具身智能
+                    </div>
+                    
+                    <div class="teacher-email">
+                        <a href="mailto:leizhu0608@gmail.com">
+                            <i class="fas fa-envelope"></i>leizhu0608@gmail.com
+                        </a>
+                    </div>
+                    
+                    <div class="teacher-intro">
+                        同济大学计算机科学与技术学院研究员、博士生导师，国家级青年人才。发表CCF-A类期刊/会议100+篇，ESI高被引/热点论文9篇，CCF-A类会议最佳论文提名奖2项，2019年中国百篇最具影响国际学术论文。
+                        ACM TOMM、IEEE TBD编委，CCF A类会议AC/SPC，CSIG青年工作委员会副秘书长。主持国家自然科学基金等课题10余项。获山东省自然科学二等奖、吴文俊人工智能自然科学二等奖、ACM中国SIGMM新星奖、CSIG青年工作突出贡献奖，入选全球前2%终身科学影响力榜单、2024年全球前0.05%顶尖科学家榜单。
+                    </div>
+                </div>
+            </div>
+
+            <div class="teacher-card">
+                <div class="teacher-photo">
+                        <img src="static/photo/wangzheng.jpg" alt="汪政" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="teacher-info">
+                    <div class="name-title">
+                        <div class="teacher-name">汪政</div>
+                        <div class="talent-title">研究员</div>
+                    </div>
+                    
+                    <div class="research-area">
+                        <strong>研究方向：</strong>多模态具身智能，多媒体理解，计算机视觉
+                    </div>
+                    
+                    <div class="teacher-email">
+                        <a href="mailto:zh_wang@tongji.edu.cn">
+                            <i class="fas fa-envelope"></i>zh_wang@tongji.edu.cn
+                        </a>
+                    </div>
+                    <div class="teacher-intro">
+                    ​​同济大学计算机学院研究员，博士生导师。担任IEEE TIP/TCYB/TMM/TNNLS/TCSVT​​等顶级期刊审稿人，CVPR/ICCV/NeurIPS/ICLR/ACM MM/AAAI/ECCV​​等顶会审稿人，PRCV/ChinaMM​​等国内会议区域主席。
+                    近五年发表CCF A类会议/IEEE汇刊论文​​50+篇​​（含ESI高被引/热点论文1篇）​​，主持国家自然科学基金及省部级项目5项，主研国家级重大重点项目3项，省部级重大重点项目2项。
+                    </div>
+                </div>
+            </div>
+
+            <div class="teacher-card">
+                <div class="teacher-photo">
+                        <img src="static/photo/binyi.jpg" alt="宾燚" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="teacher-info">
+                    <div class="name-title">
+                        <div class="teacher-name">宾燚</div>
+                        <div class="talent-title">研究员</div>
+                    </div>
+                    
+                    <div class="research-area">
+                        <strong>研究方向：</strong>多媒体理解，自然语言处理，多模态大模型
+                    </div>
+                    
+                    <div class="teacher-email">
+                        <a href="mailto:yi.bin@hotmail.com">
+                            <i class="fas fa-envelope"></i>yi.bin@hotmail.com
+                        </a>
+                    </div>
+                    
+                    <div class="teacher-intro">
+                        同济大学研究员，博士生导师。近五年在ACM MM、CVPR、ACL、AAAI等CCF A类会议及TIP、TMM等中科院一区期刊发表论文40余篇。ESI高被引/热点论文1篇。申请/授权发明专利10余件。主持国家自然科学基金及省部级项目5项，主研国家级重大重点项目4项，省部级重大重点项1项。
+                    </div>
+                </div>
+            </div>
+
+            <div class="teacher-card">
+                <div class="teacher-photo">
+                        <img src="static/photo/chengpeng.jpg" alt="程鹏" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="teacher-info">
+                    <div class="name-title">
+                        <div class="teacher-name">程鹏</div>
+                        <div class="talent-title">研究员</div>
+                    </div>
+                    
+                    <div class="research-area">
+                        <strong>研究方向：</strong>时空数据管理、向量数据管理、空间智能
+                    </div>
+                    
+                    <div class="teacher-email">
+                        <a href="mailto:cspcheng@tongji.edu.cn">
+                            <i class="fas fa-envelope"></i>cspcheng@tongji.edu.cn
+                        </a>
+                    </div>
+                    
+                    <div class="teacher-intro">
+                        同济大学计算机科学与技术学院研究员，硕博导师。在数据库领域顶级会议和期刊SIGMOD、VLDB、ICDE、TKDE发表40余篇论文，获ACM CIKM 2021数据挖掘国际顶级学术会议的最佳论文提名，VLDB 2014国际会议的杰出演示奖。担任VLDB、ICDE、KDD、DASFAA的程序委员，ICDE 2025领域主席，TKDE、WWWJ、VLDBJ审稿人，主持国家自然科学基金青年基金，上海市浦江人才计划项目，蚂蚁集团校企合作项目。参与科技部科技创新2030-“新一代人工智能”重大项目一项、阿里巴巴集团校企合作项目两项。
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-bottom">
+            <p>Copyright © 2025 同济多模态空间智能团队. 保留所有权利</p>
+        </div>
+    </footer>
+    
+    <script>
+        // 选项卡功能
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // 卡片悬停效果增强
+        const cards = document.querySelectorAll('.teacher-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.zIndex = '10';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.zIndex = '1';
+            });
+        });
+    </script>
+</body>
+</html>

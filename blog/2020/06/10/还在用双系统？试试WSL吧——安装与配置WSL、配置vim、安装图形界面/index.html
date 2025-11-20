@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文主要介绍Windows Subsystem for Linux（WSL）的安装与配置，以及vim的配置和图形界面的安装。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="还在用双系统？试试WSL吧——安装与配置WSL、配置vim、安装图形界面">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/06/10/%E8%BF%98%E5%9C%A8%E7%94%A8%E5%8F%8C%E7%B3%BB%E7%BB%9F%EF%BC%9F%E8%AF%95%E8%AF%95WSL%E5%90%A7%E2%80%94%E2%80%94%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AEWSL%E3%80%81%E9%85%8D%E7%BD%AEvim%E3%80%81%E5%AE%89%E8%A3%85%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="本文主要介绍Windows Subsystem for Linux（WSL）的安装与配置，以及vim的配置和图形界面的安装。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/833855aaa1dd66fc12452799bc559b23.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/85194be9a0339c49237010cb9647b5dc.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/30a1ede4c12f8a1aa2b2b2e0d49468a1.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/13d3bebe070b437bee742488e73b60b2.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/20bfebce20118a2e607ed818276d1979.png">
+<meta property="article:published_time" content="2020-06-10T03:21:35.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.367Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="运维">
+<meta property="article:tag" content="WSL">
+<meta property="article:tag" content="Vim">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/833855aaa1dd66fc12452799bc559b23.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/06/10/%E8%BF%98%E5%9C%A8%E7%94%A8%E5%8F%8C%E7%B3%BB%E7%BB%9F%EF%BC%9F%E8%AF%95%E8%AF%95WSL%E5%90%A7%E2%80%94%E2%80%94%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AEWSL%E3%80%81%E9%85%8D%E7%BD%AEvim%E3%80%81%E5%AE%89%E8%A3%85%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>还在用双系统？试试WSL吧——安装与配置WSL、配置vim、安装图形界面 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/06/10/%E8%BF%98%E5%9C%A8%E7%94%A8%E5%8F%8C%E7%B3%BB%E7%BB%9F%EF%BC%9F%E8%AF%95%E8%AF%95WSL%E5%90%A7%E2%80%94%E2%80%94%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AEWSL%E3%80%81%E9%85%8D%E7%BD%AEvim%E3%80%81%E5%AE%89%E8%A3%85%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          还在用双系统？试试WSL吧——安装与配置WSL、配置vim、安装图形界面
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-10 11:21:35" itemprop="dateCreated datePublished" datetime="2020-06-10T11:21:35+08:00">2020-06-10</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E8%BF%90%E7%BB%B4/" itemprop="url" rel="index"><span itemprop="name">运维</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+            <div class="post-description">本文主要介绍Windows Subsystem for Linux（WSL）的安装与配置，以及vim的配置和图形界面的安装。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Windows Subsystem for Linux（简称WSL）是一个在Windows
+10上能够运行原生Linux二进制可执行文件（ELF格式）的兼容层。它是由微软与Canonical公司合作开发，其目标是使纯正的Ubuntu
+14.04 "Trusty
+Tahr"映像能下载和解压到用户的本地计算机，并且映像内的工具和实用工具能在此子系统上原生运行。</p>
+<h1 id="安装与配置wsl">安装与配置WSL</h1>
+<h2 id="安装wsl">安装WSL</h2>
+<p>安装非常简单，在微软商店里搜索ubuntu下载即可。 <img src="https://i-blog.csdnimg.cn/blog_migrate/833855aaa1dd66fc12452799bc559b23.png" alt="在这里插入图片描述">
+安装完之后，在命令行输入<code>wsl</code>就可以启动。</p>
+<p>第一次启动时会要求输入用户名和密码，用户名首字母不能大写，输入完就可以正常使用了。</p>
+<h2 id="换源">换源</h2>
+<p>由于官方服务器在国外，我们需要更换国内源以加快下载速度。</p>
+<ol type="1">
+<li><p>备份官方源 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /etc/apt</span><br><span class="line">sudo sources.list sources-backup.list</span><br></pre></td></tr></table></figure></p></li>
+<li><p>更换国内源 这里推荐用清华同方、网易和阿里的源。 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim sources.list</span><br></pre></td></tr></table></figure>
+输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse</span><br></pre></td></tr></table></figure></p></li>
+</ol>
+<p>之后输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt upgrade</span><br></pre></td></tr></table></figure> 更新完成。</p>
+<hr>
+<h1 id="配置vim">配置vim</h1>
+<p>vim的配置文件有两个： <code>/etc/vim/vimrc</code>: 全局配置
+<code>/usr/share/vim/vimrc</code>: 用户配置</p>
+<p>此处我选择修改全局配置。</p>
+<h2 id="基础配置">基础配置</h2>
+<p>输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /etc/vim</span><br><span class="line">sudo vim vimrc</span><br></pre></td></tr></table></figure></p>
+<p>加入一下内容： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">" 去掉边框</span><br><span class="line">set go=</span><br><span class="line">" 设置背景色，每种配色有两种方案，一个light、一个dark</span><br><span class="line">set background=dark</span><br><span class="line">" 打开语法高亮</span><br><span class="line">syntax on</span><br><span class="line">" 显示行号 </span><br><span class="line">set number</span><br><span class="line">" 设置缩进有三个取值cindent(c风格)、smartindent(智能模式)、autoindent(简单的与上一行保持一致)</span><br><span class="line">set cindent</span><br><span class="line">" 在windows版本中vim的退格键模式默认与vi兼容，与我们的使用习惯不太符合，下边这条可以改过来</span><br><span class="line">set backspace=indent,eol,start</span><br><span class="line">" 用空格键替换制表符</span><br><span class="line">:set expandtab</span><br><span class="line">" 制表符占2个空格</span><br><span class="line">set tabstop=2</span><br><span class="line">" 默认缩进2个空格大小</span><br><span class="line">set shiftwidth=2</span><br><span class="line">" 增量式搜索</span><br><span class="line">set incsearch</span><br><span class="line">" 高亮搜索</span><br><span class="line">set hlsearch</span><br></pre></td></tr></table></figure>
+笔者个人不太喜欢配置许多复杂的内容，这些都是比较基础的配置。</p>
+<p>个人习惯缩进2个空格，因为这是google的风格规范，如果你不喜欢这样，可以调成4个空格。</p>
+<h2 id="与windows系统剪贴板通信">与windows系统剪贴板通信</h2>
+<p>vim非常让人头疼的一点，就是vim的复制粘贴是在自己的寄存器，而不在系统剪贴板，这使得复制代码和其他内容十分麻烦。</p>
+<p>接下来我们将配置vim与windows系统剪贴板的交互，<strong>此配置只适用于WSL！</strong></p>
+<ol type="1">
+<li>查看vim是否支持剪贴板 输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim --version | grep clipboard</span><br></pre></td></tr></table></figure> <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">koorye@LAPTOP-UHN3B0S8:/etc/vim$ vim --version | grep clipboard</span><br><span class="line">+clipboard         +keymap            +printer           +vertsplit</span><br><span class="line">+emacs_tags        +mouse_gpm         -sun_workshop      +xterm_clipboard</span><br></pre></td></tr></table></figure>
+返回<code>+clipboard</code>，说明支持；如果不支持，我们需要安装其他内容。</li>
+</ol>
+<p>不支持，解决方案： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install vim-gtk</span><br></pre></td></tr></table></figure></p>
+<p>安装完vim-gtk之后，再次检查即会支持。</p>
+<p>WSL下使用系统剪贴板的原理，在于配置映射调用Windows系统的clip.exe和paste.exe可执行文件。</p>
+<p>Windows系统中自带clip.exe，但没有paste.exe，需要我们另外下载：<a target="_blank" rel="noopener" href="https://www.c3scripts.com/tutorials/msdos/paste.zip">paste.exe下载</a></p>
+<p>下载之后放到<code>C:/Windows/System32</code>目录下。</p>
+<p>之后在vimrc配置文件中配置映射： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">83 " 设置剪贴命令</span><br><span class="line">84 map ;y :!/mnt/c/Windows/System32/clip.exe &lt;cr&gt;u</span><br><span class="line">85 map ;p :read !/mnt/c/Windows/System32/paste.exe &lt;cr&gt;i&lt;bs&gt;&lt;esc&gt;l</span><br><span class="line">86 map! ;p &lt;esc&gt;:read !/mnt/c/Windows/System32/paste.exe &lt;cr&gt;i&lt;bs&gt;&lt;esc&gt;l</span><br></pre></td></tr></table></figure></p>
+<p>这样，就可以使用<code>;y</code>和<code>;p</code>来进行复制粘贴了。</p>
+<h2 id="配置配色主题">配置配色主题</h2>
+<p>原生的vim配色不太好看，说到配色主题，笔者喜欢用molokai。</p>
+<p>先把主题clone下来： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone git@github.com:tomasr/molokai.git</span><br></pre></td></tr></table></figure></p>
+<p>之后把配色文件复制到<code>/etc/vim/colors</code>中，如果没有colors目录就新建一个：
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp molokai/colors/molokai.vim /etc/vim/colors/molokai.vim</span><br></pre></td></tr></table></figure></p>
+<p>最后在vimrc配置文件中加入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">colorscheme molokai</span><br></pre></td></tr></table></figure></p>
+<p>配色配置到这里就结束了，但由于笔者个人喜欢用自己花哨的背景，需要修改配色文件。</p>
+<p>将背景从黑色改为透明，并修改一些深色配色（如注释从灰黑色改为绿色，以便看清）。</p>
+<p>打开配色文件： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/vim/colors/molokai.vim</span><br></pre></td></tr></table></figure></p>
+<p>在结尾加入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">hi Delimiter ctermfg=red</span><br><span class="line">hi Comment ctermfg=green</span><br><span class="line">hi LineNr ctermfg=180 ctermbg=none</span><br><span class="line">hi Normal ctermfg=252 ctermbg=none</span><br></pre></td></tr></table></figure>
+分别是括号等（定界符）、注释、侧边栏（行号显示）、背景的设置。</p>
+<p>配置完之后的效果： <img src="https://i-blog.csdnimg.cn/blog_migrate/85194be9a0339c49237010cb9647b5dc.png" alt="在这里插入图片描述">
+你说你的cmd怎么不一样？那就去微软商店下载一个windows terminal吧。</p>
+<hr>
+<h1 id="安装图形界面">安装图形界面</h1>
+<p>传统的命令行界面我们已经配置的差不多了，但笔者个人就喜欢花里胡哨的，非要整个图形界面才满意。</p>
+<p>安装xfce4和显卡驱动，输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install xfce4-session xfce4 xorg</span><br></pre></td></tr></table></figure></p>
+<p>这个地方如果报错，可能是因为当前的镜像没有软件源，此时请更换回官方源下载。</p>
+<p>之后配置<code>~/.bashrc</code>文件： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim ~/.bashrc</span><br></pre></td></tr></table></figure> 在开头添加：
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export DISPLAY=localhost:0</span><br></pre></td></tr></table></figure></p>
+<p>然后搜索下载XLaunch，启动XLaunch.exe： <img src="https://i-blog.csdnimg.cn/blog_migrate/30a1ede4c12f8a1aa2b2b2e0d49468a1.png" alt="在这里插入图片描述">
+根据自己的喜好选择窗口类型，然后一路点击默认配置，直到启动窗口： <img src="https://i-blog.csdnimg.cn/blog_migrate/13d3bebe070b437bee742488e73b60b2.png" alt="在这里插入图片描述"> 此时窗口是一片雪花。</p>
+<p>在命令行中输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo startxfce4</span><br></pre></td></tr></table></figure> 桌面就成功启动了！ <img src="https://i-blog.csdnimg.cn/blog_migrate/20bfebce20118a2e607ed818276d1979.png" alt="在这里插入图片描述"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E8%BF%90%E7%BB%B4/" rel="tag"># 运维</a>
+              <a href="/blog/tags/WSL/" rel="tag"># WSL</a>
+              <a href="/blog/tags/Vim/" rel="tag"># Vim</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/06/09/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E8%BF%9B%E9%98%B6%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E9%A2%84%E6%9F%A5%E4%B8%8E%E5%88%86%E7%BB%84/" rel="prev" title="正则表达式的进阶用法——预查与分组">
+      <i class="fa fa-chevron-left"></i> 正则表达式的进阶用法——预查与分组
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/06/16/%E6%B5%85%E8%B0%88%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C(CNN)%E2%80%94%E2%80%94%E5%8D%B7%E7%A7%AF%E3%80%81%E6%89%B9%E6%A0%87%E5%87%86%E5%8C%96%E3%80%81%E6%B1%A0%E5%8C%96%E3%80%81%E5%A4%B1%E6%B4%BB/" rel="next" title="浅谈卷积神经网络(CNN)——卷积、批标准化、池化、失活">
+      浅谈卷积神经网络(CNN)——卷积、批标准化、池化、失活 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AEwsl"><span class="nav-number">1.</span> <span class="nav-text">安装与配置WSL</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85wsl"><span class="nav-number">1.1.</span> <span class="nav-text">安装WSL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8D%A2%E6%BA%90"><span class="nav-number">1.2.</span> <span class="nav-text">换源</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEvim"><span class="nav-number">2.</span> <span class="nav-text">配置vim</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE"><span class="nav-number">2.1.</span> <span class="nav-text">基础配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8Ewindows%E7%B3%BB%E7%BB%9F%E5%89%AA%E8%B4%B4%E6%9D%BF%E9%80%9A%E4%BF%A1"><span class="nav-number">2.2.</span> <span class="nav-text">与windows系统剪贴板通信</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E9%85%8D%E8%89%B2%E4%B8%BB%E9%A2%98"><span class="nav-number">2.3.</span> <span class="nav-text">配置配色主题</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E5%9B%BE%E5%BD%A2%E7%95%8C%E9%9D%A2"><span class="nav-number">3.</span> <span class="nav-text">安装图形界面</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

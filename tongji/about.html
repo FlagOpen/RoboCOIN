@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同济多模态空间智能团队</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 蓝色导航栏样式 */
+        header {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            background: white;
+            color: #2a5da0;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 12px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .logo-text h2 {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav li {
+            margin: 0 8px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            padding: 8px 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        /* Banner部分 */
+        .banner {
+            position: relative;
+            margin: 25px 0 30px;
+            height: 420px;
+            overflow: hidden;
+            background: linear-gradient(to right, #19376d, #24509e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-direction: column;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+        }
+        
+        .photo-placeholder {
+            font-size: 68px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .banner-text {
+            text-align: center;
+            max-width: 680px;
+            padding: 0 25px;
+        }
+        
+        .banner-text h3 {
+            font-size: 38px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .banner-text p {
+            font-size: 19px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        /* 主要内容区 */
+        .main-content {
+            background: #fff;
+            padding: 35px;
+            margin-bottom: 45px;
+            /* box-shadow: 0 3px 12px rgba(0,0,0,0.08); */
+        }
+        
+        .main-content h3 {
+            color: #1a4580;
+            font-size: 28px;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            /* border-bottom: 2px solid #d5e3f8; */
+            font-weight: 650;
+        }
+        
+        .overview-content p {
+            margin-bottom: 22px;
+            text-align: justify;
+            font-size: 17px;
+            line-height: 1.8;
+            color: #444;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 22px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: #f0f6ff;
+            padding: 22px;
+            text-align: center;
+            border: 1px solid #e1ebff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(26, 69, 128, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 30px;
+            font-weight: 750;
+            color: #1a4580;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card div:last-child {
+            font-size: 15px;
+            color: #555;
+        }
+        
+        .journals {
+            background: #f9fbff;
+            padding: 25px;
+            margin: 35px 0;
+            border: 1px solid #e1ebff;
+        }
+        
+        .journals h4 {
+            color: #1a4580;
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .journal-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .journal-item {
+            background: #e1ebff;
+            padding: 8px 15px;
+            font-size: 14.5px;
+            color: #1a4580;
+        }
+        
+        /* 科研成果部分 */
+        .achievements {
+            background: #f0f6ff;
+            padding: 25px;
+            margin: 30px 0;
+            border: 1px solid #d5e3f8;
+        }
+        
+        .achievements h4 {
+            color: #1a4580;
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .badge {
+            background: linear-gradient(to right, #1a4580, #2a5da0);
+            color: white;
+            padding: 8px 18px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .badge i {
+            margin-right: 10px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 980px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .logo-text h1 {
+                font-size: 18px;
+            }
+            
+            .logo-text h2 {
+                font-size: 12px;
+            }
+            
+            nav ul {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .banner {
+                height: 320px;
+            }
+            
+            .banner-text h3 {
+                font-size: 30px;
+            }
+            
+            .stat-card {
+                padding: 18px 12px;
+            }
+            
+            .main-content {
+                padding: 25px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .banner {
+                height: 280px;
+            }
+            
+            .banner-text h3 {
+                font-size: 26px;
+            }
+            
+            .banner-text p {
+                font-size: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .badge {
+                padding: 6px 14px;
+                font-size: 14px;
+            }
+        }
+
+        .about-container {
+            padding: 50px 10%;
+        }
+
+        .about-title {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 24px;
+            color: #1a4580;
+        }
+
+        .about-content {
+            margin: 15px 0;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        footer {
+            background: linear-gradient(to right, #1a4580, #19376d);
+            color: rgba(255,255,255,0.9);
+            padding: 20px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <!-- 蓝色导航栏 -->
+    <header>
+        <div class="container nav-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <!-- <i class="fas fa-brain"></i> -->
+                     <img src="static/logo/tongji.png" alt="Tongji Logo" style="width: 100%; height: 100%; object-fit: cover;"></img>
+                </div>
+                <div class="logo-text">
+                    <h1>同济多模态空间智能团队</h1>
+                    <h2>TONGJI MULTIMODAL SPATIAL INTELLIGENCE</h2>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">网站首页</a></li>
+                    <li><a href="member.html">团队成员</a></li>
+                    <li><a href="honor.html">团队荣誉</a></li>
+                    <li><a href="paper.html">学术论文</a></li>
+                    <!-- <li><a href="project.html">科研项目</a></li> -->
+                    <li><a href="about.html">关于我们</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="about-container">
+        <h2 class="about-title">同济多模态空间智能团队</h2>
+
+        <p class="about-content">团队致力于计算机科学与技术学科在智能信息处理方向的学科建设，团队建设，人才培养，科学研究与技术应用。建设的目标是从事国际最前沿、最顶尖的学术研究与系统实现，同时培养杰出人才，承担国家重大科研项目和转化科研成果。中心将多媒体计算与传统学科、新兴学科、人文社科等领域形成交叉、渗透和融合，形成具有国际显示度的创新性研究成果。通过跨学科、跨领域、跨国家合作，构筑在多媒体计算领域的创新顶尖人才高地，努力建成国家高水平科技智库，冲击建设国际一流科研基地，并引领多媒体计算领域在国际上的未来发展方向。实现“产学研”一体化的资源整合，面向国家重大需求，大力推动多媒体计算领域的研发及成果转化，切实服务于国民经济主战场。力争实现四个重大：“国际重大学术成果、国家重大科技支持、国家重大科技奖励、国民重大科学成果应用”。</p>
+
+        <p class="about-content">同济多模态空间智能团队致力于计算机科学与技术、人工智能等学科在多媒体智能信息处理方面的学科建设，团队建设，人才培养，科学研究与技术应用。建设的目标是从事国际最前沿、最顶尖的学术研究与系统实现，同时培养杰出人才，承担国家重大科研项目和转化科研成果。团队目前有ACM Fellow 1人，IEEE Fellow 1人，OSA Fellow 1人，国家级人才3人，教授或研究员6人。团队核心成员均来自澳大利亚、新加坡或日本等国家的海外著名大学（世界前200名大学）的博士。自中心成立以来，已形成一支以海外归国博士为学术骨干和高素质研究生为后备力量的有活力的学术梯队。团队主要从事多媒体智能搜索和理解、计算机视觉、信息检索、数据库、具身智能等领域的国际一流研究。团队在TPAMI、ACM MM、CVPR、ICCV、AAAI、VLDB、ICDE、ACM TOIS、IEEE TIP、IEEE TKDE、IEEE TMM等CCF A类/中科院JCR二区以上的顶级会议和期刊上发表论文​​数百余篇，获得​​10多项国际会议和期刊最佳论文奖项​，如ICPR最佳论文奖、SIGIR最佳论文提名奖、ADC最佳学生论文奖、ACM CIKM最佳论文提名和VLDB杰出演示奖等。这些研究成果在多媒体、计算机视觉、大数据、人工智能等研究方向产生了较大的国际影响力，多篇论文入选ESI高被引/热点论文。团队承担过​​2项国家科技部科技创新2030—“新一代人工智能”重大项目​、​​多项国家自然基金重点项目，以及​​10多项国家自然科学基金面上和青年项目。</p>
+
+        <p class="about-content">邮箱：xxxxxxxxxxx@xxx.cn</p>
+
+        <p class="about-content">电话：xxx-xxxxxxxx</p>
+
+        <p class="about-content">地址：上海市嘉定区曹安公路4800号</p>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-bottom">
+            <p>Copyright © 2025 同济多模态空间智能团队. 保留所有权利</p>
+        </div>
+    </footer>
+
+    <script>
+        // 移动端菜单切换
+        document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
+            const nav = document.querySelector('nav ul');
+            nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+        });
+        
+        // 导航项点击效果
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // 数据卡片悬停效果
+        const cards = document.querySelectorAll('.stat-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.zIndex = '10';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.zIndex = '1';
+            });
+        });
+    </script>
+</body>
+</html>

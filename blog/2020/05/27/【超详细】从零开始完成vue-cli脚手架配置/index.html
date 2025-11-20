@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"koorye.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在前后端分离成为主流的今天，Vue框架是前端的主流框架之一。Vue是一套用于构建用户界面的渐进式框架，Vue的核心库只关注视图层，易于上手，且便于与第三方库或既有项目整合。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【超详细】从零开始完成vue-cli脚手架配置">
+<meta property="og:url" content="https://koorye.github.io/blog/2020/05/27/%E3%80%90%E8%B6%85%E8%AF%A6%E7%BB%86%E3%80%91%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%AE%8C%E6%88%90vue-cli%E8%84%9A%E6%89%8B%E6%9E%B6%E9%85%8D%E7%BD%AE/index.html">
+<meta property="og:site_name" content="吴世涵的博客">
+<meta property="og:description" content="在前后端分离成为主流的今天，Vue框架是前端的主流框架之一。Vue是一套用于构建用户界面的渐进式框架，Vue的核心库只关注视图层，易于上手，且便于与第三方库或既有项目整合。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/d75306576f44ef0f6e264c93b7a432c6.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/3a33ea856755819a4aafbc8d79772dc9.png">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/blog_migrate/1c6238821af090bf4794b76e658e6498.png">
+<meta property="article:published_time" content="2020-05-26T16:44:36.000Z">
+<meta property="article:modified_time" content="2025-03-04T03:39:21.360Z">
+<meta property="article:author" content="吴世涵">
+<meta property="article:tag" content="前端">
+<meta property="article:tag" content="Vue">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/blog_migrate/d75306576f44ef0f6e264c93b7a432c6.png">
+
+<link rel="canonical" href="https://koorye.github.io/blog/2020/05/27/%E3%80%90%E8%B6%85%E8%AF%A6%E7%BB%86%E3%80%91%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%AE%8C%E6%88%90vue-cli%E8%84%9A%E6%89%8B%E6%9E%B6%E9%85%8D%E7%BD%AE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>【超详细】从零开始完成vue-cli脚手架配置 | 吴世涵的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<style>mjx-container[jax="SVG"] {
+  direction: ltr;
+}
+
+mjx-container[jax="SVG"] > svg {
+  overflow: visible;
+}
+
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+mjx-container[jax="SVG"][justify="left"] {
+  text-align: left;
+}
+
+mjx-container[jax="SVG"][justify="right"] {
+  text-align: right;
+}
+
+g[data-mml-node="merror"] > g {
+  fill: red;
+  stroke: red;
+}
+
+g[data-mml-node="merror"] > rect[data-background] {
+  fill: yellow;
+  stroke: none;
+}
+
+g[data-mml-node="mtable"] > line[data-line] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > rect[data-frame] {
+  stroke-width: 70px;
+  fill: none;
+}
+
+g[data-mml-node="mtable"] > .mjx-dashed {
+  stroke-dasharray: 140;
+}
+
+g[data-mml-node="mtable"] > .mjx-dotted {
+  stroke-linecap: round;
+  stroke-dasharray: 0,140;
+}
+
+g[data-mml-node="mtable"] > svg {
+  overflow: visible;
+}
+
+[jax="SVG"] mjx-tool {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+[jax="SVG"] mjx-tool > mjx-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+mjx-tool > mjx-tip {
+  display: inline-block;
+  padding: .2em;
+  border: 1px solid #888;
+  font-size: 70%;
+  background-color: #F8F8F8;
+  color: black;
+  box-shadow: 2px 2px 5px #AAAAAA;
+}
+
+g[data-mml-node="maction"][data-toggle] {
+  cursor: pointer;
+}
+
+mjx-status {
+  display: block;
+  position: fixed;
+  left: 1em;
+  bottom: 1em;
+  min-width: 25%;
+  padding: .2em .4em;
+  border: 1px solid #888;
+  font-size: 90%;
+  background-color: #F8F8F8;
+  color: black;
+}
+
+foreignObject[data-mjx-xml] {
+  font-family: initial;
+  line-height: normal;
+  overflow: visible;
+}
+
+.MathJax path {
+  stroke-width: 3;
+}
+
+mjx-container[display="true"] {
+  overflow: auto hidden;
+}
+
+mjx-container[display="true"] + br {
+  display: none;
+}
+</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">吴世涵的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://koorye.github.io/blog/2020/05/27/%E3%80%90%E8%B6%85%E8%AF%A6%E7%BB%86%E3%80%91%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%AE%8C%E6%88%90vue-cli%E8%84%9A%E6%89%8B%E6%9E%B6%E9%85%8D%E7%BD%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+      <meta itemprop="name" content="吴世涵">
+      <meta itemprop="description" content="来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="吴世涵的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【超详细】从零开始完成vue-cli脚手架配置
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-27 00:44:36" itemprop="dateCreated datePublished" datetime="2020-05-27T00:44:36+08:00">2020-05-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%89%8D%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">前端</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+            <div class="post-description">在前后端分离成为主流的今天，Vue框架是前端的主流框架之一。Vue是一套用于构建用户界面的渐进式框架，Vue的核心库只关注视图层，易于上手，且便于与第三方库或既有项目整合。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在前后端分离成为主流的今天，vue框架是前端的主流框架之一，学会使用vue脚手架的配置是前端不可或缺的技术。</p>
+<h1 id="安装nodejs">安装nodejs</h1>
+<p>直接前往官网下载安装即可：</p>
+<p><a target="_blank" rel="noopener" href="http://nodejs.cn/download/">nodejs下载</a> ## 配置环境变量
+如果你是windows系统，需要配置环境变量。</p>
+<p>打开：</p>
+<p>计算机（右键）<span class="math inline"><mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.025ex;" xmlns="http://www.w3.org/2000/svg" width="2.262ex" height="1.181ex" role="img" focusable="false" viewBox="0 -511 1000 522"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mo"><path data-c="2192" d="M56 237T56 250T70 270H835Q719 357 692 493Q692 494 692 496T691 499Q691 511 708 511H711Q720 511 723 510T729 506T732 497T735 481T743 456Q765 389 816 336T935 261Q944 258 944 250Q944 244 939 241T915 231T877 212Q836 186 806 152T761 85T740 35T732 4Q730 -6 727 -8T711 -11Q691 -11 691 0Q691 7 696 25Q728 151 835 230H70Q56 237 56 250Z"></path></g></g></g></svg></mjx-container></span> 属性
+<span class="math inline"><mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.025ex;" xmlns="http://www.w3.org/2000/svg" width="2.262ex" height="1.181ex" role="img" focusable="false" viewBox="0 -511 1000 522"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mo"><path data-c="2192" d="M56 237T56 250T70 270H835Q719 357 692 493Q692 494 692 496T691 499Q691 511 708 511H711Q720 511 723 510T729 506T732 497T735 481T743 456Q765 389 816 336T935 261Q944 258 944 250Q944 244 939 241T915 231T877 212Q836 186 806 152T761 85T740 35T732 4Q730 -6 727 -8T711 -11Q691 -11 691 0Q691 7 696 25Q728 151 835 230H70Q56 237 56 250Z"></path></g></g></g></svg></mjx-container></span> 高级系统设置 <span class="math inline"><mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.025ex;" xmlns="http://www.w3.org/2000/svg" width="2.262ex" height="1.181ex" role="img" focusable="false" viewBox="0 -511 1000 522"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mo"><path data-c="2192" d="M56 237T56 250T70 270H835Q719 357 692 493Q692 494 692 496T691 499Q691 511 708 511H711Q720 511 723 510T729 506T732 497T735 481T743 456Q765 389 816 336T935 261Q944 258 944 250Q944 244 939 241T915 231T877 212Q836 186 806 152T761 85T740 35T732 4Q730 -6 727 -8T711 -11Q691 -11 691 0Q691 7 696 25Q728 151 835 230H70Q56 237 56 250Z"></path></g></g></g></svg></mjx-container></span> 高级 <span class="math inline"><mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -0.025ex;" xmlns="http://www.w3.org/2000/svg" width="2.262ex" height="1.181ex" role="img" focusable="false" viewBox="0 -511 1000 522"><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mo"><path data-c="2192" d="M56 237T56 250T70 270H835Q719 357 692 493Q692 494 692 496T691 499Q691 511 708 511H711Q720 511 723 510T729 506T732 497T735 481T743 456Q765 389 816 336T935 261Q944 258 944 250Q944 244 939 241T915 231T877 212Q836 186 806 152T761 85T740 35T732 4Q730 -6 727 -8T711 -11Q691 -11 691 0Q691 7 696 25Q728 151 835 230H70Q56 237 56 250Z"></path></g></g></g></svg></mjx-container></span> 环境变量</p>
+<p>在用户变量（或系统变量，系统变量影响所有用户，容易产生全局污染，因此笔者一般编辑用户变量）中添加<code>NODE_PATH</code>，指定nodejs的安装路径:</p>
+<p><img src="https://i-blog.csdnimg.cn/blog_migrate/d75306576f44ef0f6e264c93b7a432c6.png" alt="在这里插入图片描述"> 接着编辑Path变量，添加：</p>
+<p><code>%NODE_PATH%\node_modules</code>，指定npm包管理器位置
+<code>%NODE_PATH%\npm_global</code>，指定npm下载的包位置，这个路径要在后续npm中再行配置
+<img src="https://i-blog.csdnimg.cn/blog_migrate/3a33ea856755819a4aafbc8d79772dc9.png" alt="在这里插入图片描述"> ## 测试
+输入<code>node -v</code>和<code>npm -v</code>，返回版本号，则配置成功：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">PS C:\Users\a1311&gt; node -v</span><br><span class="line">v12.16.3</span><br><span class="line">PS C:\Users\a1311&gt; npm -v</span><br><span class="line">6.14.4</span><br></pre></td></tr></table></figure>
+<hr>
+<h1 id="配置npm">配置npm</h1>
+<h2 id="配置仓库路径">配置仓库路径</h2>
+<p>输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm config set prefix "包安装路径"</span><br><span class="line">npm config set cache "包下载缓存路径"</span><br></pre></td></tr></table></figure></p>
+<p>这里的路径根据自己的意愿指定即可，命令没有任何回应，则代表配置成功。</p>
+<h2 id="配置cnpm">配置cnpm</h2>
+<p>之所以配置cnpm，是因为npm的服务器在国外，速度过慢，所以我们平时下载包时一般都通过cnpm淘宝镜像进行。</p>
+<p>输入： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g cnpm --registry=https://registry.npm.taobao.org</span><br></pre></td></tr></table></figure></p>
+<p>等待下载安装即可，cnpm将被安装到之前<code>set prefix</code>配置的包安装路径下。
+## 测试 输入<code>npm config list</code>.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">PS C:\Users\a1311&gt; npm config list</span><br><span class="line">; cli configs</span><br><span class="line">metrics-registry = "https://registry.npm.taobao.org/"</span><br><span class="line">scope = ""</span><br><span class="line">user-agent = "npm/6.14.4 node/v12.16.3 win32 x64"</span><br><span class="line"></span><br><span class="line">; userconfig C:\Users\a1311\.npmrc</span><br><span class="line">cache = "D:\\software\\system\\nodejs\\npm_cache"</span><br><span class="line">prefix = "D:\\software\\system\\nodejs\\npm_global"</span><br><span class="line">registry = "https://registry.npm.taobao.org/"</span><br><span class="line"></span><br><span class="line">; builtin config undefined</span><br><span class="line"></span><br><span class="line">; node bin location = D:\software\system\nodejs\node.exe</span><br><span class="line">; cwd = C:\Users\a1311</span><br><span class="line">; HOME = C:\Users\a1311</span><br><span class="line">; "npm config ls -l" to show all defaults.</span><br></pre></td></tr></table></figure>
+<p>注意到cache、prefix和metrics-registry已经更改。</p>
+<p>输入<code>cnpm -v</code>. <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PS C:\Users\a1311&gt; cnpm -v</span><br><span class="line">cnpm@6.1.1 (D:\software\system\nodejs\npm_global\node_modules\cnpm\lib\parse_argv.js)</span><br><span class="line">npm@6.14.5 (D:\software\system\nodejs\npm_global\node_modules\cnpm\node_modules\npm\lib\npm.js)</span><br><span class="line">node@12.16.3 (D:\software\system\nodejs\node.exe)</span><br><span class="line">npminstall@3.27.0 (D:\software\system\nodejs\npm_global\node_modules\cnpm\node_modules\npminstall\lib\index.js)</span><br><span class="line">prefix=D:\software\system\nodejs\npm_global</span><br><span class="line">win32 x64 10.0.18363</span><br><span class="line">registry=https://r.npm.taobao.org</span><br></pre></td></tr></table></figure></p>
+<p>显示出关于cnpm的版本和其他详细信息，则配置成功。注意此处的prefix就是之前<code>set prefix</code>指定的路径。</p>
+<hr>
+<h1 id="安装与使用vue-cli">安装与使用vue-cli</h1>
+<h2 id="安装vue-cli">安装vue-cli</h2>
+<p>输入<code>cnpm install @vue/cli</code>，会自动下载安装最新版vue-cli脚手架工具，输入<code>vue -V</code>显示最新版本号，说明安装成功。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">PS C:\Users\a1311&gt; cnpm install -g @vue/cli</span><br><span class="line">Downloading @vue/cli to D:\software\system\nodejs\npm_global\node_modules\@vue\cli_tmp</span><br><span class="line">Copying D:\software\system\nodejs\npm_global\node_modules\@vue\cli_tmp\_@vue_cli@4.3.1@@vue\cli to D:\software\system\nodejs\npm_global\node_modules\@vue\cli</span><br><span class="line">Installing @vue/cli's dependencies to D:\software\system\nodejs\npm_global\node_modules\@vue\cli/node_modules</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line">All packages installed (1042 packages installed from npm registry, used 28s(network 26s), speed 1.41MB/s, json 907(2.35MB), tarball 34.48MB)</span><br><span class="line">[@vue/cli@4.3.1] link D:\software\system\nodejs\npm_global\vue@ -&gt; D:\software\system\nodejs\npm_global\node_modules\@vue\cli\bin\vue.js</span><br><span class="line"></span><br><span class="line">PS C:\Users\a1311&gt; vue -V</span><br><span class="line">@vue/cli 4.3.1</span><br></pre></td></tr></table></figure>
+<p>此处笔者安装的是最新的4.3.1版本。</p>
+<p>如果想安装旧版，可以使用<code>cnpm install -g vue-cli</code>安装2.9.6版本。</p>
+<h2 id="卸载旧版vue-cli的坑">卸载旧版vue-cli的坑</h2>
+<p>输入<code>npm remove vue-cli</code>移除旧版vue-cli，如果执行后输入<code>vue -V</code>后仍会显示版本号，则说明vue-cli未被移除。</p>
+<p>此错误一般是<strong>环境变量配置错误</strong>导致，请仔细检查npm和cnpm的路径是否已在环境变量中配置。</p>
+<h2 id="使用脚手架搭建项目">使用脚手架搭建项目</h2>
+<p>先安装@vue/cli-init工具，输入<code>cnpm install -g @vue/cli-init</code>.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">PS C:\Users\a1311&gt; cnpm install -g @vue/cli-init</span><br><span class="line">Downloading @vue/cli-init to D:\software\system\nodejs\npm_global\node_modules\@vue\cli-init_tmp</span><br><span class="line">...</span><br><span class="line">All packages installed (249 packages installed from npm registry, used 11s(network 10s), speed 494.15kB/s, json 234(482.01kB), tarball 4.59MB)</span><br></pre></td></tr></table></figure>
+<p>在要创建项目的目录中，输入<code>vue init webpack 你的项目名</code>（webpack指定打包方式），之后按照提示操作：</p>
+<ul>
+<li>Project name: 项目名，不输入则指定括号里的默认值，下同</li>
+<li>Project description: 项目描述</li>
+<li>Author: 作者</li>
+<li>Vue build: 脱机/联机构建项目 一般选脱机(standalone)</li>
+<li>Install vue-router?
+使用vue-router路由？根据需求选择，一般选择yes</li>
+<li>Use ESLint to lint your code?
+使用eslint代码规范检测？笔者使用idea开发，故选择no</li>
+<li>Set up unit tests 启用unit测试？</li>
+<li>Setup e2e tests with Nightwatch? 启用e2e自动化测试？</li>
+<li>Should we run <code>npm install</code> for you after the project has
+been created? (recommended) npm 指定包管理工具，推荐npm
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line">PS D:\&gt; vue init webpack demo</span><br><span class="line"></span><br><span class="line">? Project name demo</span><br><span class="line">? Project description A Vue.js project</span><br><span class="line">? Author Koorye</span><br><span class="line">? Vue build standalone</span><br><span class="line">? Install vue-router? Yes</span><br><span class="line">? Use ESLint to lint your code? No</span><br><span class="line">? Set up unit tests No</span><br><span class="line">? Setup e2e tests with Nightwatch? No</span><br><span class="line">? Should we run `npm install` for you after the project has been created? (recommended) npm</span><br><span class="line"></span><br><span class="line">   vue-cli · Generated "demo".</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Installing project dependencies ...</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">========================</span></span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">core-js@2.6.11 postinstall D:\demo\node_modules\core-js</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">node -e <span class="string">"try{require('./postinstall')}catch(e){}"</span></span></span><br><span class="line"></span><br><span class="line">Thank you for using core-js ( https://github.com/zloirock/core-js ) for polyfilling JavaScript standard library!</span><br><span class="line"></span><br><span class="line">The project needs your help! Please consider supporting of core-js on Open Collective or Patreon:</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">https://opencollective.com/core-js</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">https://www.patreon.com/zloirock</span></span><br><span class="line"></span><br><span class="line">Also, the author of core-js ( https://github.com/zloirock ) is looking for a good job -)</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">ejs@2.7.4 postinstall D:\demo\node_modules\ejs</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">node ./postinstall.js</span></span><br><span class="line"></span><br><span class="line">Thank you for installing EJS: built with the Jake JavaScript build tool (https://jakejs.com/)</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">uglifyjs-webpack-plugin@0.4.6 postinstall D:\demo\node_modules\webpack\node_modules\uglifyjs-webpack-plugin</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">node lib/post_install.js</span></span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">added 1279 packages from 672 contributors in 62.825s</span><br><span class="line"></span><br><span class="line">29 packages are looking for funding</span><br><span class="line">  run `npm fund` for details</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Project initialization finished!</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">========================</span></span><br><span class="line"></span><br><span class="line">To get started:</span><br><span class="line"></span><br><span class="line">  cd demo</span><br><span class="line">  npm run dev</span><br><span class="line"></span><br><span class="line">Documentation can be found at https://vuejs-templates.github.io/webpack</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="启动项目">启动项目</h2>
+<p>输入<code>npm start</code>即可。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">PS D:\demo&gt; npm start</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">demo@1.0.0 start D:\demo</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">npm run dev</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">demo@1.0.0 dev D:\demo</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">webpack-dev-server --inline --progress --config build/webpack.dev.conf.js</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"> 13% </span><span class="language-bash">building modules 27/31 modules 4 active ...=template&amp;index=0!D:\demo\src\App.vue{ parser: <span class="string">"babylon"</span> } is deprecated; we now treat it as { parser: <span class="string">"babel"</span> }.</span></span><br><span class="line"><span class="meta prompt_"> 95% </span><span class="language-bash">emitting</span></span><br><span class="line"></span><br><span class="line"> DONE  Compiled successfully in 6563ms                                                                           0:42:06</span><br><span class="line"></span><br><span class="line"> I  Your application is running here: http://localhost:8080</span><br></pre></td></tr></table></figure>
+<p>可以看到，项目已经运行于本机8080端口，访问就可以看到项目啦。</p>
+<figure>
+<img src="https://i-blog.csdnimg.cn/blog_migrate/1c6238821af090bf4794b76e658e6498.png" alt="在这里插入图片描述">
+<figcaption aria-hidden="true">在这里插入图片描述</figcaption>
+</figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%89%8D%E7%AB%AF/" rel="tag"># 前端</a>
+              <a href="/blog/tags/Vue/" rel="tag"># Vue</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/05/08/vue%E7%BB%84%E4%BB%B6%E9%97%B4%E7%88%B6%E5%AD%90%E4%BC%A0%E5%80%BC%E3%80%81%E7%A5%96%E7%88%B6%E5%AD%90%E5%AD%99%E4%BC%A0%E5%80%BC%E5%92%8C%E4%BB%BB%E6%84%8F%E4%BC%A0%E5%80%BC%E7%9A%845%E7%A7%8D%E6%96%B9%E6%B3%95%EF%BC%8Cprop,emit,attrs,listeners%E4%BB%A5%E5%8F%8A%E4%B8%AD%E5%A4%AE%E4%BA%8B%E4%BB%B6%E6%80%BB%E7%BA%BF/" rel="prev" title="vue组件间父子传值、祖父子孙传值和任意传值的5种方法，prop,emit,attrs,listeners以及中央事件总线">
+      <i class="fa fa-chevron-left"></i> vue组件间父子传值、祖父子孙传值和任意传值的5种方法，prop,emit,attrs,listeners以及中央事件总线
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/06/05/%E3%80%90%E6%9C%80%E6%96%B0%E3%80%91Qt5.13%E5%8F%8A%E4%BB%A5%E4%B8%8A%E7%89%88%E6%9C%AC%E5%A6%82%E4%BD%95%E8%AE%BF%E9%97%AEMySQL%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="next" title="【最新】Qt5.13及以上版本如何访问MySQL数据库">
+      【最新】Qt5.13及以上版本如何访问MySQL数据库 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85nodejs"><span class="nav-number">1.</span> <span class="nav-text">安装nodejs</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEnpm"><span class="nav-number">2.</span> <span class="nav-text">配置npm</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E4%BB%93%E5%BA%93%E8%B7%AF%E5%BE%84"><span class="nav-number">2.1.</span> <span class="nav-text">配置仓库路径</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEcnpm"><span class="nav-number">2.2.</span> <span class="nav-text">配置cnpm</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%BF%E7%94%A8vue-cli"><span class="nav-number">3.</span> <span class="nav-text">安装与使用vue-cli</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85vue-cli"><span class="nav-number">3.1.</span> <span class="nav-text">安装vue-cli</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%B8%E8%BD%BD%E6%97%A7%E7%89%88vue-cli%E7%9A%84%E5%9D%91"><span class="nav-number">3.2.</span> <span class="nav-text">卸载旧版vue-cli的坑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E8%84%9A%E6%89%8B%E6%9E%B6%E6%90%AD%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="nav-number">3.3.</span> <span class="nav-text">使用脚手架搭建项目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8%E9%A1%B9%E7%9B%AE"><span class="nav-number">3.4.</span> <span class="nav-text">启动项目</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="吴世涵"
+      src="/blog/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">吴世涵</p>
+  <div class="site-description" itemprop="description">来自电子科技大学(UESTC)计算机科学与工程学院的硕士研究生</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">61</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Koorye" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:shihan.wu.koorye@outlook.com" title="E-Mail → mailto:shihan.wu.koorye@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      我的链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://koorye.github.io/" title="https:&#x2F;&#x2F;Koorye.github.io">个人主页</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/Koorye" title="https:&#x2F;&#x2F;github.com&#x2F;Koorye" rel="noopener" target="_blank">Github</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://scholar.google.com/citations?hl=en&user=7VCaV5EAAAAJ" title="https:&#x2F;&#x2F;scholar.google.com&#x2F;citations?hl&#x3D;en&amp;user&#x3D;7VCaV5EAAAAJ" rel="noopener" target="_blank">谷歌学术</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://dblp.org/pid/132/9517-1.html" title="https:&#x2F;&#x2F;dblp.org&#x2F;pid&#x2F;132&#x2F;9517-1.html" rel="noopener" target="_blank">dblp</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">吴世涵</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">516k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:49</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'default',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

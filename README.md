@@ -1,6 +1,9 @@
 # RoboCOIN
 
-[English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
+[Project Website](https://flagopen.github.io/RoboCOIN/) | [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
+
+Welcome to scan the QR code to join the official RoboCOIN WeChat group for discussion.
+![QR COde](https://flagopen.github.io/RoboCOIN/assets/qrcode-DFmJpXi2.png)
 
 Table of Contents
 - [RoboCOIN](#robocoin)

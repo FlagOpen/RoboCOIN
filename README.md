@@ -56,7 +56,7 @@ We will continuously update the datasets. You can find the latest datasets on th
 <p align="center">
   <img src="assets/how-to-use.gif" alt="This demo shows how to discovery, download, and standardized loading RoboCOIN datasets" width="700">
 </p>
-<p align="center">The above GIF shows shows how to discovery, download, and use RoboCOIN datasets.</p>
+<p align="center">The above GIF shows how to discovery, download, and use RoboCOIN datasets.</p>
 
 
 ```bash

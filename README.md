@@ -1,8 +1,14 @@
 # RoboCOIN
 
-[Project Website](https://flagopen.github.io/RoboCOIN/) | [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
+📄READMEs: [English](README.md) | [中文](README_zh-CN.md) | [LeRobot](README_lerobot.md)
 
-Table of Contents
+🔗Links: [Project Website](https://flagopen.github.io/RoboCOIN/) | [ArXiv](https://arxiv.org/abs/2511.17441) | [PDF](https://arxiv.org/pdf/2511.17441) | [Visualize & Download](https://flagopen.github.io/RoboCOIN-DataManage/)
+
+## News
+
+- 🔥[24 Nov. 2025] Our technical report is available on [ArXiv](https://arxiv.org/abs/2511.17441)!
+
+## Table of Contents
 - [RoboCOIN](#robocoin)
   - [Overview](#overview)
   - [Installation](#installation)

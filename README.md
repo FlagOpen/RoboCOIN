@@ -482,6 +482,20 @@ sequenceDiagram
     Note over Robot: Final State: st+n
 ```
 
+#### Json Explanation
+Fields under `observation.state` / `action` represent data collected from the robot arms (primary/secondary). The standardized fields are:
+
+| Field | Unit | Description | Source config |
+|---|---:|---|---|
+| `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (primary/secondary). | `state_action_info.json` |
+| `{dir}_hand_joint_{num}_rad` | rad | Converted from collected data; represents the hand joint angles. | `state_action_info.json` |
+| `{dir}_gripper_open` | - | Value range [0, 1]; `0` means fully closed; converted from collected data. | `state_action_info.json` |
+| `{dir}_eef_pos_{axis}` | m | Obtained from the simulation environment; the end-effector position of the left/right arm in the robot coordinate frame (x/y/z). | `motion_annotation_info.json` |
+| `{dir}_eef_rot_{axis}` | rad | Obtained from the simulation environment; the end-effector rotation of the left/right arm in the robot coordinate frame (radians). | `motion_annotation_info.json` |
+
+> Note: `{dir}` is a placeholder that stands for `left` or `right`.
+
+
 ### Usage Instructions
 
 #### Trajectory Replay

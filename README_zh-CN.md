@@ -17,6 +17,7 @@
     - [特定功能说明](#特定功能说明)
       - [统一单位转换](#统一单位转换)
       - [绝对与相对位置控制](#绝对与相对位置控制)
+      - [Json字段说明](#json字段说明)
     - [使用说明](#使用说明)
       - [轨迹重播](#轨迹重播)
       - [模型推理](#模型推理)
@@ -471,6 +472,21 @@ sequenceDiagram
     
     Note over Robot: 最终状态: st+n
 ```
+
+#### Json字段说明
+
+键名为 `observation.state` / `action` 的字段，表示从机械臂（主臂/分臂）采集到的数据。统一的字段如下：
+
+| 字段 | 单位 | 说明 | 统一自配置文件 |
+|---|---:|---|---|
+| `{dir}_arm_joint_{num}_rad` | rad | 由采集数据转换而成，表示机械臂的关节角（主臂/分臂）。 | `state_action_info.json` |
+| `{dir}_hand_joint_{num}_rad` | rad | 由采集数据转换而成，表示手部关节角。 | `state_action_info.json` |
+| `{dir}_gripper_open` | - | 取值范围为 [0, 1]；`0` 表示完全闭合；由采集数据转换而成。 | `state_action_info.json` |
+| `{dir}_eef_pos_{axis}` | m | 由仿真环境得到，表示左/右臂在机器人坐标系下 end-effector 的坐标（x/y/z）。 | `motion_annotation_info.json` |
+| `{dir}_eef_rot_{axis}` | rad | 由仿真环境得到，表示左/右臂在机器人坐标系下 end-effector 的旋转（以弧度表示）。 | `motion_annotation_info.json` |
+
+> 注：此处的 `{dir}` 为统一占位符，代表 `left` 或 `right`。
+
 
 ### 使用说明
 

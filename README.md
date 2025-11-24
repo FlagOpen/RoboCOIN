@@ -10,6 +10,8 @@
 
 ## Table of Contents
 - [RoboCOIN](#robocoin)
+  - [News](#news)
+  - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [Installation](#installation)
   - [Dataset Discovery, Download, and Loading](#dataset-discovery-download-and-loading)
@@ -23,6 +25,7 @@
     - [Specific Feature Descriptions](#specific-feature-descriptions)
       - [Unified Unit Conversion](#unified-unit-conversion)
       - [Absolute and Relative Position Control](#absolute-and-relative-position-control)
+      - [Json Explanation](#json-explanation)
     - [Usage Instructions](#usage-instructions)
       - [Trajectory Replay](#trajectory-replay)
       - [Model Inference](#model-inference)
@@ -32,6 +35,7 @@
     - [Customization](#customization)
       - [Adding Custom Robots](#adding-custom-robots)
   - [Acknowledgements](#acknowledgements)
+  - [Contact Us](#contact-us)
 ## Overview
 
 As the official companion toolkit for the [**RoboCOIN Dataset**], this project is built upon the [**LeRobot**](https://github.com/huggingface/lerobot) repository. It maintains full compatibility with LeRobot’s data format while adding support for rich metadata—including **subtasks**, **scene descriptions**, and **motion descriptions**. RoboCOIN provides an end-to-end pipeline for dataset discovery, download, and standardized loading, along with model deployment capabilities across multiple robotic platforms.
@@ -481,6 +485,20 @@ sequenceDiagram
     
     Note over Robot: Final State: st+n
 ```
+
+#### Json Explanation
+Fields under `observation.state` / `action` represent data collected from the robot arms (primary/secondary). The standardized fields are:
+
+| Field | Unit | Description | Source config |
+|---|---:|---|---|
+| `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (primary/secondary). | `state_action_info.json` |
+| `{dir}_hand_joint_{num}_rad` | rad | Converted from collected data; represents the hand joint angles. | `state_action_info.json` |
+| `{dir}_gripper_open` | `[0, 1]` | Value range [0, 1]; `0` means fully closed; converted from collected data. | `state_action_info.json` |
+| `{dir}_eef_pos_{axis}` | m | Obtained from the simulation environment; the end-effector position of the left/right arm in the robot coordinate frame (x/y/z). | `motion_annotation_info.json` |
+| `{dir}_eef_rot_{axis}` | rad | Obtained from the simulation environment; the end-effector rotation of the left/right arm in the robot coordinate frame (radians). | `motion_annotation_info.json` |
+
+> Note: `{dir}` is a placeholder that stands for `left` or `right`.
+
 
 ### Usage Instructions
 

@@ -349,6 +349,7 @@ graph LR
     D[BiBaseRobotConfig] --> E[BiRealmanConfig]
     D --> F[BiRealmanEndEffectorConfig]
     C --> F
+    A --> D
 ```
 
 Taking Realman as example, located at `src/lerobot/robots/realman/configuration_realman.py`：

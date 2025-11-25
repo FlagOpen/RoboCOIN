@@ -99,7 +99,7 @@ dataloader = torch.utils.data.DataLoader(
 #### `observation.state` / `action` 
 These features represent data collected from the robot arms (slave/master). In the absence of robot action data, actions are derived from the observation.state sequence. The standardized fields are:
 
-| Field | Unit | Description |
+| Feature | Unit | Description |
 |---|---:|---|
 | `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (slave/master). | 
 | `{dir}_hand_joint_{num}_rad` | rad | Converted from collected data; represents the hand joint angles. | 

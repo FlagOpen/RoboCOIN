@@ -112,7 +112,7 @@ These features represent simulation eef data. Due to inconsistencies in the coor
 
 > Note: `{dir}` is a placeholder that stands for `left` or `right`.
 ---
-### 🚀 Upcoming Highlights
+### Upcoming Highlights
 
 - **Version Compatibility**: RoboCOIN currently supports **LeRobot v2.1** data format. Support for **v3.0** data format is coming soon.
 - **Codebase Origin**: This project is currently based on **LeRobot v0.3.4**. Future releases will evolve into a fully compatible **LeRobot extension plugin**, maintaining seamless interoperability with the official LeRobot repository.

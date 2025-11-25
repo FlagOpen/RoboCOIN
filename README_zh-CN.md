@@ -7,8 +7,8 @@
   - [概述](#概述)
   - [安装](#安装)
   - [数据集检索、下载与加载](#数据集检索下载与加载)
-    - [🔍 检索和下载数据集](#-检索和下载数据集)
-    - [📥 加载数据集](#-加载数据集)
+    - [检索和下载数据集](#-检索和下载数据集)
+    - [加载数据集](#-加载数据集)
     - [lerobot features说明](#lerobot-features说明)
     - [重点预告:](#重点预告)
   - [机器人控制逻辑](#机器人控制逻辑)
@@ -47,7 +47,7 @@ pip install robocoin
 ---
 ## 数据集检索、下载与加载
 
-### 🔍 检索和下载数据集
+### 检索和下载数据集
 > 数据集目录请访问：https://flagopen.github.io/RoboCOIN-DataManage/
 我们将持续更新数据集，您可以在上方页面中找到最新的数据集
 
@@ -68,7 +68,7 @@ robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lit
 # robocoin-download --hub modelscope --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven 
 ```
 
-### 📥 加载数据集
+### 加载数据集
 ```python
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset  # Note: module name is 'datasets' (plural)

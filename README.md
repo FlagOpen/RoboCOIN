@@ -17,6 +17,7 @@
   - [Dataset Discovery, Download, and Loading](#dataset-discovery-download-and-loading)
     - [🔍 Discover and Download Datasets](#-discover-and-download-datasets)
     - [📥 Load a Dataset](#-load-a-dataset)
+    - [lerobot features annotation](#-lerobot-features-explanation)
     - [🚀 Upcoming Highlights](#-upcoming-highlights)
   - [Robot Control](#robot-control)
     - [Robot Script Structure](#robot-script-structure)
@@ -25,7 +26,6 @@
     - [Specific Feature Descriptions](#specific-feature-descriptions)
       - [Unified Unit Conversion](#unified-unit-conversion)
       - [Absolute and Relative Position Control](#absolute-and-relative-position-control)
-      - [Json Explanation](#json-explanation)
     - [Usage Instructions](#usage-instructions)
       - [Trajectory Replay](#trajectory-replay)
       - [Model Inference](#model-inference)
@@ -95,12 +95,13 @@ dataloader = torch.utils.data.DataLoader(
 )
 ```
 ---
-### lerobot features
-#### Feature `observation.state` / `action` represent data collected from the robot arms (slave/master). The standardized fields are:
+### lerobot-features-explanation
+#### `observation.state` / `action` 
+These features represent data collected from the robot arms (slave/master). In the absence of robot action data, actions are derived from the observation.state sequence. The standardized fields are:
 
 | Field | Unit | Description |
 |---|---:|---|
-| `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (primary/secondary). | 
+| `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (slave/master). | 
 | `{dir}_hand_joint_{num}_rad` | rad | Converted from collected data; represents the hand joint angles. | 
 | `{dir}_gripper_open` | - | Value range [0, 1]; `0` means fully closed, `1`means fully open; converted from collected data. | 
 | `{dir}_eef_pos_{axis}` | m | EEF position obtained from robot sdk. |

@@ -107,8 +107,9 @@ These features represent data collected from the robot arms (slave/master). In t
 | `{dir}_eef_pos_{axis}` | m | EEF position obtained from robot sdk. |
 | `{dir}_eef_rot_{axis}` | rad | EEF rotation(euler) obtained from robot sdk. |
 
-#### Simulation Results of Robot End-Effector
-Due to inconsistencies in the coordinate system definitions across different robotic SDKs in the observation.state / action data, we employed a simulation-based approach to obtain the end-effector poses of each robot expressed in a unified coordinate system (x-forward / y-left / z-up, with the origin located at the robot's base or the center between its feet). These simulated end-effector poses are represented by the features `eef_sim_pose_state` / `eef_sim_pose_action`.
+#### `eef_sim_pose_state` / `eef_sim_pose_action`
+These features represent simulation eef data. Due to inconsistencies in the coordinate system definitions across different robotic SDKs in the observation.state / action data, we employed a simulation-based approach to obtain the end-effector poses of each robot expressed in a unified coordinate system (x-forward / y-left / z-up, with the origin located at the robot's base or the center between its feet). These simulated end-effector poses are represented by the features `eef_sim_pose_state` / `eef_sim_pose_action`.
+
 > Note: `{dir}` is a placeholder that stands for `left` or `right`.
 ---
 ### 🚀 Upcoming Highlights

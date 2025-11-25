@@ -95,8 +95,8 @@ dataloader = torch.utils.data.DataLoader(
 | `{dir}_eef_pos_{axis}` | m | Robot SDK获取的末端位置（单位为米）。|
 | `{dir}_eef_rot_{axis}` | rad | Robot SDK获取的末端姿态（欧拉角，单位为弧度）。|
 
-#### `eef_sim_pose_state`/`eef_sim_pose_state`
-表示在仿真环境中计算得到的统一坐标系下机器人末端位姿态数据。在`observation.state` / `action`中，由于各数采机器人SDK定义的坐标系不一致，所以我们使用仿真方法，获得了各机器人末端在统一坐标系（x前/y左/z上，坐标系原点为机器人底盘或双脚中心）下的位姿数据，并用 `eef_sim_pose_state`/`eef_sim_pose_state` feature表示。
+#### `eef_sim_pose_state`/`eef_sim_pose_action`
+表示在仿真环境中计算得到的统一坐标系下机器人末端位姿态数据。在`observation.state` / `action`中，由于各数采机器人SDK定义的坐标系不一致，所以我们使用仿真方法，获得了各机器人末端在统一坐标系（x前/y左/z上，坐标系原点为机器人底盘或双脚中心）下的位姿数据，并用 `eef_sim_pose_state`/`eef_sim_pose_action` feature表示。
 
 > 注：此处的 `{dir}` 为统一占位符，代表 `left` 或 `right`。
 ---

@@ -87,7 +87,7 @@ dataloader = torch.utils.data.DataLoader(
 #### `observation.state` / `action` feature
 表示从机械臂（从臂/主臂）采集到的数据。如果数采机器人没有action数据，则使用observation.state数据填充action数据。features典型的命名方式及说明如下：
 
-| 字段 | 单位 | 说明 |
+| feature | 单位 | 说明 |
 |---|---:|---|
 | `{dir}_arm_joint_{num}_rad` | rad | 由采集数据转换而成，表示机械臂的关节角（从臂/主臂）。|
 | `{dir}_hand_joint_{num}_rad` | rad | 由采集数据转换而成，表示手部关节角。|

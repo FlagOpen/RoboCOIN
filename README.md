@@ -15,10 +15,10 @@
   - [Overview](#overview)
   - [Installation](#installation)
   - [Dataset Discovery, Download, and Loading](#dataset-discovery-download-and-loading)
-    - [🔍 Discover and Download Datasets](#-discover-and-download-datasets)
-    - [📥 Load a Dataset](#-load-a-dataset)
-    - [lerobot features annotation](#-lerobot-features-explanation)
-    - [🚀 Upcoming Highlights](#-upcoming-highlights)
+    - [🔍 Discover and Download Datasets](#discover-and-download-datasets)
+    - [📥 Load a Dataset](#load-a-dataset)
+    - [lerobot features annotation](#lerobot-features-explanation)
+    - [🚀 Upcoming Highlights](#upcoming-highlights)
   - [Robot Control](#robot-control)
     - [Robot Script Structure](#robot-script-structure)
     - [Base Robot Configuration Classes](#base-robot-configuration-classes)
@@ -95,7 +95,7 @@ dataloader = torch.utils.data.DataLoader(
 )
 ```
 ---
-### lerobot-features-explanation
+### lerobot features explanation
 #### `observation.state` / `action` 
 These features represent data collected from the robot arms (slave/master). In the absence of robot action data, actions are derived from the observation.state sequence. The standardized fields are:
 

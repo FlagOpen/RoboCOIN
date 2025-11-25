@@ -94,7 +94,22 @@ dataloader = torch.utils.data.DataLoader(
     batch_size=32,
 )
 ```
+---
+### lerobot features
+#### Feature `observation.state` / `action` represent data collected from the robot arms (slave/master). The standardized fields are:
 
+| Field | Unit | Description |
+|---|---:|---|
+| `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (primary/secondary). | 
+| `{dir}_hand_joint_{num}_rad` | rad | Converted from collected data; represents the hand joint angles. | 
+| `{dir}_gripper_open` | - | Value range [0, 1]; `0` means fully closed, `1`means fully open; converted from collected data. | 
+| `{dir}_eef_pos_{axis}` | m | EEF position obtained from robot sdk. |
+| `{dir}_eef_rot_{axis}` | rad | EEF rotation(euler) obtained from robot sdk. |
+
+#### Simulation Results of Robot End-Effector
+Due to inconsistencies in the coordinate system definitions across different robotic SDKs in the observation.state / action data, we employed a simulation-based approach to obtain the end-effector poses of each robot expressed in a unified coordinate system (x-forward / y-left / z-up, with the origin located at the robot's base or the center between its feet). These simulated end-effector poses are represented by the features `eef_sim_pose_state` / `eef_sim_pose_action`.
+> Note: `{dir}` is a placeholder that stands for `left` or `right`.
+---
 ### 🚀 Upcoming Highlights
 
 - **Version Compatibility**: RoboCOIN currently supports **LeRobot v2.1** data format. Support for **v3.0** data format is coming soon.
@@ -485,19 +500,6 @@ sequenceDiagram
     
     Note over Robot: Final State: st+n
 ```
-
-#### Json Explanation
-Fields under `observation.state` / `action` represent data collected from the robot arms (primary/secondary). The standardized fields are:
-
-| Field | Unit | Description | Source config |
-|---|---:|---|---|
-| `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (primary/secondary). | `state_action_info.json` |
-| `{dir}_hand_joint_{num}_rad` | rad | Converted from collected data; represents the hand joint angles. | `state_action_info.json` |
-| `{dir}_gripper_open` | - | Value range [0, 1]; `0` means fully closed; converted from collected data. | `state_action_info.json` |
-| `{dir}_eef_pos_{axis}` | m | Obtained from the simulation environment; the end-effector position of the left/right arm in the robot coordinate frame (x/y/z). | `motion_annotation_info.json` |
-| `{dir}_eef_rot_{axis}` | rad | Obtained from the simulation environment; the end-effector rotation of the left/right arm in the robot coordinate frame (radians). | `motion_annotation_info.json` |
-
-> Note: `{dir}` is a placeholder that stands for `left` or `right`.
 
 
 ### Usage Instructions

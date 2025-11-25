@@ -81,23 +81,24 @@ dataloader = torch.utils.data.DataLoader(
     batch_size=32,
 )
 ```
+---
 ### lerobot features说明
 
 #### `observation.state` / `action` feature，表示从机械臂（主臂/分臂）采集到的数据。统一的字段如下：
 
 | 字段 | 单位 | 说明 |
 |---|---:|---|
-| `{dir}_arm_joint_{num}_rad` | rad | 由采集数据转换而成，表示机械臂的关节角（主臂/分臂）。
-| `{dir}_hand_joint_{num}_rad` | rad | 由采集数据转换而成，表示手部关节角。
-| `{dir}_gripper_open` | - | 取值范围为 [0, 1]；`0` 表示完全闭合；由采集数据转换而成。
-| `{dir}_eef_pos_{axis}` | m | Robot SDK获取的末端位置（单位为米）。
-| `{dir}_eef_rot_{axis}` | rad | Robot SDK获取的末端姿态（欧拉角，单位为弧度）。
+| `{dir}_arm_joint_{num}_rad` | rad | 由采集数据转换而成，表示机械臂的关节角（主臂/分臂）。|
+| `{dir}_hand_joint_{num}_rad` | rad | 由采集数据转换而成，表示手部关节角。|
+| `{dir}_gripper_open` | - | 取值范围为 [0, 1]；`0` 表示完全闭合，`1`表示完全张开；由采集数据转换而成。|
+| `{dir}_eef_pos_{axis}` | m | Robot SDK获取的末端位置（单位为米）。|
+| `{dir}_eef_rot_{axis}` | rad | Robot SDK获取的末端姿态（欧拉角，单位为弧度）。|
 
 #### 机器人end effector的仿真结果
-在`observation.state` / `action`中，由于各数采机器人SDK定义的坐标系不一致，所以我们使用仿真方法，获得了各机器人末端在统一坐标系（x前/y左/z上，坐标系原点为机器人底盘或双脚中心）下的位姿数据，并用 `eef_sim_pose_state`/`eef_sim_pose_state` feature表示
+在`observation.state` / `action`中，由于各数采机器人SDK定义的坐标系不一致，所以我们使用仿真方法，获得了各机器人末端在统一坐标系（x前/y左/z上，坐标系原点为机器人底盘或双脚中心）下的位姿数据，并用 `eef_sim_pose_state`/`eef_sim_pose_state` feature表示。
 
 > 注：此处的 `{dir}` 为统一占位符，代表 `left` 或 `right`。
-
+---
 ### 重点预告:
 
 - **版本兼容性**：当前 RoboCOIN 支持 **LeRobot v2.1** 数据格式，**v3.0 版本**数据格式支持将很快推出。

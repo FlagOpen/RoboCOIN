@@ -59,7 +59,7 @@ pip install robocoin
 ## Dataset Discovery, Download, and Loading
 
 ### Discover and Download Datasets  
-> Browse available datasets at: [https://flagopen.github.io/RoboCOIN-DataManage/]
+> Browse available datasets at: [https://flagopen.github.io/RoboCOIN-DataManager/]
 We will continuously update the datasets. You can find the latest datasets on the page above.
 
 

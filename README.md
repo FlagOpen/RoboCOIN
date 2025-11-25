@@ -15,10 +15,10 @@
   - [Overview](#overview)
   - [Installation](#installation)
   - [Dataset Discovery, Download, and Loading](#dataset-discovery-download-and-loading)
-    - [🔍 Discover and Download Datasets](#discover-and-download-datasets)
-    - [📥 Load a Dataset](#load-a-dataset)
-    - [lerobot features annotation](#lerobot-features-explanation)
-    - [🚀 Upcoming Highlights](#upcoming-highlights)
+    - [Discover and Download Datasets](#discover-and-download-datasets)
+    - [Load a Dataset](#load-a-dataset)
+    - [Lerobot features explanation](#lerobot-features-explanation)
+    - [Upcoming Highlights](#upcoming-highlights)
   - [Robot Control](#robot-control)
     - [Robot Script Structure](#robot-script-structure)
     - [Base Robot Configuration Classes](#base-robot-configuration-classes)
@@ -58,7 +58,7 @@ pip install robocoin
 ---
 ## Dataset Discovery, Download, and Loading
 
-### 🔍 Discover and Download Datasets  
+### Discover and Download Datasets  
 > Browse available datasets at: [https://flagopen.github.io/RoboCOIN-DataManage/]
 We will continuously update the datasets. You can find the latest datasets on the page above.
 
@@ -81,7 +81,7 @@ robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lit
 # robocoin-download --hub modelscope --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven 
 ```
 
-### 📥 Load a Dataset
+### Load a Dataset
 ```python
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
@@ -95,7 +95,7 @@ dataloader = torch.utils.data.DataLoader(
 )
 ```
 ---
-### lerobot features explanation
+### Lerobot features explanation
 #### `observation.state` / `action` 
 These features represent data collected from the robot arms (slave/master). In the absence of robot action data, actions are derived from the observation.state sequence. The standardized fields are:
 

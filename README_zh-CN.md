@@ -50,7 +50,7 @@ pip install robocoin
 ## 数据集检索、下载与加载
 
 ### 检索和下载数据集
-> 数据集目录请访问：https://flagopen.github.io/RoboCOIN-DataManage/
+> 数据集目录请访问：https://flagopen.github.io/RoboCOIN-DataManager/
 我们将持续更新数据集，您可以在上方页面中找到最新的数据集
 
 <p align="center">

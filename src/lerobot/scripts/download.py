@@ -22,10 +22,17 @@ DEFAULT_SLEEP_SECONDS = 5
 MAX_SLEEP_SECONDS = 120
 DEFAULT_OUTPUT_DIR = "~/.cache/huggingface/lerobot/"
 
+# Setup logging with file output
+_log_dir = Path("logs/download")
+_log_dir.mkdir(parents=True, exist_ok=True)
+_file_handler = logging.FileHandler(_log_dir / "download.log")
+_file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S"))
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     datefmt="%H:%M:%S",
+    handlers=[logging.StreamHandler(), _file_handler],
 )
 LOGGER = logging.getLogger("hub-download")
 

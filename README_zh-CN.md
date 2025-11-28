@@ -11,7 +11,9 @@
   - [数据集检索、下载与加载](#数据集检索下载与加载)
     - [检索和下载数据集](#检索和下载数据集)
     - [加载数据集](#加载数据集)
-    - [lerobot features说明](#lerobot-features说明)
+    - [lerobot-features说明](#lerobot-features说明)
+      - [`observation.state` / `action` feature](#observationstate--action-feature)
+      - [`eef_sim_pose_state`/`eef_sim_pose_action`](#eef_sim_pose_stateeef_sim_pose_action)
     - [重点预告](#重点预告)
   - [机器人控制逻辑](#机器人控制逻辑)
     - [机器人目录结构](#机器人目录结构)
@@ -336,10 +338,10 @@ class BiBaseRobotEndEffectorConfig(BiBaseRobotConfig, BaseRobotEndEffectorConfig
 graph LR
     A[BaseRobotConfig] --> B[RealmanConfig]
     A --> C[RealmanEndEffectorConfig]
-    D[BiBaseRobotConfig] --> E[BiRealmanConfig]
-    D --> F[BiRealmanEndEffectorConfig]
-    C --> F
-    A --> D
+    A --> D[BiBaseRobotConfig]
+    D --> E[BiRealmanConfig]
+    C --> F[BiRealmanEndEffectorConfig]
+    D --> F
 ```
 
 以Realman为例，位于`src/lerobot/robots/realman/configuration_realman.py`：

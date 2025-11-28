@@ -346,10 +346,10 @@ Inheritance relationship, taking Realman as example:
 graph LR
     A[BaseRobotConfig] --> B[RealmanConfig]
     A --> C[RealmanEndEffectorConfig]
-    D[BiBaseRobotConfig] --> E[BiRealmanConfig]
-    D --> F[BiRealmanEndEffectorConfig]
-    C --> F
-    A --> D
+    A --> D[BiBaseRobotConfig]
+    D --> E[BiRealmanConfig]
+    C --> F[BiRealmanEndEffectorConfig]
+    D --> F
 ```
 
 Taking Realman as example, located at `src/lerobot/robots/realman/configuration_realman.py`：

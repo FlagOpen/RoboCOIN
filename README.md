@@ -18,6 +18,8 @@
     - [Discover and Download Datasets](#discover-and-download-datasets)
     - [Load a Dataset](#load-a-dataset)
     - [Lerobot features explanation](#lerobot-features-explanation)
+      - [`observation.state` / `action`](#observationstate--action)
+      - [`eef_sim_pose_state` / `eef_sim_pose_action`](#eef_sim_pose_state--eef_sim_pose_action)
     - [Upcoming Highlights](#upcoming-highlights)
   - [Robot Control](#robot-control)
     - [Robot Script Structure](#robot-script-structure)
@@ -346,10 +348,10 @@ Inheritance relationship, taking Realman as example:
 graph LR
     A[BaseRobotConfig] --> B[RealmanConfig]
     A --> C[RealmanEndEffectorConfig]
-    D[BiBaseRobotConfig] --> E[BiRealmanConfig]
-    D --> F[BiRealmanEndEffectorConfig]
-    C --> F
-    A --> D
+    A --> D[BiBaseRobotConfig]
+    D --> E[BiRealmanConfig]
+    C --> F[BiRealmanEndEffectorConfig]
+    D --> F
 ```
 
 Taking Realman as example, located at `src/lerobot/robots/realman/configuration_realman.py`：

@@ -95,7 +95,7 @@ dataloader = torch.utils.data.DataLoader(
 |---|---:|---|
 | `{dir}_arm_joint_{num}_rad` | rad | 由采集数据转换而成，表示机械臂的关节角（从臂/主臂）。|
 | `{dir}_hand_joint_{num}_rad` | rad | 由采集数据转换而成，表示手部关节角。|
-| `{dir}_gripper_open` | - | 取值范围为 [0, 1]；`0` 表示完全闭合，`1`表示完全张开；由采集数据转换而成。|
+| `{dir}_gripper_open_scale` | - | 取值范围为 [0, 1]；`0` 表示完全闭合，`1`表示完全张开；由采集数据转换而成。|
 | `{dir}_eef_pos_{axis}` | m | Robot SDK获取的末端位置（单位为米）。|
 | `{dir}_eef_rot_{axis}` | rad | Robot SDK获取的末端姿态（欧拉角，单位为弧度）。|
 

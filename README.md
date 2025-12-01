@@ -105,7 +105,7 @@ These features represent data collected from the robot arms (slave/master). In t
 |---|---:|---|
 | `{dir}_arm_joint_{num}_rad` | rad | Converted from collected data; represents the arm joint angles (slave/master). | 
 | `{dir}_hand_joint_{num}_rad` | rad | Converted from collected data; represents the hand joint angles. | 
-| `{dir}_gripper_open` | - | Value range [0, 1]; `0` means fully closed, `1`means fully open; converted from collected data. | 
+| `{dir}_gripper_open_scale` | - | Value range [0, 1]; `0` means fully closed, `1`means fully open; converted from collected data. | 
 | `{dir}_eef_pos_{axis}` | m | EEF position obtained from robot sdk. |
 | `{dir}_eef_rot_{axis}` | rad | EEF rotation(euler) obtained from robot sdk. |
 

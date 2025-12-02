@@ -1,0 +1,123 @@
+# RTML V1.0
+task:
+  id: "pull_bowl_storage_bread"
+
+  global_constraints:
+    velocity:
+      linear:
+        max: 0.5          
+        mean_max: 0.3     
+    acceleration:
+      linear:
+        max: 12.0          
+
+  stages:
+    - id: "move_bowl_right"
+      match_subtask: "Move the pink bowl to the center of table with right hand"
+      constraints:
+        workspace:
+          right:
+            min: [0.10, -0.40, 0.10]
+            max: [0.25, -0.20, 0.30]
+        velocity:
+          linear:
+            mean_max: 0.10
+            std_max: 0.08
+        idle_arm:
+          arm: "left"
+          velocity_linear_mean_max: 0.05
+        temporal:
+          duration_min: 2.0
+          duration_max: 6.0
+
+    - id: "grasp_long_bread_left"
+      match_subtask: "Grasp the long bread with left hand"
+      constraints:
+        workspace:
+          left:
+            min: [0.05, -0.05, -0.05]
+            max: [0.25, 0.35, 0.20]
+        orientation:
+          left:
+            angular_mean_deviation_max: 0.8
+            std_max: [0.5, 0.5, 0.8]
+            angular_variance_max: 0.15
+        velocity:
+          linear:
+            mean_max: 0.12
+            std_max: 0.10
+        idle_arm:
+          arm: "right"
+          velocity_linear_mean_max: 0.05
+        temporal:
+          duration_min: 2.0
+          duration_max: 8.0
+
+    - id: "place_long_bread_in_bowl"
+      match_subtask: "Place the long bread in pink bowl with left hand"
+      constraints:
+        workspace:
+          left:
+            min: [0.05, -0.05, -0.05]
+            max: [0.25, 0.35, 0.20]
+        velocity:
+          linear:
+            mean_max: 0.15
+            std_max: 0.15
+        idle_arm:
+          arm: "right"
+          velocity_linear_mean_max: 0.05
+        temporal:
+          duration_min: 1.0
+          duration_max: 4.0
+
+    - id: "grasp_round_bread_left"
+      match_subtask: "Grasp the round bread with left hand"
+      constraints:
+        workspace:
+          left:
+            min: [0.05, 0.00, -0.05]
+            max: [0.25, 0.35, 0.20]
+        orientation:
+          left:
+            angular_mean_deviation_max: 0.5
+            std_max: [0.5, 0.5, 0.5]
+            angular_variance_max: 0.15
+        velocity:
+          linear:
+            mean_max: 0.12
+            std_max: 0.10
+        idle_arm:
+          arm: "right"
+          velocity_linear_mean_max: 0.05
+        temporal:
+          duration_min: 2.0
+          duration_max: 8.0
+
+    - id: "place_round_bread_in_bowl"
+      match_subtask: "Place the round bread in pink bowl with left hand"
+      constraints:
+        workspace:
+          left:
+            min: [0.05, 0.00, -0.05]
+            max: [0.25, 0.35, 0.20]
+        velocity:
+          linear:
+            mean_max: 0.15
+            std_max: 0.15
+        idle_arm:
+          arm: "right"
+          velocity_linear_mean_max: 0.05
+        temporal:
+          duration_min: 1.0
+          duration_max: 4.0
+
+    - id: "End"
+      match_subtask: "End"
+      constraints:
+        velocity:
+          linear:
+            mean_max: 0.12
+            std_max: 0.12
+        temporal:
+          duration_max: 6.0

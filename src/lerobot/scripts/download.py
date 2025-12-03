@@ -211,9 +211,6 @@ def _ensure_gate_dataset(
     gate_repo_id = f"{namespace}/{gate_name}"
     gate_path = out_dir / namespace / gate_name
 
-    LOGGER.error("============================================================")
-    LOGGER.error(" CHECKING GATE DATASET ACCESS — ROBOCOIN CONSENT REQUIRED")
-    LOGGER.error("============================================================")
 
     # Check if gate dataset already exists
     if gate_path.exists() and any(gate_path.rglob("*")):
@@ -234,7 +231,7 @@ def _ensure_gate_dataset(
             enable_retry=False,
         )
         LOGGER.error("============================================================")
-        LOGGER.error(" ✓ GATE CHECK PASSED — THANK YOU FOR SUPPORTING ROBOCOIN")
+        LOGGER.error(" GATE CHECK PASSED — THANK YOU FOR SUPPORTING ROBOCOIN")
         LOGGER.error("============================================================")
         LOGGER.error("Gate dataset is ready at: %s", gate_path)
         LOGGER.error("Your consent keeps RoboCOIN sustainable and region-aware.")
@@ -247,7 +244,7 @@ def _ensure_gate_dataset(
             gate_url = f"https://modelscope.cn/datasets/{gate_repo_id}"
 
         LOGGER.error("============================================================")
-        LOGGER.error(" ✗ GATE DATASET ACCESS REQUIRED — PLEASE COMPLETE STATISTICS FORM")
+        LOGGER.error(" GATE DATASET ACCESS REQUIRED — PLEASE COMPLETE STATISTICS FORM")
         LOGGER.error("============================================================")
         LOGGER.error("To improve RoboCOIN’s regional coverage and understand how the data")
         LOGGER.error("is used, we need a one-time, lightweight consent submission before")
@@ -278,8 +275,7 @@ def _download_from_hf(repo_id: str, target_dir: Path, token: str | None, max_wor
 
     def _run() -> Path:
         try:
-            # Create directory only after confirming download will succeed
-            target_dir.mkdir(parents=True, exist_ok=True)
+            # 让 huggingface_hub 自己创建 / 管理目录，避免在仓库不存在时生成空目录
             download_kwargs = {
                 "repo_id": repo_id,
                 "repo_type": "dataset",
@@ -342,9 +338,6 @@ def _download_from_ms(repo_id: str, target_dir: Path, token: str | None, max_wor
             if token:
                 LOGGER.info("Logging in to ModelScope with provided token")
                 HubApi().login(token)
-
-            # Create directory only after confirming download will succeed
-            target_dir.mkdir(parents=True, exist_ok=True)
 
             # Use dataset_snapshot_download for downloading dataset files
             # This downloads all raw files from the dataset repository
@@ -538,23 +531,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         LOGGER.info("  Token: %s", "provided" if args.token else "not provided")
         return 0
 
-    # Perform gate check before actual download
+    # Perform gate check before actual download (HuggingFace only)
     resolved_namespace = _resolve_namespace(args.namespace)
     resolved_token = _resolve_token(args.hub, args.token)
-    try:
-        _ensure_gate_dataset(
-            hub=args.hub,
-            namespace=resolved_namespace,
-            out_dir=output_dir,
-            token=resolved_token,
-            max_workers=max(1, args.max_workers),
-            max_retries=int(args.max_retry_time),
-        )
-        LOGGER.error("Gate check completed successfully. Proceeding with dataset downloads...")
-    except RuntimeError as exc:
-        # Gate dataset failure – abort cleanly before downloading other datasets
-        LOGGER.error("Download aborted due to gate check failure: %s", exc)
-        return 1
+    if args.hub == "huggingface":
+        try:
+            _ensure_gate_dataset(
+                hub=args.hub,
+                namespace=resolved_namespace,
+                out_dir=output_dir,
+                token=resolved_token,
+                max_workers=max(1, args.max_workers),
+                max_retries=int(args.max_retry_time),
+            )
+            LOGGER.error("Gate check completed successfully. Proceeding with dataset downloads...")
+        except RuntimeError as exc:
+            # Gate dataset failure – abort cleanly before downloading other datasets
+            LOGGER.error("Download aborted due to gate check failure: %s", exc)
+            return 1
 
     try:
         failures = download_datasets(

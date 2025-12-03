@@ -211,6 +211,9 @@ def _ensure_gate_dataset(
     gate_repo_id = f"{namespace}/{gate_name}"
     gate_path = out_dir / namespace / gate_name
 
+    print("============================================================", flush=True)
+    print(" CHECKING GATE DATASET ACCESS — ROBOCOIN CONSENT REQUIRED", flush=True)
+    print("============================================================", flush=True)
     LOGGER.info("============================================================")
     LOGGER.info(" CHECKING GATE DATASET ACCESS — ROBOCOIN CONSENT REQUIRED")
     LOGGER.info("============================================================")
@@ -233,6 +236,9 @@ def _ensure_gate_dataset(
             max_retries=1,
             enable_retry=False,
         )
+        print("============================================================", flush=True)
+        print(" ✓ GATE CHECK PASSED — THANK YOU FOR SUPPORTING ROBOCOIN", flush=True)
+        print("============================================================", flush=True)
         LOGGER.info("============================================================")
         LOGGER.info(" ✓ GATE CHECK PASSED — THANK YOU FOR SUPPORTING ROBOCOIN")
         LOGGER.info("============================================================")

@@ -494,16 +494,16 @@ sequenceDiagram
     
     Note over Robot: Current State: st
     
-    Model->>Controller: Output action sequence: [at+1, at+2, ..., at+n]
+    Model->>Controller: Output action sequence: [a(t+1), a(t+2), ..., a(t+n)]
     
     Note over Controller: Actions always calculated relative to initial state st
 
     loop Execute action sequence i = 1 to n
-        Controller->>Robot: Execute action: st + at+i
-        Robot-->>Controller: Reach state st+i = st + at+i
+        Controller->>Robot: Execute action: st + a(t+i)
+        Robot-->>Controller: Reach state s(t+i) = st + a(t+i)
     end
     
-    Note over Robot: Final State: st+n
+    Note over Robot: Final State: s(t+n)
 ```
 
 

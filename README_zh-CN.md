@@ -484,16 +484,16 @@ sequenceDiagram
     
     Note over Robot: 当前状态: st
     
-    Model->>Controller: 输出动作序列: [at+1, at+2, ..., at+n]
+    Model->>Controller: 输出动作序列: [a(t+1), a(t+2), ..., a(t+n)]
     
     Note over Controller: 动作始终相对于初始状态 st 进行计算
 
     loop 执行动作序列 i = 1 to n
-        Controller->>Robot: 执行动作: st + at+i
-        Robot-->>Controller: 达到状态 st+i = st + at+i
+        Controller->>Robot: 执行动作: st + a(t+i)
+        Robot-->>Controller: 达到状态 s(t+i) = st + a(t+i)
     end
     
-    Note over Robot: 最终状态: st+n
+    Note over Robot: 最终状态: s(t+n)
 ```
 
 

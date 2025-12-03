@@ -73,10 +73,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _resolve_output_dir(path: str) -> Path:
+def _resolve_output_dir(path: str | Path) -> Path:
     resolved = Path(path).expanduser().resolve()
     resolved.mkdir(parents=True, exist_ok=True)
     return resolved
+
+
+def _resolve_namespace(namespace: str | None) -> str:
+    return namespace or DEFAULT_NAMESPACE
 
 
 # --------------------------------------------------------------------------- #
@@ -139,6 +143,127 @@ def _resolve_token(hub: Literal["huggingface", "modelscope"], explicit: str | No
     if hub == "huggingface":
         return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
     return os.environ.get("MODELSCOPE_TOKEN") or os.environ.get("MODELSCOPE_API_TOKEN")
+
+
+def _prepare_dataset_list(dataset_names: Iterable[str]) -> list[str]:
+    datasets = list(dataset_names)
+    if not datasets:
+        raise ValueError("No datasets provided.")
+    return datasets
+
+
+def _log_download_plan(
+    hub: Literal["huggingface", "modelscope"],
+    namespace: str,
+    out_dir: Path,
+    datasets: Iterable[str],
+    max_retries: int,
+    token_provided: bool,
+) -> None:
+    LOGGER.info("Hub: %s", hub)
+    LOGGER.info("Namespace: %s", namespace)
+    LOGGER.info("Output: %s", out_dir)
+    LOGGER.info("Datasets: %s", ", ".join(datasets))
+    LOGGER.info("Retry budget: %d attempt(s) per dataset", int(max_retries))
+    LOGGER.info("Token: %s", "provided" if token_provided else "not provided")
+
+
+def _download_requested_datasets(
+    *,
+    hub: Literal["huggingface", "modelscope"],
+    datasets: list[str],
+    out_dir: Path,
+    namespace: str | None,
+    token: str | None,
+    max_workers: int,
+    max_retries: int,
+) -> list[str]:
+    failures: list[str] = []
+    for idx, name in enumerate(datasets, 1):
+        LOGGER.info("[%d/%d] %s", idx, len(datasets), name)
+        try:
+            path = download_dataset(
+                hub=hub,
+                dataset_name=name,
+                output_dir=out_dir,
+                namespace=namespace,
+                token=token,
+                max_workers=max_workers,
+                max_retries=max_retries,
+            )
+            LOGGER.info("Completed: %s --> %s", name, path)
+        except Exception as exc:  # noqa: PERF203
+            LOGGER.error("Failed: %s (%s)", name, exc)
+            failures.append(name)
+    return failures
+
+
+def _ensure_gate_dataset(
+    *,
+    hub: Literal["huggingface", "modelscope"],
+    namespace: str,
+    out_dir: Path,
+    token: str | None,
+    max_workers: int,
+    max_retries: int,
+) -> None:
+    gate_name = "gate"
+    gate_repo_id = f"{namespace}/{gate_name}"
+    gate_path = out_dir / namespace / gate_name
+
+    LOGGER.info("============================================================")
+    LOGGER.info(" CHECKING GATE DATASET ACCESS — ROBOCOIN CONSENT REQUIRED")
+    LOGGER.info("============================================================")
+
+    # Check if gate dataset already exists
+    if gate_path.exists() and any(gate_path.rglob("*")):
+        LOGGER.info("Gate dataset already exists at: %s", gate_path)
+        LOGGER.info("Verifying gate dataset access...")
+    else:
+        LOGGER.info("Gate dataset not found. Attempting to download mandatory dataset %s from %s", gate_repo_id, hub)
+
+    try:
+        gate_path = download_dataset(
+            hub=hub,
+            dataset_name=gate_name,
+            output_dir=out_dir,
+            namespace=namespace,
+            token=token,
+            max_workers=max_workers,
+            max_retries=1,
+            enable_retry=False,
+        )
+        LOGGER.info("============================================================")
+        LOGGER.info(" ✓ GATE CHECK PASSED — THANK YOU FOR SUPPORTING ROBOCOIN")
+        LOGGER.info("============================================================")
+        LOGGER.info("Gate dataset is ready at: %s", gate_path)
+        LOGGER.info("Your consent keeps RoboCOIN sustainable and region-aware.")
+        LOGGER.info("Proceeding with the remaining dataset downloads...")
+        LOGGER.info("------------------------------------------------------------")
+    except Exception as exc:  # noqa: PERF203
+        if hub == "huggingface":
+            gate_url = f"https://huggingface.co/datasets/{gate_repo_id}"
+        else:
+            gate_url = f"https://modelscope.cn/datasets/{gate_repo_id}"
+
+        LOGGER.error("============================================================")
+        LOGGER.error(" ✗ GATE DATASET ACCESS REQUIRED — PLEASE COMPLETE STATISTICS FORM")
+        LOGGER.error("============================================================")
+        LOGGER.error("To improve RoboCOIN’s regional coverage and understand how the data")
+        LOGGER.error("is used, we need a one-time, lightweight consent submission before")
+        LOGGER.error("any other datasets can be downloaded. Please visit the following link")
+        LOGGER.error("and fill out the brief form, then re-run this command:")
+        LOGGER.error("  %s", gate_url)
+        LOGGER.error("The information is collected solely via the official Hugging Face flow")
+        LOGGER.error("and will never be used for unrelated purposes. Your response helps us")
+        LOGGER.error("prioritize support and keep the project sustainable. Thank you!")
+        LOGGER.error("------------------------------------------------------------")
+        LOGGER.error("Technical tips:")
+        LOGGER.error("  - Ensure you have granted access at the URL above")
+        LOGGER.error("  - If the dataset is private, confirm your token and permissions")
+        LOGGER.error("  - Verify network connectivity and try again")
+        LOGGER.error("Original error: %s: %s", type(exc).__name__, exc)
+        raise RuntimeError(f"Gate dataset '{gate_repo_id}' download failed") from exc
 
 
 # --------------------------------------------------------------------------- #
@@ -293,8 +418,9 @@ def download_dataset(
     token: str | None,
     max_workers: int,
     max_retries: int,
+    enable_retry: bool = True,
 ) -> Path:
-    namespace = namespace or DEFAULT_NAMESPACE
+    namespace = _resolve_namespace(namespace)
     repo_id = f"{namespace}/{dataset_name}"
     
     # Create a subdirectory for this dataset, preserving namespace structure.
@@ -317,7 +443,9 @@ def download_dataset(
             return _download_from_ms(repo_id, dataset_path, token, max_workers)
         raise ValueError(f"Unsupported hub: {hub}")
 
-    return _retry_loop(f"{hub}:{repo_id}", max_retries, _perform_download)
+    if enable_retry:
+        return _retry_loop(f"{hub}:{repo_id}", max_retries, _perform_download)
+    return _perform_download()
 
 
 def download_datasets(
@@ -341,43 +469,31 @@ def download_datasets(
         max_workers: Maximum number of parallel workers for downloading (used for both HuggingFace and ModelScope).
         max_retries: Maximum attempts per dataset (including the first try).
     """
-    datasets = list(dataset_names)
-    if not datasets:
-        raise ValueError("No datasets provided.")
-
-    # Use default output directory if not provided
-    if output_dir is None:
-        output_dir = DEFAULT_OUTPUT_DIR
-
-    out_dir: Path = Path(output_dir).expanduser().resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
-
+    datasets = _prepare_dataset_list(dataset_names)
+    out_dir = _resolve_output_dir(output_dir or DEFAULT_OUTPUT_DIR)
+    resolved_namespace = _resolve_namespace(namespace)
     resolved_token = _resolve_token(hub, token)
+    safe_workers = max(1, max_workers)
+    safe_retries = int(max_retries)
 
-    LOGGER.info("Hub: %s", hub)
-    LOGGER.info("Namespace: %s", namespace or DEFAULT_NAMESPACE)
-    LOGGER.info("Output: %s", out_dir)
-    LOGGER.info("Datasets: %s", ", ".join(datasets))
-    LOGGER.info("Retry budget: %d attempt(s) per dataset", int(max_retries))
-    LOGGER.info("Token: %s", "provided" if resolved_token else "not provided")
+    _log_download_plan(
+        hub=hub,
+        namespace=resolved_namespace,
+        out_dir=out_dir,
+        datasets=datasets,
+        max_retries=safe_retries,
+        token_provided=bool(resolved_token),
+    )
 
-    failures: list[str] = []
-    for idx, name in enumerate(datasets, 1):
-        LOGGER.info("[%d/%d] %s", idx, len(datasets), name)
-        try:
-            path = download_dataset(
-                hub=hub,
-                dataset_name=name,
-                output_dir=out_dir,
-                namespace=namespace,
-                token=resolved_token,
-                max_workers=max(1, max_workers),
-                max_retries=int(max_retries),
-            )
-            LOGGER.info("Completed: %s --> %s", name, path)
-        except Exception as exc:  # noqa: PERF203
-            LOGGER.error("Failed: %s (%s)", name, exc)
-            failures.append(name)
+    failures = _download_requested_datasets(
+        hub=hub,
+        datasets=datasets,
+        out_dir=out_dir,
+        namespace=namespace,
+        token=resolved_token,
+        max_workers=safe_workers,
+        max_retries=safe_retries,
+    )
 
     if failures:
         LOGGER.error("Failed datasets: %s", ", ".join(failures))
@@ -418,15 +534,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         LOGGER.info("  Token: %s", "provided" if args.token else "not provided")
         return 0
 
-    failures = download_datasets(
-        hub=args.hub,
-        dataset_names=dataset_names,
-        output_dir=output_dir,
-        namespace=args.namespace,
-        token=args.token,
-        max_workers=max(1, args.max_workers),
-        max_retries=int(args.max_retry_time),
-    )
+    # Perform gate check before actual download
+    resolved_namespace = _resolve_namespace(args.namespace)
+    resolved_token = _resolve_token(args.hub, args.token)
+    try:
+        _ensure_gate_dataset(
+            hub=args.hub,
+            namespace=resolved_namespace,
+            out_dir=output_dir,
+            token=resolved_token,
+            max_workers=max(1, args.max_workers),
+            max_retries=int(args.max_retry_time),
+        )
+        LOGGER.info("Gate check completed successfully. Proceeding with dataset downloads...")
+    except RuntimeError as exc:
+        # Gate dataset failure – abort cleanly before downloading other datasets
+        LOGGER.error("Download aborted due to gate check failure: %s", exc)
+        return 1
+
+    try:
+        failures = download_datasets(
+            hub=args.hub,
+            dataset_names=dataset_names,
+            output_dir=output_dir,
+            namespace=args.namespace,
+            token=args.token,
+            max_workers=max(1, args.max_workers),
+            max_retries=int(args.max_retry_time),
+        )
+    except RuntimeError as exc:
+        # Gate dataset failure (or other fatal download error) – abort cleanly.
+        LOGGER.error("Download aborted: %s", exc)
+        return 1
 
     return 1 if failures else 0
 

@@ -318,8 +318,8 @@ def _log_gate_failure(gate_repo_id: str, gate_url: str, exc: Exception) -> None:
 # --------------------------------------------------------------------------- #
 def _download_from_hf(repo_id: str, target_dir: Path, token: str | None, max_workers: int) -> Path:
     try:
-        from huggingface_hub import snapshot_download
-        from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
+        from huggingface_hub import snapshot_download  # type: ignore[import-untyped]
+        from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - dependency error
         raise RuntimeError("huggingface_hub is missing: pip install huggingface_hub") from exc
 
@@ -364,14 +364,14 @@ def _download_from_hf(repo_id: str, target_dir: Path, token: str | None, max_wor
 
 def _download_from_ms(repo_id: str, target_dir: Path, token: str | None, max_workers: int) -> Path:
     try:
-        from modelscope import dataset_snapshot_download
-        from modelscope.hub.api import HubApi
+        from modelscope import dataset_snapshot_download  # type: ignore[import-untyped]
+        from modelscope.hub.api import HubApi  # type: ignore[import-untyped]
     except ImportError as exc:  # pragma: no cover - dependency error
         raise RuntimeError("modelscope is missing: pip install modelscope") from exc
 
     # Check if datasets module is available (ModelScope requires it internally)
     try:
-        import datasets  # noqa: F401
+        import datasets  # noqa: F401  # type: ignore[import-untyped]
     except ImportError:
         raise RuntimeError(
             "datasets module is missing but required by ModelScope\n"

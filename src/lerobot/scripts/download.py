@@ -22,6 +22,7 @@ DEFAULT_SLEEP_SECONDS = 5
 MAX_SLEEP_SECONDS = 120
 DEFAULT_OUTPUT_DIR = "~/.cache/huggingface/lerobot/"
 GATE_DATASET_NAME = "gate"
+ENABLE_GATE = False
 
 # Setup logging with file output
 _log_dir = Path("logs/download")
@@ -79,6 +80,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_MAX_RETRIES,
         help="Maximum number of retry attempts per dataset.",
     )
+    parser.add_argument("--enable-gate", 
+        action="store_true", 
+        default=ENABLE_GATE, 
+        help="Enable the gate dataset check before downloading other datasets.")
     parser.add_argument("--dry_run", action="store_true", help="Print plan and exit.")
     return parser
 
@@ -576,22 +581,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"  Token: {'provided' if args.token else 'not provided'}")
         return 0
 
-    # Perform gate check before actual download (HuggingFace only)
+    # Perform gate check before actual download (HuggingFace only) if enabled
     resolved_namespace = _resolve_namespace(args.namespace)
     resolved_token = _resolve_token(args.hub, args.token)
-    try:
-        _ensure_gate_dataset(
-            hub=args.hub,
-            namespace=resolved_namespace,
-            out_dir=output_dir,
-            token=resolved_token,
-            max_workers=max(1, args.max_workers),
-        )
-        LOGGER.debug("Gate check completed successfully. Proceeding with dataset downloads...")
-    except RuntimeError as exc:
-        # Gate dataset failure – abort cleanly before downloading other datasets
-        LOGGER.error("Download aborted due to gate check failure: %s", exc)
-        return 1
+    
+    if args.enable_gate:
+        try:
+            perform_gate_check(
+                hub=args.hub,
+                namespace=resolved_namespace,
+                out_dir=output_dir,
+                token=resolved_token,
+                max_workers=max(1, args.max_workers),
+            )
+            LOGGER.debug("Gate check completed successfully. Proceeding with dataset downloads...")
+        except RuntimeError as exc:
+            # Gate dataset failure – abort cleanly before downloading other datasets
+            LOGGER.error("Download aborted due to gate check failure: %s", exc)
+            return 1
+    else:
+        LOGGER.debug("Gate check disabled. Proceeding directly with dataset downloads...")
 
     try:
         failures = download_datasets(
@@ -609,6 +618,48 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     return 1 if failures else 0
+
+
+def perform_gate_check(
+    *,
+    hub: Literal["huggingface", "modelscope"],
+    namespace: str,
+    out_dir: Path,
+    token: str | None,
+    max_workers: int,
+) -> None:
+    """Perform the gate dataset check if enabled."""
+    # Only perform gate check for HuggingFace hub
+    if hub != "huggingface":
+        return
+
+    gate_name = GATE_DATASET_NAME
+    gate_repo_id = f"{namespace}/{gate_name}"
+    gate_path = out_dir / namespace / gate_name
+
+    # Check if gate dataset already exists
+    if gate_path.exists() and any(gate_path.rglob("*")):
+        LOGGER.debug("Gate dataset already exists at: %s", gate_path)
+        LOGGER.debug("Verifying gate dataset access...")
+    else:
+        LOGGER.debug("Gate dataset not found. Attempting to download mandatory dataset %s from %s", gate_repo_id, hub)
+
+    try:
+        gate_path = download_dataset(
+            hub=hub,
+            dataset_name=gate_name,
+            output_dir=out_dir,
+            namespace=namespace,
+            token=token,
+            max_workers=max_workers,
+            max_retries=1,
+            enable_retry=False,
+        )
+        _log_gate_success(gate_path)
+    except Exception as exc:  # noqa: PERF203
+        gate_url = f"https://huggingface.co/datasets/{gate_repo_id}"
+        _log_gate_failure(gate_repo_id, gate_url, exc)
+        raise RuntimeError(f"Gate dataset '{gate_repo_id}' download failed") from exc
 
 
 if __name__ == "__main__":

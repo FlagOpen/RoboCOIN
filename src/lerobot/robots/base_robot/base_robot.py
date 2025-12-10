@@ -148,6 +148,9 @@ class BaseRobot(Robot):
         Params:
         - state: Joint positions in standard units
         """
+        if self.config.use_hardware_teleop:
+            return # Bypass setting joint state if hardware teleop is enabled
+
         state = self.joint_transform.output_transform(state) # standard -> joint
         self._set_joint_state(state)
     
@@ -168,6 +171,9 @@ class BaseRobot(Robot):
         Params:
         - state: End-effector pose in standard units
         """
+        if self.config.use_hardware_teleop:
+            return # Bypass setting EE state if hardware teleop is enabled
+        
         state = self.pose_transform.output_transform(state) # standard -> end_effector
         self._set_ee_state(state)
     
@@ -257,7 +263,7 @@ class BaseRobot(Robot):
         """
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
-        
+
         action = np.array([action[each] for each in self._motors_ft.keys()])
         action = self.model_joint_transform.input_transform(action) # model -> standard
 

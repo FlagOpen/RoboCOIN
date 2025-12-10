@@ -32,10 +32,12 @@ class BaseRobotConfig(RobotConfig):
     # camera configurations, key is camera name, value is CameraConfig, e.g.
     # cameras: {"front": CameraConfig(width=640, height=480, fps=30)}
     cameras: dict[str, CameraConfig] = field(default_factory=dict)
+
     # list of joint names, including gripper
     joint_names: List[str] = field(default_factory=lambda: [
         'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
     ])
+
     # initialization type, choices: 'none', 'joint', 'end_effector'
     init_type: str = 'none'
     # initial joint state if init_type is 'joint',
@@ -43,6 +45,7 @@ class BaseRobotConfig(RobotConfig):
     init_state: List[float] = field(default_factory=lambda: [
         0, 0, 0, 0, 0, 0, 0, 0,
     ])
+
     # units for robot joints, for sdk control
     joint_units: List[str] = field(default_factory=lambda: [
         'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
@@ -55,6 +58,7 @@ class BaseRobotConfig(RobotConfig):
     model_joint_units: List[str] = field(default_factory=lambda: [
         'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
     ])
+
     # delta control mode, choices: 'none', 'previous', 'initial'
     # 'none': absolute control
     # 'previous': delta control with respect to previous state
@@ -68,6 +72,13 @@ class BaseRobotConfig(RobotConfig):
     #        set s2 + a5 -> s5
     # 'initial': relative control with respect to initial state
     delta_with: str = 'none'    
+
+    # whether to use hardware teleoperation interface (only used during data collection)
+    # - If True, the _set_joint_state & _set_end_effector_pose methods
+    #   will be banned to avoid conflicts with hardware teleop control
+    # - If False, the robot can be controlled via code
+    use_hardware_teleop: bool = False
+
     # visualization settings
     visualize: bool = True
     # whether to draw 2D trajectories

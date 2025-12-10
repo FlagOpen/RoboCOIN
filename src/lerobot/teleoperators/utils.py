@@ -65,5 +65,29 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .bi_so100_leader import BiSO100Leader
 
         return BiSO100Leader(config)
+    elif config.type == "dummy_leader":
+        from .dummy_leader import DummyLeader
+
+        return DummyLeader(config)
+    elif config.type == "bi_dummy_leader":
+        from .bi_dummy_leader import BiDummyLeader
+
+        return BiDummyLeader(config)
+    elif config.type == "piper_leader":
+        from .piper_leader import PiperLeader
+
+        return PiperLeader(config)
+    elif config.type == "bi_piper_leader":
+        from .bi_piper_leader import BiPiperLeader
+
+        return BiPiperLeader(config)
+    elif config.type == "realman_leader":
+        from .realman_leader import RealmanLeader
+
+        return RealmanLeader(config)
+    elif config.type == "bi_realman_leader":
+        from .bi_realman_leader import BiRealmanLeader
+
+        return BiRealmanLeader(config)
     else:
         raise ValueError(config.type)

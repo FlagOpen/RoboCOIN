@@ -119,10 +119,6 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from .ros_robot.ros_robot import ROSRobot
 
         return ROSRobot(config)
-    elif config.type == "ros_robot_end_effector":
-        from .ros_robot.ros_robot_end_effector import ROSRobotEndEffector
-
-        return ROSRobotEndEffector(config)
     elif config.type == "moveit_robot":
         from .moveit_robot.moveit_robot import MoveitRobot
 

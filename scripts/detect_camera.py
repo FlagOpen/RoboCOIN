@@ -5,7 +5,7 @@
 多设备自动检测与绑定工具
 作用：根据用户输入的设备数量，依次引导用户插入设备并自动检测绑定
 输出：生成udev规则文件，实现设备与固定端口的绑定
-使用方法：直接运行此脚本 python3 multi_device_detector.py
+使用方法：直接运行此脚本 python detect_camera.py
 """
 
 import subprocess

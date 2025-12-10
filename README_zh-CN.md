@@ -1,10 +1,15 @@
 # RoboCOIN
 
-[English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
+📄READMEs: [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
 
 🔗Links: [Project Website](https://flagopen.github.io/RoboCOIN/) | [ArXiv](https://arxiv.org/abs/2511.17441) | [PDF](https://arxiv.org/pdf/2511.17441) | [Visualize & Download](https://flagopen.github.io/RoboCOIN-DataManager/)
 
-目录
+## 新闻
+
+- 🔥[2025.12.09] 我们的数据集在 [HuggingFace](https://huggingface.co/datasets/RoboCoin) 和 [ModelScope](https://modelscope.cn/organization/RoboCOIN) 上累计取得300,000下载量！
+- 🔥[2025.11.24] 我们的技术报告已在 [ArXiv](https://arxiv.org/abs/2511.17441) 上发布！
+
+## 目录
 - [RoboCOIN](#robocoin)
   - [概述](#概述)
   - [安装](#安装)
@@ -25,11 +30,19 @@
     - [使用说明](#使用说明)
       - [轨迹重播](#轨迹重播)
       - [模型推理](#模型推理)
-        - [基于LeRobot Policy的推理](#基于lerobot-policy的推理)
+        - [基于LeRobot Policy的推理 (基础版)](#基于lerobot-policy的推理-基础版)
+        - [基于LeRobot Policy的推理 (异步RPC版)](#基于lerobot-policy的推理-异步rpc版)
         - [基于OpenPI Policy的推理](#基于openpi-policy的推理)
         - [层次化任务描述的推理 (目前仅支持OpenPI)](#层次化任务描述的推理-目前仅支持openpi)
-    - [自定义功能](#自定义功能)
-      - [新增自定义机器人](#新增自定义机器人)
+    - [新增自定义机器人](#新增自定义机器人)
+  - [机器人遥操作](#机器人遥操作)
+    - [遥操作脚本结构](#遥操作脚本结构)
+    - [遥操作基础配置类](#遥操作基础配置类)
+    - [遥操作特定配置类](#遥操作特定配置类)
+    - [使用说明](#使用说明)
+      - [主从臂遥操作](#主从臂遥操作)
+      - [硬件设备直接遥操作（绕过代码逻辑）](#硬件设备直接遥操作（绕过代码逻辑）)
+    - [添加自定义遥操作器](#添加自定义遥操作器)
   - [致谢](#致谢)
 ---
 ## 概述
@@ -111,45 +124,45 @@ dataloader = torch.utils.data.DataLoader(
 ---
 ## 机器人控制逻辑
 
+机器人控制模块为多种机器人平台提供统一接口，支持 SDK 直控（如 Piper、Realman）和通用 ROS/MoveIt 控制，包含标准化单位转换、绝对 / 相对位置控制、轨迹可视化等功能。
 
 ```mermaid
 graph LR
-    subgraph Robot Low-level Interfaces
-    A1[Unified Unit Conversion]
-    A2[Absolute & Relative Position Control]
-    A3[Camera & Trajectory Visualization]
-    A[Robot Low-level Interface]
+    subgraph 机器人底层接口
+    A1[统一单位转换]
+    A2[绝对/相对位置控制]
+    A3[相机与轨迹可视化]
+    A[机器人底层接口]
     end
     
-    %% Robot Service Layer
-    subgraph Robot Services
-    C[Robot Services]
-    C1[SDK]
-    C2[ROS]
-    C11[Agilex Piper Service]
-    C12[Realman Service]
-    C13[Other Robot Services]
-    C21[Generic Robot Service]
+    %% 机器人服务层
+    subgraph 机器人服务
+    C[机器人服务]
+    C1[SDK 直控]
+    C2[ROS 控制]
+    C11[Agilex Piper 服务]
+    C12[Realman 服务]
+    C13[其他机器人服务]
+    C21[通用机器人服务]
     end
     
-    %% Camera Service Layer
-    subgraph Camera Services
-    D[Camera Services]
-    D1[OpenCV Camera Service]
-    D2[RealSense Camera Service]
+    %% 相机服务层
+    subgraph 相机服务
+    D[相机服务]
+    D1[OpenCV 相机服务]
+    D2[RealSense 相机服务]
     end
     
-    %% Inference Service Layer
-    subgraph Inference Services
-    E[Inference Services]
-    E1[RPC]
-    E11[Lerobot Policy]
-    E2[WebSocket]
-    E21[OpenPi Policy]
+    %% 推理服务层
+    subgraph 推理服务
+    E[推理服务]
+    E1[RPC 通信]
+    E11[LeRobot 策略]
+    E2[WebSocket 通信]
+    E21[OpenPi 策略]
     end
     
-    %% Connection Relationships
-
+    %% 连接关系
     A1 --- A
     A2 --- A
     A3 --- A
@@ -172,7 +185,6 @@ graph LR
     A --- C
     A --- D
     A --- E
-    
 ```
 
 ### 机器人目录结构
@@ -499,6 +511,8 @@ sequenceDiagram
 
 ### 使用说明
 
+> ⚠️ 运行机器人控制脚本前，请仔细阅读所有配置项，并根据机器人平台 SDK 和实际环境修改参数。
+
 #### 轨迹重播
 
 机器人平台的配置选项可以在配置类文件中修改，也可以通过命令行传入，以双臂Realman为例，命令如下：
@@ -521,7 +535,31 @@ python src/lerobot/scripts/replay.py \
 
 #### 模型推理
 
-##### 基于LeRobot Policy的推理
+##### 基于LeRobot Policy的推理 (基础版)
+
+直接运行推理脚本，以双臂 Realman 为例，命令如下：
+```bash
+python src/lerobot/scripts/inference_naive.py \
+    --robot.type=bi_realman \
+    --robot.ip_left="169.254.128.18" \
+    --robot.port_left=8080 \
+    --robot.ip_right="169.254.128.19" \
+    --robot.port_right=8080 \
+    --robot.cameras="{front: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, left_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30}, right_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30}}" \
+    --robot.block=False \
+    --robot.id=black \
+    --task="do something" \
+    --pretrained_path=path/to/checkpoint \
+    --repo_id=realman/bi_realman_demo \
+    --frequency=10 \
+    --camera_keys="[front]"
+```
+
+上述命令初始化 Realman 姿态，加载头部、左臂腕部、右臂腕部相机，传入任务提示 “do something”，加载本地模型进行推理，并输出动作控制机器人平台。
+
+可在终端按 “q” 随时退出，退出后按 “y/n” 标记任务成功 / 失败，视频将保存至 results/ 目录。
+
+##### 基于LeRobot Policy的推理 (异步RPC版)
 
 1. 运行LeRobot Server，详见`src/lerobot/scripts/server/policy_server.py`，命令如下：
 ```bash
@@ -715,6 +753,416 @@ python src/lerobot/scripts/server/robot_client_openpi_anno.py \
    from lerobot.robots.my_robot.bi_my_robot_end_effector import BiMyRobotEndEffector
    ```
 9. 现在你可以通过命令行参数`--robot.type=my_robot`来使用你的自定义机器人了
+
+---
+## 机器人遥操作
+
+遥操作模块为多种机器人平台提供遥操作功能，支持通过多种设备控制机器人，包括基于代码的遥操作和基于硬件的直接遥操作。
+
+```mermaid
+graph LR
+    Robot[机器人]
+    Record[记录脚本]
+
+    subgraph 遥操作模式
+        CodeBased[基于代码的遥操作]
+        HardwareBased[基于硬件的遥操作]
+    end
+
+    subgraph 遥操作设备类型
+        ControllerGroup[多样化控制器] --> LeaderArm[主臂]
+        ControllerGroup --> Keyboard[键盘]
+        ControllerGroup --> Gamepad[游戏手柄]
+        VendorDevice[厂商专属硬件]
+        VendorDevice --> LeaderArm2[主臂]
+        VendorDevice --> ExoSkeleton[外骨骼]
+        VendorDevice --> DataGlove[数据手套]
+    end
+
+    Robot --- Record
+    Record --- CodeBased
+    Record --- HardwareBased
+    CodeBased --- ControllerGroup
+    HardwareBased --- VendorDevice
+```
+
+### 遥操作脚本结构
+
+所有遥操作脚本均位于 `src/lerobot/teleoperators` 目录下。以 Realman 遥操作器为例，相关文件位于 `src/lerobot/teleoperators/realman_leader`：
+```bash
+realman_leader # 单臂遥操作器
+├── __init__.py
+├── configuration_realman_leader.py # 配置类
+├── realman_leader.py               # 遥操作逻辑
+└── realman_leader_end_effector.py  # 末端执行器遥操作逻辑
+
+bi_realman_leader # 双臂遥操作器
+├── __init__.py
+├── configuration_bi_realman_leader.py # 配置类
+├── bi_realman_leader.py               # 遥操作逻辑
+└── bi_realman_leader_end_effector.py  # 末端执行器遥操作逻辑
+```
+
+### 遥操作基础配置类
+
+```mermaid
+graph LR
+    A[TeleoperatorConfig] 
+    B[BaseLeaderConfig]
+    C[BaseLeaderEndEffectorConfig]
+    D[BiBaseLeaderConfig]
+    E[BiBaseLeaderEndEffectorConfig]
+    A --> B
+    B --> C
+    B --> D
+    D --> E
+    C --> E
+```
+
+遥操作基础配置位于 `src/lerobot/teleoperators/base_teleoperator/config_base_teleoperator.py`：
+
+```python
+"""
+BaseLeader 遥操作器配置
+"""
+
+from dataclasses import dataclass, field
+from typing import List
+
+from ..config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("base_leader")
+@dataclass
+class BaseLeaderConfig(TeleoperatorConfig):
+    """
+    BaseLeader 遥操作器配置类
+    参数说明：
+    - joint_names: 关节名称列表（含夹爪）
+    - joint_units: 机器人关节控制单位（适配 SDK）
+    - pose_units: 末端执行器控制单位（适配 SDK）
+    - model_joint_units: 模型输入/输出关节单位（适配数据集）
+    """
+
+    # 关节名称列表（含夹爪）
+    joint_names: List[str] = field(default_factory=lambda: [
+        "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6", "joint_7", "gripper",
+    ])
+
+    # 初始化类型和状态（每轮任务开始时执行）
+    # 'none': 不初始化
+    # 'joint': 关节角度初始化
+    # 'end_effector': 末端执行器位姿初始化
+    init_type: str = "none"  # 可选值：'none', 'joint', 'end_effector'
+    init_state: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    init_threshold: float = 0.1  # 初始化完成阈值（状态误差小于该值则认为初始化成功）
+
+    # 机器人关节控制单位（适配 SDK）
+    joint_units: List[str] = field(default_factory=lambda: [
+        "radian", "radian", "radian", "radian", "radian", "radian", "radian", "m",
+    ])
+    # 末端执行器控制单位（适配 SDK）
+    pose_units: List[str] = field(default_factory=lambda: [
+        "m", "m", "m", "radian", "radian", "radian", "m",
+    ])
+    # 模型输入/输出关节单位（适配数据集）
+    model_joint_units: List[str] = field(default_factory=lambda: [
+        "radian", "radian", "radian", "radian", "radian", "radian", "radian", "m",
+    ])
+
+
+@TeleoperatorConfig.register_subclass("base_leader_end_effector")
+@dataclass
+class BaseLeaderEndEffectorConfig(BaseLeaderConfig):
+    """
+    BaseLeaderEndEffector 遥操作器配置类
+    扩展 BaseLeaderConfig，增加末端执行器专属参数
+    参数说明：
+    - base_euler: 机器人 SDK 控制坐标系相对于模型坐标系的旋转角度（暂未实现）
+    - model_pose_units: 模型输入/输出末端执行器单位（适配数据集）
+    """
+
+    # 机器人 SDK 控制坐标系相对于模型坐标系的旋转角度
+    base_euler: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    # 模型输入/输出末端执行器单位（适配数据集）
+    model_pose_units: List[str] = field(default_factory=lambda: [
+        "m", "m", "m", "radian", "radian", "radian", "m",
+    ])
+```
+
+参数详情：
+
+| 参数名称 | 类型 | 默认值 | 描述 |
+| ------------------- | ------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `joint_names` | `List[str]` | `["joint_1", "joint_2", ..., "gripper"]` | 关节名称列表（含夹爪） |
+| `init_type` | `str` | `"none"` | 初始化类型，可选值：`"none"`（不初始化）、`"joint"`（关节初始化）、`"end_effector"`（末端执行器初始化） |
+| `init_state` | `List[float]` | `[0.0, 0.0, ..., 0.0]`（8 个元素） | 初始化目标值（关节角度或末端执行器位姿） |
+| `init_threshold` | `float` | `0.1` | 初始化完成阈值（状态误差小于该值则认为成功） |
+| `joint_units` | `List[str]` | `["radian", ..., "m"]`（8 个元素） | 机器人关节控制单位（适配 SDK） |
+| `pose_units` | `List[str]` | `["m", "m", "m", "radian", "radian", "radian", "m"]` | 末端执行器控制单位（适配 SDK） |
+| `model_joint_units` | `List[str]` | `["radian", ..., "m"]`（8 个元素） | 模型输入/输出关节单位（适配数据集） |
+| `base_euler` | `List[float]` | `[0.0, 0.0, 0.0]` | 坐标系旋转角度（暂未实现） |
+| `model_pose_units` | `List[str]` | `["m", "m", "m", "radian", "radian", "radian", "m"]` | 模型输入/输出末端执行器单位（适配数据集） |
+
+双臂遥操作基础配置类位于 `src/lerobot/teleoperators/bi_base_leader/config_bi_base_leader.py`，继承自单臂基础配置：
+```python
+"""
+双臂基础遥操作器配置
+"""
+
+from dataclasses import dataclass
+
+from lerobot.teleoperators import TeleoperatorConfig
+
+from ..base_leader import BaseLeaderConfig, BaseLeaderEndEffectorConfig
+
+
+@TeleoperatorConfig.register_subclass("bi_base_leader")
+@dataclass
+class BiBaseLeaderConfig(BaseLeaderConfig):
+    """
+    双臂基础遥操作器配置类（关节控制）
+    """
+
+    pass
+
+
+@TeleoperatorConfig.register_subclass("bi_base_leader_end_effector")
+@dataclass
+class BiBaseLeaderEndEffectorConfig(BiBaseLeaderConfig, BaseLeaderEndEffectorConfig):
+    """
+    双臂基础遥操作器配置类（末端执行器控制）
+    """
+    
+    pass
+```
+
+### 遥操作特定配置类
+
+每个遥操作器都有专属配置类，继承自基础配置类，需根据具体机器人 SDK 进行适配。
+以 Realman 遥操作器为例，继承关系：
+
+```mermaid
+graph LR;
+    A[BaseLeaderConfig] --> B[RealmanLeaderConfig]
+    A --> C[RealmanLeaderEndEffectorConfig]
+    A --> D[BiBaseLeaderConfig]
+    D --> E[BiRealmanLeaderConfig]
+    C --> F[BiRealmanLeaderEndEffectorConfig]
+    D --> F
+```
+
+Realman 单臂遥操作配置示例（位于 `src/lerobot/teleoperators/realman_leader/config_realman_leader.py`）：
+```python
+"""
+Realman 主臂遥操作器配置
+"""
+
+from dataclasses import dataclass, field
+from typing import List
+
+from ..base_leader import BaseLeaderConfig, BaseLeaderEndEffectorConfig
+from ..config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("realman_leader")
+@dataclass
+class RealmanLeaderConfig(BaseLeaderConfig):
+    """
+    Realman 主臂配置类
+    参数说明：
+    - ip: Realman 机器人控制器 IP 地址
+    - port: Realman 机器人控制器端口
+    - block: 是否启用阻塞式控制（动作完成前阻塞）
+    - wait_second: 非阻塞模式下的动作延迟时间
+    - velocity: 关节运动默认速度（0-100）
+    - joint_names: 关节名称列表（含夹爪）
+    - init_type: 初始化类型（none/joint/end_effector）
+    - init_state: Realman 主臂初始关节状态
+    - joint_units: 机器人关节控制单位（适配 SDK）
+    - pose_units: 末端执行器控制单位（适配 SDK）
+    """
+
+    ##### Realman SDK 配置 #####
+    # Realman 机器人控制器 IP 和端口
+    ip: str = "169.254.128.18"
+    port: int = 8080
+
+    # Realman 机器人含 7 个关节 + 1 个夹爪
+    joint_names: List[str] = field(default_factory=lambda: [
+        "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6", "joint_7", "gripper",
+    ])
+    
+    # Realman 主臂默认初始关节状态
+    init_type: str = "joint"
+    init_state: List[float] = field(default_factory=lambda: [
+        -0.84, -2.03,  1.15,  1.15,  2.71,  1.60, -2.99, 888.00,
+    ])
+
+    # Realman SDK 默认单位：角度（degree）+ 米（m）
+    joint_units: List[str] = field(default_factory=lambda: [
+        "degree", "degree", "degree", "degree", "degree", "degree", "degree", "m",
+    ])
+    pose_units: List[str] = field(default_factory=lambda: [
+        "m", "m", "m", "degree", "degree", "degree", "m",
+    ])
+
+
+@TeleoperatorConfig.register_subclass("realman_leader_end_effector")
+@dataclass
+class RealmanLeaderEndEffectorConfig(RealmanLeaderConfig, BaseLeaderEndEffectorConfig):
+    """
+    Realman 主臂末端执行器遥操作配置类
+    """
+
+    pass
+```
+
+Realman 双臂遥操作配置示例（位于 `src/lerobot/teleoperators/bi_realman_leader/config_bi_realman_leader.py`）：
+```python
+"""
+双臂 Realman 主臂遥操作器配置
+"""
+
+from dataclasses import dataclass, field
+from typing import List
+
+from ..base_leader import BaseLeaderConfig, BaseLeaderEndEffectorConfig
+from ..config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("bi_realman_leader")
+@dataclass
+class BiRealmanLeaderConfig(BaseLeaderConfig):
+    """
+    双臂 Realman 主臂配置类
+    """
+    ##### Realman SDK 配置 #####
+    # 左右臂 Realman 机器人控制器 IP 和端口
+    ip_left: str = "169.254.128.18"
+    port_left: int = 8080
+    ip_right: str = "169.254.128.19"
+    port_right: int = 8080
+
+    # 双臂 Realman 机器人含 7 个关节 + 1 个夹爪（每臂）
+    joint_names: List[str] = field(default_factory=lambda: [
+        "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6", "joint_7", "gripper",
+    ])
+
+    # 双臂 Realman 主臂默认初始关节状态
+    init_type: str = "joint"
+    init_state_left: List[float] = field(default_factory=lambda: [
+        -0.84, -2.03,  1.15,  1.15,  2.71,  1.60, -2.99, 888.00,
+    ])
+    init_state_right: List[float] = field(default_factory=lambda: [
+         1.16,  2.01, -0.79, -0.68, -2.84, -1.61,  2.37, 832.00,
+    ])
+
+    # Realman SDK 默认单位：角度（degree）+ 米（m）
+    joint_units: List[str] = field(default_factory=lambda: [
+        "degree", "degree", "degree", "degree", "degree", "degree", "degree", "m",
+    ])
+    pose_units: List[str] = field(default_factory=lambda: [
+        "m", "m", "m", "degree", "degree", "degree", "m",
+    ])
+
+
+@TeleoperatorConfig.register_subclass("bi_realman_leader_end_effector")
+@dataclass
+class BiRealmanLeaderEndEffectorConfig(BiRealmanLeaderConfig, BaseLeaderEndEffectorConfig):
+    """
+    双臂 Realman 主臂末端执行器遥操作配置类
+    """
+
+    pass
+```
+
+### 使用说明
+
+> ⚠️ 运行机器人遥操作脚本前，请仔细阅读所有配置项，并根据机器人平台 SDK 和实际环境修改参数。
+
+#### 主从臂遥操作 (代码逻辑)
+
+1. 将主从臂硬件设备连接至计算机；
+2. 运行遥操作录制脚本，以 Piper 机器人为例，命令如下：
+
+```bash
+lerobot-record \
+    --robot.type=piper \
+    --robot.can=can0 \
+    --robot.cameras="{observation.images.cam_front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+    --robot.id=piper_follower \
+    --teleop.type=piper_leader \
+    --teleop.can=can1 \
+    --teleop.id=piper_leader \
+    --dataset.repo_id=<your_lerobot_repo_id> \
+    --dataset.num_episodes=3 \
+    --dataset.single_task="执行具体任务" \
+    --dataset.push_to_hub=False
+```
+
+上述命令通过 CAN 总线 `can0` 连接 Piper 从臂，加载前置相机，通过 CAN 总线 `can1` 连接 Piper 主臂，录制 3 轮 “执行具体任务” 的遥操作数据，并保存至 <your_lerobot_repo_id>。
+
+操作说明：按右方向键（->）开始下一轮任务，按左方向键（<-）重复上一轮任务，按 “esc” 键随时退出遥操作。
+
+#### 硬件设备直接遥操作 (绕过代码逻辑)
+
+上述脚本通过遥操作代码逻辑实现控制，但许多机器人支持基于硬件的直连控制（如 Piper 可通过 CAN 总线直接关联主从臂），实时性和稳定性更优。
+
+此时可绕过代码逻辑，直接通过机器人 SDK 基于主臂硬件输入控制从臂：
+```bash
+lerobot-record \
+    --robot.type=piper \
+    --robot.can=can0 \
+    --robot.cameras="{observation.images.cam_front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+    --robot.id=piper_follower \
+    --robot.use_hardware_teleop=True \ # 启用硬件直连遥操作（绕过代码逻辑）
+    --teleop.can=can0 \
+    --teleop.type=piper_leader \
+    --teleop.id=piper_leader \
+    --dataset.repo_id=<your_lerobot_repo_id> \
+    --dataset.num_episodes=3 \
+    --dataset.single_task="do something" \
+    --dataset.push_to_hub=False
+```
+
+上述命令通过 CAN 总线 can0 同时连接 Piper 主臂和从臂，加载前置相机，录制 3 轮遥操作数据并保存至 <your_lerobot_repo_id>。
+
+### 添加自定义遥操作器
+
+1. 在 src/lerobot/teleoperators/ 目录下创建自定义遥操作器文件夹，命名为 my_robot_leader；
+2. 在该文件夹下创建以下文件：
+   - __init__.py：初始化文件；
+   - my_robot_leader.py：实现遥操作控制逻辑；
+   - configuration_my_robot_leader.py：定义配置类（继承自 TeleoperatorConfig）；
+   - my_robot_leader_end_effector.py（可选）：末端执行器遥操作逻辑；
+3. 在 configuration_my_robot_leader.py 中定义配置，包括 SDK 专属参数和基础配置；
+4. 在 my_robot_leader.py 中实现控制逻辑（继承自 BaseLeader）；
+5. 实现所有抽象方法：
+   - _check_dependencys(self)：检查遥操作器依赖环境；
+   - _connect_leader(self)：连接主臂硬件设备；
+   - _disconnect_leader(self)：断开主臂硬件连接；
+   - _get_joint_state(self) -> np.ndarray：获取当前主臂关节状态（输出为 joint_units 定义的单位）；
+   - _get_ee_state(self) -> np.ndarray：获取当前主臂末端执行器状态（输出为 pose_units 定义的单位）；
+6. （可选）参考其他遥操作器实现，扩展控制模式：
+   - my_robot_leader_end_effector.py：末端执行器遥操作（继承自 BaseLeaderEndEffector 和 my_robot_leader.py）；
+   - bi_my_robot_leader.py：双臂遥操作（继承自 BiBaseLeader 和 my_robot_leader.py）；
+   - bi_my_robot_leader_end_effector.py：双臂末端执行器遥操作（继承自 BiBaseLeaderEndEffector 和 my_robot_leader_end_effector.py）；
+7. 在 src/lerobot/teleoperators/utils.py 中注册配置类：
+   ```python
+   elif teleop_type == "my_robot_leader":
+       from .my_robot_leader.configuration_my_robot_leader import MyRobotLeaderConfig
+       return MyRobotLeaderConfig(**config_dict)
+   elif teleop_type == "my_robot_leader_end_effector":
+       from .my_robot_leader.configuration_my_robot_leader import MyRobotLeaderEndEffectorConfig
+       return MyRobotLeaderEndEffectorConfig(**config_dict)
+   elif teleop_type == "bi_my_robot_leader":
+       from .my_robot_leader.configuration_my_robot_leader import BiMyRobotLeaderConfig
+       return BiMyRobotLeaderConfig(**config_dict)
+   elif teleop_type == "bi_my_robot_leader_end_effector":
+       from .my_robot_leader.configuration_my_robot_leader import BiMyRobotLeaderEndEffectorConfig
+       return BiMyRobotLeaderEndEffectorConfig(**config_dict)
+
 ---
 ## 致谢
 

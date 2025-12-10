@@ -13,5 +13,9 @@ class PiperEndEffector(Piper, BaseRobotEndEffector):
     Params:
     - config: PiperEndEffectorConfig
     """
+
+    config_class = PiperEndEffectorConfig
+    name = "piper_end_effector"
+    
     def __init__(self, config: PiperEndEffectorConfig) -> None:
         super().__init__(config)

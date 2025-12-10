@@ -85,6 +85,12 @@ from lerobot.robots import (  # noqa: F401
     make_robot_from_config,
     so100_follower,
     so101_follower,
+    dummy,
+    bi_dummy,
+    piper,
+    bi_piper,
+    realman,
+    bi_realman,
 )
 from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
@@ -95,6 +101,12 @@ from lerobot.teleoperators import (  # noqa: F401
     make_teleoperator_from_config,
     so100_leader,
     so101_leader,
+    dummy_leader,
+    bi_dummy_leader,
+    piper_leader,
+    bi_piper_leader,
+    realman_leader,
+    bi_realman_leader,
 )
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.utils.control_utils import (
@@ -228,6 +240,9 @@ def record_loop(
     while timestamp < control_time_s:
         start_loop_t = time.perf_counter()
 
+        if dataset is None:
+            print(teleop.check_initialized())
+
         if events["exit_early"]:
             events["exit_early"] = False
             break
@@ -273,6 +288,7 @@ def record_loop(
         if dataset is not None:
             action_frame = build_dataset_frame(dataset.features, sent_action, prefix="action")
             frame = {**observation_frame, **action_frame}
+            # print(frame)
             dataset.add_frame(frame, task=single_task)
 
         if display_data:
@@ -334,11 +350,23 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
         teleop.connect()
 
     listener, events = init_keyboard_listener()
+    
+    print('Initialize robot')
+    record_loop(
+        robot=robot,
+        events=events,
+        fps=cfg.dataset.fps,
+        teleop=teleop,
+        control_time_s=cfg.dataset.reset_time_s,
+        single_task=cfg.dataset.single_task,
+        display_data=cfg.display_data,
+    )
 
     with VideoEncodingManager(dataset):
         recorded_episodes = 0
         while recorded_episodes < cfg.dataset.num_episodes and not events["stop_recording"]:
             log_say(f"Recording episode {dataset.num_episodes}", cfg.play_sounds)
+            print(f"Recording episode {dataset.num_episodes}", cfg.play_sounds)
             record_loop(
                 robot=robot,
                 events=events,

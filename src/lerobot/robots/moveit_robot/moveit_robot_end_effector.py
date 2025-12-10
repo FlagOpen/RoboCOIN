@@ -13,5 +13,9 @@ class MoveitRobotEndEffector(MoveitRobot, BaseRobotEndEffector):
     Params:
     - config: MoveitRobotEndEffectorConfig
     """
+
+    config_class = MoveitRobotEndEffectorConfig
+    name = "moveit_robot_end_effector"
+    
     def __init__(self, config: MoveitRobotEndEffectorConfig) -> None:
         super().__init__(config)

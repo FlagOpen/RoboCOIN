@@ -1,4 +1,4 @@
-from Robotic_Arm.rm_robot_interface import *
+from Robotic_Arm.rm_robot_interface import RoboticArm, rm_thread_mode_e
 
 robot = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
 handle = robot.rm_create_robot_arm("169.254.128.18", 8080, level=0)

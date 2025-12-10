@@ -6,6 +6,7 @@
 
 ## News
 
+- 🔥[9 Dec. 2025] Our datasets have reached a total of 300,000 downloads on [HuggingFace](https://huggingface.co/datasets/RoboCoin) and [ModelScope](https://modelscope.cn/organization/RoboCOIN)!
 - 🔥[24 Nov. 2025] Our technical report is available on [ArXiv](https://arxiv.org/abs/2511.17441)!
 
 ## Table of Contents
@@ -31,11 +32,19 @@
     - [Usage Instructions](#usage-instructions)
       - [Trajectory Replay](#trajectory-replay)
       - [Model Inference](#model-inference)
-        - [LeRobot Policy Based Inference](#lerobot-policy-based-inference)
+        - [LeRobot Policy Based Inference (Naive)](#lerobot-policy-based-inference-naive)
+        - [LeRobot Policy Based Inference (Asynchronous RPC)](#lerobot-policy-based-inference-asynchronous-rpc)
         - [OpenPI Policy Based Inference](#openpi-policy-based-inference)
         - [Hierarchical Task Description Inference (Currently Only Supports OpenPI)](#hierarchical-task-description-inference-currently-only-supports-openpi)
-    - [Customization](#customization)
-      - [Adding Custom Robots](#adding-custom-robots)
+    - [Adding Custom Robots](#adding-custom-robots)
+  - [Robot Teleoperation](#robot-teleoperation)
+    - [Teleoperator Script Structure](#teleoperator-script-structure)
+    - [Base Teleoperator Configuration Classes](#base-teleoperator-configuration-classes)
+    - [Specific Teleoperator Configuration Classes](#specific-teleoperator-configuration-classes)
+    - [Usage Instructions](#usage-instructions-1)
+        - [Teleoperation via Leader-Follower Arm (Code Logic)](#teleoperation-via-leader-follower-arm-code-logic)
+        - [Teleoperation directly via Hardware Device (Bypass Code Logic)](#teleoperation-directly-via-hardware-device-bypass-code-logic)
+    - [Adding Custom Teleoperators](#adding-custom-teleoperators)
   - [Acknowledgements](#acknowledgements)
   - [Contact Us](#contact-us)
 ## Overview
@@ -120,6 +129,8 @@ These features represent simulation eef data. Due to inconsistencies in the coor
 - **Codebase Origin**: This project is currently based on **LeRobot v0.3.4**. Future releases will evolve into a fully compatible **LeRobot extension plugin**, maintaining seamless interoperability with the official LeRobot repository.
 ---
 ## Robot Control
+
+The robot control module provides a unified interface for various robotic platforms, supporting SDK-based control (e.g., Piper, Realman) and general-purpose ROS/MoveIt-based control. It includes features such as standardized unit conversion, absolute and relative position control, and trajectory visualization.
 
 ```mermaid
 graph LR
@@ -509,13 +520,14 @@ sequenceDiagram
 
 ### Usage Instructions
 
+> ⚠️ Before running robot control scripts, please read all the configuration items carefully and modify them according to your robot platform SDK and settings.
+
 #### Trajectory Replay
 
 Robot platform configuration options can be modified in configuration class files or passed via command line. Taking dual-arm Realman as example, command is as follows:
 
 ```bash
-python src/lerobot/scripts/replay.py \
-    --repo_id=<your_lerobot_repo_id> \
+lerobot-replay \
     --robot.type=bi_realman \
     --robot.ip_left="169.254.128.18" \
     --robot.port_left=8080 \
@@ -524,14 +536,40 @@ python src/lerobot/scripts/replay.py \
     --robot.block=True \
     --robot.cameras="{ observation.images.cam_high: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, observation.images.cam_left_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30},observation.images.cam_right_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30}}" \
     --robot.id=black \
-    --robot.visualize=True
+    --robot.visualize=True \
+    --dataset.repo_id=<your_lerobot_repo_id> \
+    --dataset.episode=0
 ```
 
 The above command specifies Realman left and right arm IP/ports, and loads head, left hand, right hand cameras. During trajectory replay, control will be based on data in <your_lerobot_repo_id>.
 
 #### Model Inference
 
-##### LeRobot Policy Based Inference
+##### LeRobot Policy Based Inference (Naive)
+
+Run inference script directly, taking dual-arm Realman as example, command is as follows:
+
+```bash
+python src/lerobot/scripts/inference_naive.py \
+    --robot.type=bi_realman \
+    --robot.ip_left="169.254.128.18" \
+    --robot.port_left=8080 \
+    --robot.ip_right="169.254.128.19" \
+    --robot.port_right=8080 \
+    --robot.cameras="{ front: {type: opencv, index_or_path: 8, width: 640, height: 480, fps: 30}, left_wrist: {type: opencv, index_or_path: 14, width: 640, height: 480, fps: 30},right_wrist: {type: opencv, index_or_path: 20, width: 640, height: 480, fps: 30}}" \
+    --robot.block=False \
+    --robot.id=black \
+    --task="do something" \
+    --pretrained_path=path/to/checkpoint \
+    --repo_id=realman/bi_realman_demo \
+    --frequency=10 \
+    --camera_keys="[ front ]"
+```
+
+The above command initializes Realman pose, loads head, left hand, right hand cameras, passes "do something" as prompt, loads local model for inference, and obtains actions to control the robot platform.
+You can press "q" in console to exit anytime, then press "y/n" to indicate task success/failure. Video will be saved to results/directory.
+
+##### LeRobot Policy Based Inference (Asynchronous RPC)
 
 1. Run LeRobot Server, see `src/lerobot/scripts/server/policy_server.py`, command as follows:
 ```bash
@@ -680,9 +718,7 @@ During inference, it starts from the first subtask, press "s" to switch to next 
 
 Press "q" in console to exit anytime, then press "y/n" to indicate task success/failure. Video will be saved to `results/` directory.
 
-### Customization
-
-#### Adding Custom Robots
+### Adding Custom Robots
 
 1. Create a new folder under src/lerobot/robots/directory named after your robot, e.g. my_robot
 2. Create the following files in this folder:
@@ -726,6 +762,434 @@ Press "q" in console to exit anytime, then press "y/n" to indicate task success/
    from lerobot.robots.my_robot.bi_my_robot_end_effector import BiMyRobotEndEffector
    ```
 9. Now you can use your custom robot via command line parameter `--robot.type=my_robot`
+
+---
+## Robot Teleoperation
+
+The teleoperator module provides teleoperation functionality for various robot platforms, allowing users to control robots through teleoperation devices.
+It provides various teleoperation methods, including code-based and hardware-based teleoperation.
+
+```mermaid
+graph LR
+    Robot[Robot]
+    Record[Record Script]
+
+    subgraph Teleoperation Methods
+        CodeBased[Code-Based Teleoperation]
+        HardwareBased[Hardware-Based Teleoperation]
+    end
+
+    subgraph Teleoperator Types
+        ControllerGroup[Various Controllers] --> LeaderArm[Leader Arm]
+        ControllerGroup --> Keyboard[Keyboard]
+        ControllerGroup --> Gamepad[Gamepad]
+        VendorDevice[Vendor-Specific Hardware]
+        VendorDevice --> LeaderArm2[Leader Arm]
+        VendorDevice --> ExoSkeleton[Exo Skeleton]
+        VendorDevice --> DataGlove[Data Glove]
+    end
+
+    Robot --- Record
+    Record --- CodeBased
+    Record --- HardwareBased
+    CodeBased --- ControllerGroup
+    HardwareBased --- VendorDevice
+```
+
+### Teleoperator Script Structure
+
+All teleoperator scripts are located under `src/lerobot/teleoperators`. Taking the Realman teleoperator as an example, all relevant files are located in `src/lerobot/teleoperators/realman_leader`:
+
+```bash
+realman_leader # Single arm teleoperator
+├── __init__.py
+├── configuration_realman_leader.py # Configuration class
+├── realman_leader.py               # Teleoperator logic
+└── realman_leader_end_effector.py  # End effector based teleoperator logic
+
+bi_realman_leader # Dual arm teleoperator
+├── __init__.py
+├── configuration_bi_realman_leader.py # Configuration class
+├── bi_realman_leader.py               # Teleoperator logic
+└── bi_realman_leader_end_effector.py  # End effector based teleoperator logic
+```
+
+### Base Teleoperator Configuration Classes
+
+**Inheritance Relationship**：
+```mermaid
+graph LR
+    A[TeleoperatorConfig] 
+    B[BaseLeaderConfig]
+    C[BaseLeaderEndEffectorConfig]
+    D[BiBaseLeaderConfig]
+    E[BiBaseLeaderEndEffectorConfig]
+    A --> B
+    B --> C
+    B --> D
+    D --> E
+    C --> E
+```
+
+The base configuration for teleoperators is located at `src/lerobot/teleoperators/base_teleoperator/config_base_teleoperator.py`:
+
+```python
+"""
+Configuration for BaseLeader teleoperator.
+"""
+
+from dataclasses import dataclass, field
+from typing import List
+
+from ..config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("base_leader")
+@dataclass
+class BaseLeaderConfig(TeleoperatorConfig):
+    """
+    Configuration for BaseLeader teleoperator.
+    Params:
+    - joint_names: List[str], list of joint names, including gripper
+    - joint_units: List[str], units for robot joints, for sdk control
+    - pose_units: List[str], units for end effector pose, for sdk control
+    - model_joint_units: List[str], units for model joints, for model input/output
+    """
+
+    # list of joint names, including gripper
+    joint_names: List[str] = field(default_factory=lambda: [
+        'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
+    ])
+
+    # initialization type and state, each episode start with this state
+    # 'none': no initialization
+    # 'joint': initialize joint positions
+    # 'end_effector': initialize end effector pose
+    init_type: str = "none"  # 'none', 'joint', 'end_effector'
+    init_state: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    init_threshold: float = 0.1  # threshold to consider initialized
+
+    # units for robot joints, for sdk control
+    joint_units: List[str] = field(default_factory=lambda: [
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
+    ])
+    # units for end effector pose, for sdk control
+    pose_units: List[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'radian', 'radian', 'radian', 'm',
+    ])
+    # units for model joints, for model input/output
+    model_joint_units: List[str] = field(default_factory=lambda: [
+        'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm',
+    ])
+
+
+@TeleoperatorConfig.register_subclass("base_leader_end_effector")
+@dataclass
+class BaseLeaderEndEffectorConfig(BaseLeaderConfig):
+    """
+    Configuration for BaseLeaderEndEffector teleoperator.
+    Extends BaseLeaderConfig with end-effector specific parameters.
+    Params:
+    - base_euler: List[float], robot SDK control coordinate system rotation 
+      relative to the model coordinate system (not implemented yet)
+    - model_pose_units: List[str], units for model end effector pose for model input/output
+    """
+
+    # robot SDK control coordinate system rotation relative to the model coordinate system
+    base_euler: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    # units for model end effector pose, for model input/output
+    model_pose_units: List[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'radian', 'radian', 'radian', 'm',
+    ])
+```
+
+Parameter Details：
+| Parameter Name      | Type          | Default Value                                                                              | Description                                                                                                                      |
+| ------------------- | ------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `joint_names`       | `List[str]`   | `['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper']` | Joint name list, including gripper                                                                                               |
+| `init_type`         | `str`         | `'none'`                                                                                   | Initialization type, options: `'none'`, `'joint'`, `'end_effector'`                                                              |
+| `init_state`        | `List[float]` | `[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]`                                             | Initialization state for each joint and the gripper                                                                                |
+| `init_threshold`    | `float`       | `0.1`                                                                                      | Threshold to consider initialization complete                                                                                     |
+| `joint_units`       | `List[str]`   | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']`              | Robot joint units, for SDK control                                                                                               |
+| `pose_units`        | `List[str]`   | `['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']`                                       | End effector pose units, for SDK control                                                                                         |
+| `model_joint_units` | `List[str]`   | `['radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'radian', 'm']`              | Model joint units, for model input/output                                                                                        |
+| `base_euler`        | `List[float]` | `[0.0, 0.0, 0.0]`                                                                                 | Robot SDK control coordinate system rotation relative to the model coordinate system                                               |
+| `model_pose_units`  | `List[str]`   | `['m', 'm', 'm', 'radian', 'radian', 'radian', 'm']`                                       | Model end effector pose units, for model input/output                                                                             |
+
+The dual-arm robot teleoperator base configuration class is located at `src/lerobot/teleoperators/bi_base_leader/config_bi_base_leader.py`, inheriting from the single-arm base configuration:
+
+```python
+"""
+Configuration for Bi-Base Leader Teleoperator
+"""
+
+from dataclasses import dataclass
+
+from lerobot.teleoperators import TeleoperatorConfig
+
+from ..base_leader import BaseLeaderConfig, BaseLeaderEndEffectorConfig
+
+
+@TeleoperatorConfig.register_subclass("bi_base_leader")
+@dataclass
+class BiBaseLeaderConfig(BaseLeaderConfig):
+    """
+    Configuration for Bi-Base Leader Teleoperator with joint control
+    """
+
+    pass
+
+
+@TeleoperatorConfig.register_subclass("bi_base_leader_end_effector")
+@dataclass
+class BiBaseLeaderEndEffectorConfig(BiBaseLeaderConfig, BaseLeaderEndEffectorConfig):
+    """
+    Configuration for Bi-Base Leader Teleoperator with end effector control
+    """
+    
+    pass
+```
+
+### Specific Teleoperator Configuration Classes
+
+Each specific teleoperator has dedicated configuration inheriting from the teleoperator base configuration. Configure according to the specific robot SDK.
+
+Inheritance relationship, taking Realman teleoperator as example:
+
+```mermaid
+graph LR;
+    A[BaseLeaderConfig] --> B[RealmanLeaderConfig]
+    A --> C[RealmanLeaderEndEffectorConfig]
+    A --> D[BiBaseLeaderConfig]
+    D --> E[BiRealmanLeaderConfig]
+    C --> F[BiRealmanLeaderEndEffectorConfig]
+    D --> F
+```
+
+Taking Realman teleoperator as example, located at `src/lerobot/teleoperators/realman_leader/config_realman_leader.py`：
+
+```python
+"""
+Configuration for Realman leader teleoperator.
+"""
+
+from dataclasses import dataclass, field
+from typing import List
+
+from ..base_leader import BaseLeaderConfig, BaseLeaderEndEffectorConfig
+from ..config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("realman_leader")
+@dataclass
+class RealmanLeaderConfig(BaseLeaderConfig):
+    """
+    Configuration for Realman leader.
+    Params:
+    - ip: str, IP address of the Realman robot controller
+    - port: int, port number for the Realman robot controller
+    - block: bool, if True, SDK commands will block until the action is completed
+    - wait_second: float, time to wait for non-blocking commands
+    - velocity: int, default velocity for joint movements (0-100)
+    - joint_names: List[str], list of joint names for the robot, including gripper
+    - init_type: str, initialization type, choices: 'none', 'joint', 'end_effector'
+    - init_state: List[float], initial joint state for the Realman leader
+    - joint_units: List[str], units for robot joints, for sdk control
+    - pose_units: List[str], units for end effector pose, for sdk control
+    """
+
+    ##### Realman SDK settings #####
+    # IP and port of the Realman robot controller
+    ip: str = "169.254.128.18"
+    port: int = 8080
+
+    # Realman has 7 joints + gripper
+    joint_names: List[str] = field(default_factory=lambda: [
+        'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
+    ])
+    
+    # Default initial state for the Realman leader
+    init_type: str = "joint"
+    init_state: List[float] = field(default_factory=lambda: [
+        -0.84, -2.03,  1.15,  1.15,  2.71,  1.60, -2.99, 888.00,
+    ])
+
+    # Realman SDK uses degrees for joint angles and meters for positions
+    joint_units: List[str] = field(default_factory=lambda: [
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm',
+    ])
+    pose_units: List[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'degree', 'degree', 'degree', 'm',
+    ])
+
+
+@TeleoperatorConfig.register_subclass("realman_leader_end_effector")
+@dataclass
+class RealmanLeaderEndEffectorConfig(RealmanLeaderConfig, BaseLeaderEndEffectorConfig):
+    """
+    Configuration for Realman leader with end effector.
+    """
+
+    pass
+```
+
+For dual-arm Realman teleoperator, configuration class is located at `src/lerobot/teleoperators/bi_realman_leader/config_bi_realman_leader.py`：
+
+```python
+"""
+Configuration for Bi-Realman leader.
+"""
+
+from dataclasses import dataclass, field
+from typing import List
+
+from ..base_leader import BaseLeaderConfig, BaseLeaderEndEffectorConfig
+from ..config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("bi_realman_leader")
+@dataclass
+class BiRealmanLeaderConfig(BaseLeaderConfig):
+    """
+    Configuration for Bi-Realman leader.
+    """
+    ##### Realman SDK settings #####
+    # IP and port settings for the left and right Realman robots.
+    ip_left: str = "169.254.128.18"
+    port_left: int = 8080
+    ip_right: str = "169.254.128.19"
+    port_right: int = 8080
+
+    # BiRealman robot has 7 joints and a gripper for each side
+    joint_names: List[str] = field(default_factory=lambda: [
+        'joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7', 'gripper',
+    ])
+
+    # Default initial state for the BiRealman leader
+    init_type: str = "joint"
+    init_state_left: List[float] = field(default_factory=lambda: [
+        -0.84, -2.03,  1.15,  1.15,  2.71,  1.60, -2.99, 888.00,
+    ])
+    init_state_right: List[float] = field(default_factory=lambda: [
+         1.16,  2.01, -0.79, -0.68, -2.84, -1.61,  2.37, 832.00,
+    ])
+
+    # Realman SDK uses degrees for joint angles and meters for positions
+    joint_units: List[str] = field(default_factory=lambda: [
+        'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'degree', 'm',
+    ])
+    pose_units: List[str] = field(default_factory=lambda: [
+        'm', 'm', 'm', 'degree', 'degree', 'degree', 'm',
+    ])
+
+
+@TeleoperatorConfig.register_subclass("bi_realman_leader_end_effector")
+@dataclass
+class BiRealmanLeaderEndEffectorConfig(BiRealmanLeaderConfig, BaseLeaderEndEffectorConfig):
+    """
+    Configuration for Bi-Realman leader with end effector.
+    """
+
+    pass
+```
+
+### Usage Instructions
+
+> ⚠️ Before running robot teleoperation scripts, please read all the configuration items carefully and modify them according to your robot platform SDK and settings.
+
+#### Teleoperation via Leader-Follower Arm (Code Logic)
+
+1. Connect the leader & follower arm hardware device to the computer.
+2. Run the teleoperation recording script, taking Piper robot as example, command is as follows:
+
+```bash
+lerobot-record \
+    --robot.type=piper \
+    --robot.can=can0 \
+    --robot.cameras="{ observation.images.cam_front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+    --robot.id=piper_follower \
+    --teleop.type=piper_leader \
+    --teleop.can=can1 \
+    --teleop.id=piper_leader \
+    --dataset.repo_id=<your_lerobot_repo_id> \
+    --dataset.num_episodes=3 \
+    --dataset.single_task="do something" \
+    --dataset.push_to_hub=False
+```
+
+The above command connects to Piper follower robot via CAN bus `can0`, loads front camera, connects to Piper leader robot via CAN bus `can1`, and records 3 episodes of teleoperation data with the task "do something" into <your_lerobot_repo_id>.
+
+You can press direction key (->) to start next episode, press direction key (<-) to repeat last episode, press "esc" to exit teleoperation anytime.
+
+#### Teleoperation directly via Hardware Device (Bypass Code Logic)
+
+The above script is controlled by the teleoperator code logic. 
+However, many robots offer control logic based on hardware devices (e.g., Piper can directly link leader and follower arms via CAN bus), allowing better real-time performance and stability.
+
+In this case, you can bypass the teleoperator code logic and directly use the robot SDK to control the follower arm based on the leader arm hardware device input.
+
+```bash
+lerobot-record \
+    --robot.type=piper \
+    --robot.can=can0 \
+    --robot.cameras="{ observation.images.cam_front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+    --robot.id=piper_follower \
+    --robot.use_hardware_teleop=True \ # Bypass teleoperator code logic
+    --teleop.can=can0 \
+    --teleop.type=piper_leader \
+    --teleop.id=piper_leader \
+    --dataset.repo_id=<your_lerobot_repo_id> \
+    --dataset.num_episodes=3 \
+    --dataset.single_task="do something" \
+    --dataset.push_to_hub=False
+```
+
+The above command connects to Piper leader & follower robots via CAN bus `can0`, loads front camera, and records 3 episodes of teleoperation data with the task "do something" into <your_lerobot_repo_id>.
+
+### Adding Custom Teleoperators
+
+1. Create a new folder under `src/lerobot/teleoperators/` directory named after your teleoperator, e.g. `my_robot_leader`
+2. Create the following files in this folder:
+   - `__init__.py`: Initialization file
+   - `my_robot_leader.py`: Implement teleoperator control logic
+   - `configuration_my_robot_leader.py`: Define teleoperator configuration class, inheriting from TeleoperatorConfig
+   - `my_robot_leader_end_effector.py` (optional): Implement end effector based teleoperator control logic
+3. Define teleoperator configuration in `configuration_my_robot_leader.py`, including SDK-specific configuration and required base configuration parameters
+4. Implement teleoperator control logic in `my_robot_leader.py`, inheriting from BaseLeader
+5. Implement all abstract methods:
+   - `_check_dependencys(self)`: Check teleoperator dependencies
+   - `_connect_leader(self)`: Connect to leader hardware device
+   - `_disconnect_leader(self)`: Disconnect from leader hardware device
+   - `_get_joint_state(self) -> np.ndarray`: Get current leader joint state, returns joint state numpy array, units as defined in configuration class joint_units
+   - `_get_ee_state(self) -> np.ndarray`: Get current leader end effector state, returns end effector state numpy array, units as defined in configuration class pose_units
+6. Refer to other teleoperator implementation classes, implement other control modes (optional):
+   - `my_robot_leader_end_effector.py`: Implement end effector based teleoperator control logic, inheriting from BaseLeaderEndEffector and my_robot_leader.py
+   - `bi_my_robot_leader.py`: Implement dual-arm teleoperator control logic, inheriting from BiBaseLeader and my_robot_leader.py
+   - `bi_my_robot_leader_end_effector.py`: Implement dual-arm end effector based teleoperator control logic, inheriting from BiBaseLeaderEndEffector and my_robot_leader_end_effector.py
+7. Register your teleoperator configuration class in `src/lerobot/teleoperators/utils.py`:
+   ```python
+   elif teleop_type == "my_robot_leader":
+       from .my_robot_leader.configuration_my_robot_leader import MyRobotLeaderConfig
+       return MyRobotLeaderConfig(**config_dict)
+   elif teleop_type == "my_robot_leader_end_effector":
+       from .my_robot_leader.configuration_my_robot_leader import MyRobotLeaderEndEffectorConfig
+       return MyRobotLeaderEndEffectorConfig(**config_dict)
+   elif teleop_type == "bi_my_robot_leader":
+       from .my_robot_leader.configuration_my_robot_leader import BiMyRobotLeaderConfig
+       return BiMyRobotLeaderConfig(**config_dict)
+   elif teleop_type == "bi_my_robot_leader_end_effector":
+       from .my_robot_leader.configuration_my_robot_leader import BiMyRobotLeaderEndEffectorConfig
+       return BiMyRobotLeaderEndEffectorConfig(**config_dict)
+   ```
+8. Import your teleoperator implementation class at the beginning of recording scripts:
+   ```python
+    from lerobot.teleoperators.my_robot_leader.my_robot_leader import MyRobotLeader
+    from lerobot.teleoperators.my_robot_leader.my_robot_leader_end_effector import MyRobotLeaderEndEffector
+    from lerobot.teleoperators.my_robot_leader.bi_my_robot_leader import BiMyRobotLeader
+    from lerobot.teleoperators.my_robot_leader.bi_my_robot_leader_end_effector import BiMyRobotLeaderEndEffector
+   ```
+9. Now you can use your custom teleoperator via command line parameter `--teleop.type=my_robot_leader`.
+
 ---
 ## Acknowledgements
 

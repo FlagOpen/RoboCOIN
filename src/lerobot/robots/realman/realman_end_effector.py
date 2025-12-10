@@ -13,6 +13,9 @@ class RealmanEndEffector(Realman, BaseRobotEndEffector):
     Params:
     - config: RealmanEndEffectorConfig
     """
+
+    config_class = RealmanEndEffectorConfig
+    name = "realman_end_effector"
     
     def __init__(self, config: RealmanEndEffectorConfig) -> None:
         super().__init__(config)

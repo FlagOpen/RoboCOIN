@@ -215,8 +215,8 @@ class BiBaseRobot(Robot):
         if self.visualizer:
             self.visualize()
 
-        state_left = {f"left_{k}": v for k, v in zip(self.left_robot._motors_ft.keys(), state_left)}
-        state_right = {f"right_{k}": v for k, v in zip(self.right_robot._motors_ft.keys(), state_right)}
+        state_left = {f"left_{k}": v for k, v in state_left.items()}
+        state_right = {f"right_{k}": v for k, v in state_right.items()}
         return {**state_left, **state_right}
     
     def get_observation(self) -> Dict[str, Any]:

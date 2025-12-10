@@ -1,10 +1,15 @@
 # RoboCOIN
 
-[English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
+📄READMEs: [English](README.md) | [中文](README_zh-CN.md) | [LeRobot Readme](README_lerobot.md)
 
 🔗Links: [Project Website](https://flagopen.github.io/RoboCOIN/) | [ArXiv](https://arxiv.org/abs/2511.17441) | [PDF](https://arxiv.org/pdf/2511.17441) | [Visualize & Download](https://flagopen.github.io/RoboCOIN-DataManager/)
 
-目录
+## 新闻
+
+- 🔥[2025.12.09] 我们的数据集在 [HuggingFace](https://huggingface.co/datasets/RoboCoin) 和 [ModelScope](https://modelscope.cn/organization/RoboCOIN) 上累计取得300,000下载量！
+- 🔥[2025.11.24] 我们的技术报告已在 [ArXiv](https://arxiv.org/abs/2511.17441) 上发布！
+
+## 目录
 - [RoboCOIN](#robocoin)
   - [概述](#概述)
   - [安装](#安装)

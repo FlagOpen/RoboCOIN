@@ -6,6 +6,7 @@
 
 ## News
 
+- 🔥[9 Dec. 2025] Our datasets have reached a total of 300,000 downloads on [HuggingFace](https://huggingface.co/datasets/RoboCoin) and [ModelScope](https://modelscope.cn/organization/RoboCOIN)!
 - 🔥[24 Nov. 2025] Our technical report is available on [ArXiv](https://arxiv.org/abs/2511.17441)!
 
 ## Table of Contents

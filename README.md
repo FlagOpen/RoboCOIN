@@ -82,6 +82,7 @@ We will continuously update the datasets. You can find the latest datasets on th
 
 ```bash
 # you can copy the bash command from the website and paste it here, such as:
+# Required storage:  10.8GB.
 robocoin-download --hub huggingface --ds_lists Cobot_Magic_move_the_bread R1_Lite_open_and_close_microwave_oven
 
 # the default download path is ~/.cache/huggingface/lerobot/, which will be used as default dir of LerobotDataset.
